@@ -76,5 +76,12 @@
             "markdown",
             "batch"
         ]
-    }
+    },
+    "cSpell.words": [
+        "dotenv",
+        "mypy",
+        "pyarrow",
+        "pytest",
+        "Zjgxe"
+    ]
 }

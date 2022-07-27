@@ -1,6 +1,24 @@
 [tool.poetry]
-name = "Analytics-Middle-Tier-Data-Lake"
+name = "edfi_amt_data_lake"
 version = "0.1.0"
-description = ""
-authors = [""]
-license = "Apache License"
+description = "Data Lake"
+authors = ["EdFi"]
+license = "Apache License 2.0"
+
+[tool.poetry.dependencies]
+python = "^3.8"
+requests = "^2.28.1"
+pyarrow = "^8.0.0"
+pandas = "^1.4.3"
+pydantic = "^1.9.1"
+pytest = "^7.1.2"
+python-dotenv = "^0.20.0"
+python-decouple = "^3.6"
+
+[tool.poetry.dev-dependencies]
+flake8 = "^4.0.1"
+mypy = "^0.971"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
