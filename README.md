@@ -1,4 +1,4 @@
-# {Insert Repository Name Here}
+# Analytics-Middle-Tier-Data-Lake
 
 {Insert project information here}
 
