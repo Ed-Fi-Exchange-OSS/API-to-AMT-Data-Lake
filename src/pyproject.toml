@@ -7,13 +7,16 @@ license = "Apache License 2.0"
 
 [tool.poetry.dependencies]
 python = "^3.8"
-requests = "^2.28.1"
 pyarrow = "^8.0.0"
 pandas = "^1.4.3"
 pydantic = "^1.9.1"
 pytest = "^7.1.2"
 python-dotenv = "^0.20.0"
 python-decouple = "^3.6"
+requests = "^2.28.1"
+dagster = "^0.15.7"
+dagit = "^0.15.7"
+dagster-dbt = "^0.15.7"
 
 [tool.poetry.dev-dependencies]
 flake8 = "^4.0.1"
