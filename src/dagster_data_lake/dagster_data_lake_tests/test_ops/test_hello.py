@@ -1,4 +1,4 @@
-from dagter_data_lake.ops.hello import hello
+from dagster_data_lake.ops.hello import hello
 
 
 def test_hello():

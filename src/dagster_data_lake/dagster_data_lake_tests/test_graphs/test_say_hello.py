@@ -1,4 +1,4 @@
-from dagter_data_lake.jobs.say_hello import say_hello_job
+from dagster_data_lake.jobs.say_hello import say_hello_job
 
 
 def test_say_hello():

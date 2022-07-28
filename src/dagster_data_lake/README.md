@@ -1,4 +1,4 @@
-# dagter_data_lake
+# dagster_data_lake
 
 Welcome to your new Dagster repository.
 
@@ -9,8 +9,8 @@ Welcome to your new Dagster repository.
 | `README.md`              | A description and guide for this code repository                                  |
 | `setup.py`               | A build script with Python package dependencies for this code repository          |
 | `workspace.yaml`         | A file that specifies the location of the user code for Dagit and the Dagster CLI |
-| `dagter_data_lake/`       | A Python directory that contains code for your Dagster repository                 |
-| `dagter_data_lake_tests/` | A Python directory that contains tests for `dagter_data_lake`                      |
+| `dagster_data_lake/`       | A Python directory that contains code for your Dagster repository                 |
+| `dagster_data_lake_tests/` | A Python directory that contains tests for `dagster_data_lake`                      |
 
 ## Getting up and running
 
@@ -20,15 +20,15 @@ Welcome to your new Dagster repository.
 ```bash
 export PYTHON_VERSION=X.Y.Z
 pyenv install $PYTHON_VERSION
-pyenv virtualenv $PYTHON_VERSION dagter_data_lake
-pyenv activate dagter_data_lake
+pyenv virtualenv $PYTHON_VERSION dagster_data_lake
+pyenv activate dagster_data_lake
 ```
 
 **Conda**
 ```bash
 export PYTHON_VERSION=X.Y.Z
-conda create --name dagter_data_lake python=PYTHON_VERSION
-conda activate dagter_data_lake
+conda create --name dagster_data_lake python=PYTHON_VERSION
+conda activate dagster_data_lake
 ```
 
 2. Once you have activated your Python environment, install your repository as a Python package. By
@@ -67,13 +67,13 @@ dagster-daemon run
 
 ## Local Testing
 
-Tests can be found in `dagter_data_lake_tests` and are run with the following command:
+Tests can be found in `dagster_data_lake_tests` and are run with the following command:
 
 ```bash
-pytest dagter_data_lake_tests
+pytest dagster_data_lake_tests
 ```
 
-As you create Dagster ops and graphs, add tests in `dagter_data_lake_tests/` to check that your
+As you create Dagster ops and graphs, add tests in `dagster_data_lake_tests/` to check that your
 code behaves as desired and does not break over time.
 
 For hints on how to write tests for ops and graphs in Dagster,

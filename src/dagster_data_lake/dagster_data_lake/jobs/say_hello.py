@@ -1,6 +1,6 @@
 from dagster import job
 
-from dagter_data_lake.ops.hello import hello
+from dagster_data_lake.ops.hello import hello
 
 @job
 def say_hello_job():
