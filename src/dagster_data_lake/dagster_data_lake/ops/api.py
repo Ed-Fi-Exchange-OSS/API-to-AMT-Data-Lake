@@ -4,11 +4,11 @@
 # See the LICENSE and NOTICES files in the project root for more information.
 
 from dagster import asset, materialize
-from edfi_amt_data_lake.api import get_schools
+from edfi_amt_data_lake.api import get_data
 
 @asset
-def schools():
-    return get_schools()
+def api():
+    return get_data()
 
 if __name__ == "__main__":
-    materialize([schools])
+    materialize([api])
