@@ -8,36 +8,39 @@ import requests
 from decouple import config
 
 from edfi_amt_data_lake.helper.token import get_token
-from edfi_amt_data_lake.helper.file import JSONFile
-from edfi_amt_data_lake.helper.helper import save_json_response
+from edfi_amt_data_lake.helper.file import ENDPOINT, JSONFile
+from edfi_amt_data_lake.helper.helper import save_response
+
+from dagster.utils import file_relative_path
 
 # Get a response from the Ed-Fi API
-def _api_get(url, token):
+def _api_get(url, token) -> list:
     headers = {"Authorization": "Bearer " + token}
     response = requests.get(url, headers=headers)
     return response.json()
 
 # Call the Ed-Fi API
-def _call_api(url):
+def _call_api(url) -> list:
     token = get_token()
     return _api_get(url, token)
 
 # List of endpoints from API
-def _get_endpoint():
-    with open(f"./endpoint/endpoint.json") as endpoint_file:
-        data = json.load(endpoint_file)
+def _get_endpoint() -> list:
+    with open(file_relative_path(__file__, './endpoint/endpoint.json'), "r") as file:
+        data = json.load(file)
     return data
 
 # Get JSON from API endpoint and save to file
-def get_data():
-    json_len = len(_get_endpoint())
-    for i in range(0, json_len):
-        endpoint = _get_endpoint()[i]["endpoint"]
-        endpoint_name = endpoint.split("/")[-1]
-        file: JSONFile = JSONFile(endpoint_name)
-        url = f"{config('API_URL')}/{endpoint}"
-        data = _call_api(url)
-        save_json_response(file, data)
+def get_data() -> None:
+    data = _get_endpoint()
+    data_len = len(data)
+    for i in range(0, data_len):
+        path = data[i][ENDPOINT]
+        path_name = path.split("/")[-1]
+        json_file = JSONFile(path_name)
+        url = config("API_URL") + path
+        result = _call_api(url)
+        save_response(json_file, result)
     return None
 
 if __name__ == "__main__":

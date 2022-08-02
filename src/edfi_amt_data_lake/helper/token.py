@@ -9,7 +9,7 @@ import base64
 from decouple import config
 
 # Get the API key from the environment variables
-def get_token():
+def get_token() -> str:
     # Get the token from the Ed-Fi API
     api_user = config('API_USER')
     api_password = config('API_PASSWORD')

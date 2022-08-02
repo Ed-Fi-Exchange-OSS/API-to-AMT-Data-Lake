@@ -84,5 +84,8 @@
         "pyarrow",
         "pytest",
         "Zjgxe"
+    ],
+    "python.analysis.extraPaths": [
+        "./src/dagster_data_lake"
     ]
 }
