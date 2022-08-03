@@ -76,5 +76,16 @@
             "markdown",
             "batch"
         ]
-    }
+    },
+    "cSpell.words": [
+        "dotenv",
+        "jsons",
+        "mypy",
+        "pyarrow",
+        "pytest",
+        "Zjgxe"
+    ],
+    "python.analysis.extraPaths": [
+        "./src/dagster_data_lake"
+    ]
 }
