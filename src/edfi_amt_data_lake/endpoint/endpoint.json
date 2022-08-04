@@ -30,6 +30,7 @@
     {"endpoint": "/ed-fi/staffSchoolAssociations", "table_name": "base_edfi_staff_school_associations" },
     {"endpoint": "/ed-fi/staffSectionAssociations", "table_name": "base_edfi_staff_section_associations" },
     {"endpoint": "/ed-fi/stateAbbreviationDescriptors", "table_name": "base_edfi_descriptors"},
+    {"endpoint": "/ed-fi/studentAssessments", "table_name": "base_edfi_student_assessments"},
     {"endpoint": "/ed-fi/studentDisciplineIncidentBehaviorAssociations", "table_name": "base_edfi_student_discipline_behavior_associations" },
     {"endpoint": "/ed-fi/studentEducationOrganizationAssociations", "table_name": "base_edfi_student_education_organization_associations" },
     {"endpoint": "/ed-fi/studentLanguageInstructionProgramAssociations", "table_name": "base_edfi_student_language_instruction_program_associations"},
