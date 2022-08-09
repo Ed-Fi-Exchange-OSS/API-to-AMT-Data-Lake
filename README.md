@@ -1,6 +1,29 @@
 # Analytics-Middle-Tier-Data-Lake
 
-{Insert project information here}
+## API to AMT Data Lake
+Project oriented to obtain the different collections from the AMT API in order to convert them into parquet files to be used with Dagster.
+
+## Local environment
+Authentication is necessary to be able to download the different collections.
+
+Complete your .env file.
+```sh
+API_USER=<api_user>
+API_PASSWORD=<api_password>
+API_URL=<api_url>
+```
+
+Continue with the next steps:
+
+```sh
+cd API-to-AMT-Data-Lake/src
+poetry install;
+source $(poetry env info --path)/bin/activate
+
+cd ../src/dagster_data_lake
+dagit -w dagster/workspace.yaml;
+```
+
 
 ## Legal Information
 
