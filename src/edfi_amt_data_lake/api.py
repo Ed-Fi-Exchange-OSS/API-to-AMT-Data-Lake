@@ -7,6 +7,7 @@ import json
 import requests
 from decouple import config
 
+
 from edfi_amt_data_lake.helper.token import get_token
 from edfi_amt_data_lake.helper.file import ENDPOINT, JSONFile
 from edfi_amt_data_lake.helper.helper import save_response
@@ -16,12 +17,37 @@ from dagster.utils import file_relative_path
 # Get a response from the Ed-Fi API
 def _api_get(url, token) -> list:
     headers = {"Authorization": "Bearer " + token}
-    response = requests.get(url, headers=headers)
-    return response.json()
+
+    limit = 20
+    endpoint = (
+                f"{url}" f"?limit={limit}"
+            )
+    offset = 0
+
+    json_response = []
+    while True:
+        endpoint_to_call = f"{endpoint}&offset={offset}"
+        response =  requests.get(endpoint_to_call, headers=headers)
+
+        data =response.json()
+        json_response.extend(data)
+
+        if offset==100 or not json_response:
+            # retrieved all data from api
+            break
+        else:
+            # move onto next page
+            offset = offset + limit
+        print("continue")
+    print("end ")
+
+    return json.dumps(json_response)
 
 # Call the Ed-Fi API
 def _call_api(url) -> list:
     token = get_token()
+
+
     return _api_get(url, token)
 
 # List of endpoints from API

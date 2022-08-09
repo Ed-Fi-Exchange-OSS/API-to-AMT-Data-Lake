@@ -83,7 +83,7 @@ typing-compat = "0.1.0"
 typing-extensions = "4.2.0"
 urllib3 = "1.26.9"
 uvicorn = "0.17.6"
-uvloop = "0.16.0"
+
 watchdog = "2.1.9"
 watchgod = "0.8.2"
 webencodings = "0.5.1"
