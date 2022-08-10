@@ -5,7 +5,9 @@
 
 import json
 import requests
+import time
 from decouple import config
+from datetime import datetime
 
 
 from edfi_amt_data_lake.helper.token import get_token
@@ -18,30 +20,39 @@ from dagster.utils import file_relative_path
 def _api_get(url, token) -> list:
     headers = {"Authorization": "Bearer " + token}
 
-    limit = 20
+    limit = int(config('API_LIMIT'))
     endpoint = (
                 f"{url}" f"?limit={limit}"
             )
     offset = 0
-
+    start = time.time()
     json_response = []
-    while True:
-        endpoint_to_call = f"{endpoint}&offset={offset}"
-        response =  requests.get(endpoint_to_call, headers=headers)
-
-        data =response.json()
-        json_response.extend(data)
-
-        if offset==100 or not json_response:
-            # retrieved all data from api
+    data = null
+    try:
+        while True:
             break
-        else:
-            # move onto next page
-            offset = offset + limit
-        print("continue")
-    print("end ")
+            endpoint_to_call = f"{endpoint}&offset={offset}"
+            response =  requests.get(endpoint_to_call, headers=headers)
+            if response.ok:
+                data =response.json()
+                json_response.extend(data)
+            else:
+                data = null
+                break
+            if not data:
+                # retrieved all data from api
+                break
+            else:
+                # move onto next page
+                offset = offset + limit
+    except Exception as e:
+        print(f"***************\nEndpoint: {endpoint}\n")
+        print(f"Offset: {offset}\n")
+        print(f"Message: {e}\n***************\n")
+    end = time.time()
+    #elapsed_time = end - start
 
-    return json.dumps(json_response)
+    return json_response
 
 # Call the Ed-Fi API
 def _call_api(url) -> list:
