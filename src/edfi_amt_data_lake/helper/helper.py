@@ -5,21 +5,27 @@
 
 import json
 import os
+from decouple import config
+from dagster.utils import file_relative_path
 
-from edfi_amt_data_lake.helper.file import JSONFile
+from edfi_amt_data_lake.helper.base import JSONFile
 
-
-# Create the directory if it doesn't exist.
-def create_directory(json_file: JSONFile) -> None:
-    directory = f"./jsons/{json_file.directory}"
-    if not os.path.exists(json_file.directory):
-        os.makedirs(directory, exist_ok=True)
-    return None
+# List of endpoints from API
+def get_endpoint() -> list:
+    with open(file_relative_path(
+        __file__, './endpoint/endpoint.json'), "r") as file:
+        data = json.load(file)
+    return data
 
 # Create a function to save JSON into a file in the json directory.
-def save_response(json_file: JSONFile, data) -> None:
-    create_directory(json_file)
-    with open(f"./jsons/{json_file.directory}/{json_file.name}.json", "w") as outfile:
-        json.dump(data, outfile, indent=4)
-    print(f"Saved {json_file.name}")
-    return None
+def save_file(json_file: JSONFile, data) -> None:
+    path = f"../jsons/{json_file.directory}"
+    if not os.path.exists(path):
+        os.makedirs(path, exist_ok=True)
+        with open(f"../jsons/{json_file.directory}/{json_file.name}.json", "w") as file:
+            json.dump(data, file, indent=4)
+        print(f"{json_file.name} Saved!")
+
+# Create a function to get endpoint url.
+def get_url(endpoint: str) -> str:
+    return f"{config('API_URL')}/{config('PREX_DATA_V')}/{endpoint}"
