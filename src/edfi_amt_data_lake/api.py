@@ -27,7 +27,7 @@ def _api_get(url, token) -> list:
     offset = 0
     start = time.time()
     json_response = []
-    data = null
+    data = None
     try:
         while True:
             
@@ -37,7 +37,7 @@ def _api_get(url, token) -> list:
                 data =response.json()
                 json_response.extend(data)
             else:
-                data = null
+                data = None
                 break
             if not data:
                 # retrieved all data from api
