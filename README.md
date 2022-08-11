@@ -12,13 +12,13 @@ Extracts all data exposed by the Ed-Fi API and saves it into JSON files in order
 Authentication is necessary to be able to download the different collections.
 
 
-### Environment variable configuration
+#### Environment variable configuration:
 
 1. Rename the .env.example file to .env, or generate an .env file using .env.example as a reference.
 2. Modify the .env file to include your information.
 
 
-```sh
+```shi
 PREX_DATA_V=data/v3
 PREX_TOKEN=oauth/token
 ---------------------------------------------------
@@ -46,7 +46,7 @@ dagit -w dagster/workspace.yaml
 
 ## Extra Steps
 
-After you have finished the above steps, you can open your localhost or http://127.0.0.1:3000, and you will be able to see in the launcher the list of tests or collections available.
+After you have finished the above steps, you can open your localhost or http://127.0.0.1:3000 and you will be able to see in the launcher the list of tests or collections available.
 
 ### Dev Operations
 
