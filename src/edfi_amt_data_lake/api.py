@@ -30,7 +30,7 @@ def _api_get(url, token) -> list:
     data = null
     try:
         while True:
-            break
+            
             endpoint_to_call = f"{endpoint}&offset={offset}"
             response =  requests.get(endpoint_to_call, headers=headers)
             if response.ok:
