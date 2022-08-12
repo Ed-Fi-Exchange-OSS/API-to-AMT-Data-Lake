@@ -10,7 +10,8 @@ from edfi_amt_data_lake.helper.token import get_token
 from edfi_amt_data_lake.helper.base import PATH, JSONFile
 from edfi_amt_data_lake.helper.helper import save_file, get_endpoint, get_url
 
-LIMIT = int(config("API_LIMIT"))
+API_LIMIT = config("API_LIMIT", cast=int)
+LIMIT = API_LIMIT if API_LIMIT else 500
 
 # Get a response from the Ed-Fi API
 def _call(url, token) -> list:
