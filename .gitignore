@@ -120,6 +120,10 @@ celerybeat.pid
 # SageMath parsed files
 *.sage.py
 
+# Temp files
+src/edfi_amt_data_lake/jsons/*.json
+src/dagster_data_lake/dagster_data_lake/tmp*
+
 # Environments
 .env
 .venv
