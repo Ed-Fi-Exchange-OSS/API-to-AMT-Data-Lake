@@ -11,9 +11,9 @@ from decouple import config
 # Get the API key from the environment variables
 def get_token() -> str:
     # Get the token from the Ed-Fi API
-    api_user = config('API_USER')
-    api_password = config('API_PASSWORD')
-    api_url_token = config('API_URL_TOKEN')
+    api_user = config('API_KEY')
+    api_password = config('API_SECRET')
+    api_url_token = config('API_URL') +"/"+ config('PREX_TOKEN')
 
     credential = ":".join((api_user, api_password))
     credential_encoded = base64.b64encode(credential.encode("utf-8"))
@@ -24,5 +24,6 @@ def get_token() -> str:
 
     if response.status_code == 200:
         return response.json()["access_token"]
+
     else:
         return None

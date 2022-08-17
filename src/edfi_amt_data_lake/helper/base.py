@@ -3,4 +3,12 @@
 # The Ed-Fi Alliance licenses this file to you under the Apache License, Version 2.0.
 # See the LICENSE and NOTICES files in the project root for more information.
 
-from .repository import dagster_data_lake
+# Constants for endpoint.json
+PATH = 'endpoint'
+TABLE_NAME = 'table_name'
+
+class JSONFile:
+    def __init__(self, name):
+        self.name = name
+        self.directory = name
+
