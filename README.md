@@ -28,7 +28,11 @@ API_URL=https://example.com/v5.3/api/
 ---------------------------------------------------
 API_LIMIT=500
 LOG_LEVEL=info
+---------------------------------------------------
+CHANGE_VERSION_FILEPATH=<path_to_file>
 ```
+
+CHANGE_VERSION_FILEPATH is the location where the changeVersion.txt file will be saved.
 
 ####  Continue with the next steps:
 
