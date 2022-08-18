@@ -8,6 +8,7 @@
     {"endpoint": "/ed-fi/cohortYearTypeDescriptors", "table_name": "base_edfi_descriptors"},
     {"endpoint": "/ed-fi/courseOfferings", "table_name": "base_edfi_course_offerings" },
     {"endpoint": "/ed-fi/courses", "table_name": "base_edfi_courses" },
+    {"endpoint": "/ed-fi/credentials", "table_name": "base_edfi_credentials" },
     {"endpoint": "/ed-fi/disabilityDescriptors", "table_name": "base_edfi_descriptors"},
     {"endpoint": "/ed-fi/disabilityDesignationDescriptors", "table_name": "base_edfi_descriptors"},
     {"endpoint": "/ed-fi/disciplineActions", "table_name": "base_edfi_discipline_actions" },
@@ -29,6 +30,7 @@
     {"endpoint": "/ed-fi/schoolYearTypes", "table_name": "base_edfi_school_year_types" },
     {"endpoint": "/ed-fi/sections", "table_name": "base_edfi_sections" },
     {"endpoint": "/ed-fi/sessions", "table_name": "base_edfi_sessions" },
+    {"endpoint": "/ed-fi/sexDescriptors", "table_name": "base_edfi_descriptors"},
     {"endpoint": "/ed-fi/staffDisciplineIncidentAssociations", "table_name": "base_edfi_staff_discipline_incident_associations" },
     {"endpoint": "/ed-fi/staffEducationOrganizationAssignmentAssociations", "table_name": "base_edfi_staff_education_organization_assignment_associations" },
     {"endpoint": "/ed-fi/staffs", "table_name": "base_edfi_staffs" },
@@ -49,8 +51,18 @@
     {"endpoint": "/ed-fi/studentSchoolAttendanceEvents", "table_name": "base_edfi_student_school_attendance_events" },
     {"endpoint": "/ed-fi/studentSchoolFoodServiceProgramAssociations", "table_name": "base_edfi_student_school_food_service_program_associations" },
     {"endpoint": "/ed-fi/studentSectionAssociations", "table_name": "base_edfi_student_section_associations" },
-    {"endpoint": "/ed-fi/studentSectionAttendanceEvents", "table_name": "base_edfi_student_section_attendance_events" },
-    {"endpoint": "/ed-fi/studentSpecialEducationProgramAssociations", "table_name": "base_edfi_student_special_education_program_associations" }
+    {"endpoint": "/ed-fi/studentSectionAttendanceEvents", "table_name": "base_edfi_student_sect
+    {"endpoint": "/ed-fi/studentSpecialEducationProgramAssociations", "table_name": "base_edfi_student_special_education_program_associations" },
+    {"endpoint": "/ed-fi/surveyQuestionResponses", "table_name": "base_edfi_survey_question_responses" },
+    {"endpoint": "/ed-fi/surveyQuestions", "table_name": "base_edfi_survey_questions" },
+    {"endpoint": "/ed-fi/surveyResponses", "table_name": "base_edfi_survey_responses" },
+    {"endpoint": "/ed-fi/surveys", "table_name": "base_edfi_surveys" },
+    {"endpoint": "/ed-fi/termDescriptors", "table_name": "base_edfi_descriptors"},
     {"endpoint": "/ed-fi/tribalAffiliationDescriptors", "table_name": "base_edfi_descriptors" }
-    
+    {"endpoint": "/tpdm/candidates", "table_name": "base_tpdm_candidates" },
+    {"endpoint": "/tpdm/candidateEducatorPreparationProgramAssociations", "table_name": "base_tpdm_candidate_educator_preparation_program_associations" },
+    {"endpoint": "/tpdm/evaluationElements", "table_name": "base_tpdm_evaluation_elements" },
+    {"endpoint": "/tpdm/evaluationRatings", "table_name": "base_tpdm_evaluation_ratings" },
+    {"endpoint": "/tpdm/financialAids", "table_name": "base_tpdm_financial_aids" },
+    {"endpoint": "/tpdm/surveyResponsePersonTargetAssociations", "table_name": "base_tpdm_survey_response_person_target_associations" }
 ]
