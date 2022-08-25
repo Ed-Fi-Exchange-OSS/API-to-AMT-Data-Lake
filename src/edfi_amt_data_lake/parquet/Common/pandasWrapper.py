@@ -38,3 +38,5 @@ def subset(data = pd.DataFrame, columns = [str]) -> pd.DataFrame:
 def renameColumns(data = pd.DataFrame, renameColumns = {}, errors='ignore') -> pd.DataFrame:
     return data.rename(columns=renameColumns)
 
+def saveParquetFile(data = pd.DataFrame, path = str) -> None:
+    data.to_parquet(path, engine='fastparquet')
