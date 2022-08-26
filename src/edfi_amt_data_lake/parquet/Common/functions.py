@@ -5,8 +5,7 @@
 
 import json,os
 
-def getEndpointJson(endpoint = str) -> str:
-    rawDataLocation = "C:\\GAP\\EdFi\\BIA-1148\\API-to-AMT-Data-Lake\\src\\jsons\\"
+def getEndpointJson(endpoint = str, rawDataLocation = str) -> str:
     endpointFilePath = f"{rawDataLocation}{endpoint}"
     jsonFiles = [pos_json for pos_json in os.listdir(endpointFilePath) if pos_json.endswith('.json')]
 

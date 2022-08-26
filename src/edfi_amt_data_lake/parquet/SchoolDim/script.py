@@ -15,10 +15,10 @@ ENDPOINT_STATEEDUCATIONAGENCIES = 'stateEducationAgencies'
 ENDPOINT_EDUCATIONSERVICECENTERS = 'educationServiceCenters'
 
 def schoolDim() -> None:
-    schoolsContent = getEndpointJson(ENDPOINT_SCHOOLS)
-    localEducationAgenciesContent = getEndpointJson(ENDPOINT_LOCALEDUCATIONAGENCIES)
-    stateEducationAgenciesContent = getEndpointJson(ENDPOINT_STATEEDUCATIONAGENCIES)
-    educationServiceCentersContent = getEndpointJson(ENDPOINT_EDUCATIONSERVICECENTERS)
+    schoolsContent = getEndpointJson(ENDPOINT_SCHOOLS, config('SILVER_DATA_LOCATION'))
+    localEducationAgenciesContent = getEndpointJson(ENDPOINT_LOCALEDUCATIONAGENCIES, config('SILVER_DATA_LOCATION'))
+    stateEducationAgenciesContent = getEndpointJson(ENDPOINT_STATEEDUCATIONAGENCIES, config('SILVER_DATA_LOCATION'))
+    educationServiceCentersContent = getEndpointJson(ENDPOINT_EDUCATIONSERVICECENTERS, config('SILVER_DATA_LOCATION'))
 
     schoolsContentNormalized =  jsonNormalize(
         schoolsContent,
@@ -60,8 +60,6 @@ def schoolDim() -> None:
         recordPrefix=None,
         errors='ignore'
     )
-    
-    toCsv(educationServiceCentersContentNormalized, "C:\\temp\\edfi\\educationServiceCentersContentNormalized.csv")
 
     if not educationServiceCentersContentNormalized.empty:
         educationServiceCentersContentNormalized = subset(educationServiceCentersContentNormalized, ['educationServiceCenterId', 'nameOfInstitution'])
@@ -158,7 +156,4 @@ def schoolDim() -> None:
             'EducationServiceCenterKey'
         ]]
 
-    toCsv(restultDataFrame, "C:\\temp\\edfi\\restultDataFrame.csv")
-
     saveParquetFile(restultDataFrame, f"{config('PARQUET_FILES_LOCATION')}SchoolDim.parquet")
-    
