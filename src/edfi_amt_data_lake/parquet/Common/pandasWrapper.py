@@ -40,3 +40,7 @@ def renameColumns(data = pd.DataFrame, renameColumns = {}, errors='ignore') -> p
 
 def saveParquetFile(data = pd.DataFrame, path = str) -> None:
     data.to_parquet(path, engine='fastparquet')
+
+def addColumnIfNotExists(data = pd.DataFrame, column = str) -> pd.DataFrame:
+    if column not in data:
+        data[column] = ''

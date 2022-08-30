@@ -7,7 +7,7 @@ from distutils.util import subst_vars
 from operator import contains
 from decouple import config
 from edfi_amt_data_lake.parquet.Common.functions import getEndpointJson
-from edfi_amt_data_lake.parquet.Common.pandasWrapper import jsonNormalize, pdMerge, toCsv, subset, renameColumns, saveParquetFile
+from edfi_amt_data_lake.parquet.Common.pandasWrapper import jsonNormalize, pdMerge, toCsv, subset, renameColumns, saveParquetFile, addColumnIfNotExists
 
 ENDPOINT_ASSESSSMENTS = 'assessments'
 ENDPOINT_OBJECTIVEASSESSMENTS = 'objectiveAssessments'
@@ -122,9 +122,7 @@ def AssessmentFact() -> None:
         suffixRight=None
     )
 
-    toCsv(restultDataFrame, "C:\\temp\\edfi\\restultDataFrame.csv")
-
-    #### 
+    #### Objective Assessment
     objectiveAssessmentsContentNormalized = jsonNormalize(
         objectiveAssessmentsContent,
         recordPath=None,
@@ -134,26 +132,43 @@ def AssessmentFact() -> None:
         errors='ignore'
     )
 
+    addColumnIfNotExists(objectiveAssessmentsContentNormalized, 'parentObjectiveAssessmentReference.assessmentIdentifier')
+    addColumnIfNotExists(objectiveAssessmentsContentNormalized, 'parentObjectiveAssessmentReference.identificationCode')
+    addColumnIfNotExists(objectiveAssessmentsContentNormalized, 'parentObjectiveAssessmentReference.namespace')
+    addColumnIfNotExists(objectiveAssessmentsContentNormalized, 'description')
+
     # Keep the fields I actually need
     objectiveAssessmentsContentNormalized = subset(objectiveAssessmentsContentNormalized, 
         [
             'assessmentReference.assessmentIdentifier',
             'assessmentReference.namespace',
-            'identificationCode'
+            'identificationCode',
+            'parentObjectiveAssessmentReference.assessmentIdentifier',
+            'parentObjectiveAssessmentReference.identificationCode',
+            'parentObjectiveAssessmentReference.namespace',
+            'description',
+            'percentOfAssessment'
         ])
 
-    toCsv(objectiveAssessmentsContentNormalized, "C:\\temp\\edfi\\objectiveAssessmentsContentNormalized.csv")
-    
     # Objective Assessment Scores normalization
     objectiveAssessmentsScoresContentNormalized = jsonNormalize(
         objectiveAssessmentsContent,
         recordPath=['scores'],
-        meta=['assessmentReference.assessmentIdentifier', 'assessmentReference.namespace', 'identificationCode'],
+        meta=[['assessmentReference', 'assessmentIdentifier'], ['assessmentReference','namespace'], 'identificationCode'],
         metaPrefix=None,
         recordPrefix=None,
         errors='ignore'
     )
     
+    # Objective Assessment Learning Standards normalization
+    objectiveAssessmentsLearningStandardsContentNormalized = jsonNormalize(
+        objectiveAssessmentsContent,
+        recordPath=['learningStandards'],
+        meta=[['assessmentReference', 'assessmentIdentifier'], ['assessmentReference','namespace'], 'identificationCode'],
+        metaPrefix=None,
+        recordPrefix=None,
+        errors='ignore'
+    )
     ##  Then we need to merge the objective data frames above:
     
     # Objective Scores merge
@@ -167,5 +182,105 @@ def AssessmentFact() -> None:
         suffixRight=None
     )
 
-    toCsv(restultObjectiveDataFrame, "C:\\temp\\edfi\\restultObjectiveDataFrame.csv")
+    # Objective Learning Standards merge
+    restultObjectiveDataFrame = pdMerge(
+        left=restultObjectiveDataFrame, 
+        right=objectiveAssessmentsLearningStandardsContentNormalized,
+        how='left',
+        leftOn=['assessmentReference.assessmentIdentifier', 'assessmentReference.namespace', 'identificationCode'],
+        rigthOn=['assessmentReference.assessmentIdentifier', 'assessmentReference.namespace', 'identificationCode'],
+        suffixLeft=None,
+        suffixRight=None
+    )
+
+    # Merge Assessment data and Objective Assessment data
+    restultDataFrame = pdMerge(
+        left=restultDataFrame, 
+        right=restultObjectiveDataFrame,
+        how='left',
+        leftOn=['assessmentIdentifier', 'namespace'],
+        rigthOn=['assessmentReference.assessmentIdentifier', 'assessmentReference.namespace'],
+        suffixLeft=None,
+        suffixRight='_objective'
+    )
+
+    restultDataFrame['AssessmentFactKey'] = (
+        restultDataFrame['assessmentIdentifier'] + '-'
+        + restultDataFrame['namespace'] + '-'
+        + restultDataFrame['gradeLevelDescriptor'] + '-'
+        + restultDataFrame['assessmentReportingMethodDescriptor'] + '-'
+        + restultDataFrame['academicSubjectDescriptor'] + '-'
+        + restultDataFrame['identificationCode'] + '-'
+        + restultDataFrame['parentObjectiveAssessmentReference.identificationCode'] + '-'
+        + restultDataFrame['assessmentReportingMethodDescriptor_objective'] + '-'
+        + restultDataFrame['learningStandardReference.learningStandardId']
+    )
+
+    restultDataFrame['AssessmentKey'] = (
+        restultDataFrame['assessmentIdentifier'] + '-'
+        + restultDataFrame['namespace']
+    )
+
+    restultDataFrame['ObjectiveAssessmentKey'] = (
+        restultDataFrame['assessmentIdentifier'] + '-'
+        + restultDataFrame['identificationCode'] + '-'
+        + restultDataFrame['namespace']
+    )
+
+    restultDataFrame['ParentObjectiveAssessmentKey'] = (
+        restultDataFrame['parentObjectiveAssessmentReference.assessmentIdentifier'] + '-'
+        + restultDataFrame['parentObjectiveAssessmentReference.identificationCode'] + '-'
+        + restultDataFrame['parentObjectiveAssessmentReference.namespace']
+    )
+
+    # Rename columns to match AMT
+    restultDataFrame = renameColumns(restultDataFrame, 
+        {
+            'assessmentIdentifier': 'AssessmentIdentifier',
+            'namespace': 'Namespace',
+            'assessmentTitle': 'Title',
+            'assessmentVersion': 'Version',
+            'assessmentCategoryDescriptor': 'Category',
+            'gradeLevelDescriptor': 'AssessedGradeLevel',
+            'academicSubjectDescriptor': 'AcademicSubject',
+            'resultDatatypeTypeDescriptor': 'ResultDataType', # ***
+            'assessmentReportingMethodDescriptor': 'ReportingMethod', # ***
+            'identificationCode': 'IdentificationCode',
+            'description': 'ObjectiveAssessmentDescription',
+            'minimumScore': 'MinScore',
+            'maximumScore': 'MaxScore',
+            'percentOfAssessment': 'PercentOfAssessment',
+            'learningStandardReference.learningStandardId': 'LearningStandard'
+        })
+
+    restultDataFrame.loc[restultDataFrame['ResultDataType'] == '','ResultDataType'] = restultDataFrame['resultDatatypeTypeDescriptor_objective']
+    restultDataFrame.loc[restultDataFrame['ReportingMethod'] == '','ReportingMethod'] = restultDataFrame['assessmentReportingMethodDescriptor_objective']
+
+    restultDataFrame.loc[restultDataFrame['MinScore'] == '','MinScore'] = restultDataFrame['minimumScore_objective']
+    restultDataFrame.loc[restultDataFrame['MinScore'] == '','MinScore'] = restultDataFrame['maximumScore_objective']
+
+    # Reorder columns to match AMT
+    restultDataFrame = restultDataFrame[[
+            'AssessmentFactKey',
+            'AssessmentKey',
+            'AssessmentIdentifier',
+            'Namespace',
+            'Title',
+            'Version',
+            'Category',
+            'AssessedGradeLevel',
+            'AcademicSubject',
+            'ResultDataType',
+            'ReportingMethod',
+            'ObjectiveAssessmentKey',
+            'IdentificationCode',
+            'ParentObjectiveAssessmentKey',
+            'ObjectiveAssessmentDescription',
+            'PercentOfAssessment',
+            'MinScore',
+            'MaxScore',
+            'LearningStandard'
+        ]]
+
+    toCsv(restultDataFrame, "C:\\temp\\edfi\\restultDataFrame.csv")
     
