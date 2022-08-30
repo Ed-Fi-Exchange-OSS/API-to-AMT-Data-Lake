@@ -51,14 +51,14 @@
     {"endpoint": "/ed-fi/studentSchoolAttendanceEvents", "table_name": "base_edfi_student_school_attendance_events" },
     {"endpoint": "/ed-fi/studentSchoolFoodServiceProgramAssociations", "table_name": "base_edfi_student_school_food_service_program_associations" },
     {"endpoint": "/ed-fi/studentSectionAssociations", "table_name": "base_edfi_student_section_associations" },
-    {"endpoint": "/ed-fi/studentSectionAttendanceEvents", "table_name": "base_edfi_student_sect
+    {"endpoint": "/ed-fi/studentSectionAttendanceEvents", "table_name": "base_edfi_student_section_attendance_events" },
     {"endpoint": "/ed-fi/studentSpecialEducationProgramAssociations", "table_name": "base_edfi_student_special_education_program_associations" },
     {"endpoint": "/ed-fi/surveyQuestionResponses", "table_name": "base_edfi_survey_question_responses" },
     {"endpoint": "/ed-fi/surveyQuestions", "table_name": "base_edfi_survey_questions" },
     {"endpoint": "/ed-fi/surveyResponses", "table_name": "base_edfi_survey_responses" },
     {"endpoint": "/ed-fi/surveys", "table_name": "base_edfi_surveys" },
     {"endpoint": "/ed-fi/termDescriptors", "table_name": "base_edfi_descriptors"},
-    {"endpoint": "/ed-fi/tribalAffiliationDescriptors", "table_name": "base_edfi_descriptors" }
+    {"endpoint": "/ed-fi/tribalAffiliationDescriptors", "table_name": "base_edfi_descriptors" },
     {"endpoint": "/tpdm/candidates", "table_name": "base_tpdm_candidates" },
     {"endpoint": "/tpdm/candidateEducatorPreparationProgramAssociations", "table_name": "base_tpdm_candidate_educator_preparation_program_associations" },
     {"endpoint": "/tpdm/evaluationElements", "table_name": "base_tpdm_evaluation_elements" },
