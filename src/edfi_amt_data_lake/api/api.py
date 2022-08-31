@@ -53,8 +53,9 @@ def get_all() -> None:
         for endpoint in get_endpoint():
             url = get_url(endpoint[PATH])
             data = pool.apply_async(_call, args=(url, toke, changeVersionValues))
+            result = data.get()
             endpoint_name = url.split("/")[-1]
-            save_file(JSONFile(endpoint_name), changeVersionValues.newestChangeVersion, data)
+            save_file(JSONFile(endpoint_name), changeVersionValues.newestChangeVersion, result)
             #Deletes endpoint
             url_deletes = get_url(f"{url}/deletes")
             data_deletes = _call(url_deletes, toke, changeVersionValues)
