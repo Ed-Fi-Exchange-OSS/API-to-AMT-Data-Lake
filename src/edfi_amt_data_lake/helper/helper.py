@@ -32,3 +32,11 @@ def save_file(json_file: JSONFile, json_file_sufix, data) -> None:
 # Create a function to get endpoint url.
 def get_url(endpoint: str) -> str:
     return f"{config('API_URL')}/{config('PREX_DATA_V')}/{endpoint}"
+
+# Get headers for API call.
+def get_headers(token) -> dict:
+    return {
+        "Authorization": f"Bearer {token}",
+        "Content-Type": "application/json",
+        "Accept": "application/json"
+    }

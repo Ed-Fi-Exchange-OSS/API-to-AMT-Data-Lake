@@ -8,30 +8,26 @@ from decouple import config
 
 from edfi_amt_data_lake.helper.token import get_token
 from edfi_amt_data_lake.helper.base import PATH, JSONFile
-from edfi_amt_data_lake.helper.helper import save_file, get_endpoint, get_url
+from edfi_amt_data_lake.helper.helper import save_file, get_endpoint, get_url, get_headers
 from edfi_amt_data_lake.helper.changeVersionValues import ChangeVersionValues
 
 API_LIMIT = config("API_LIMIT", cast=int)
 LIMIT = API_LIMIT if API_LIMIT else 500
 
-def get_ChangeVersionValues() -> ChangeVersionValues:
-    path = config("CHANGE_VERSION_FILEPATH") + "API_TO_AMT/"
-    filename = config("CHANGE_VERSION_FILENAME")
-    pathfilename = f"{path}{filename}"
+def _get_change_version_values() -> ChangeVersionValues:
+    path_filename = f"{config('CHANGE_VERSION_FILEPATH')}/API_TO_AMT/{config('CHANGE_VERSION_FILENAME')}"
 
-    with open(pathfilename, "r") as outfile:
+    with open(path_filename, "r") as outfile:
         values = outfile.readlines()
         if len(values) == 2:
-            return ChangeVersionValues(values[0].replace('\n', ''), values[1])
-    
+            pre_version = values[0].rstrip('\n')
+            pos_version = values[1].rstrip('\n')
+            return ChangeVersionValues(pre_version, pos_version)
     return ChangeVersionValues('0', '0')
 
 # Get a response from the Ed-Fi API
 def _call(url, token, changeVersionValues) -> list:
-    headers = {
-        "Authorization": f"Bearer {token}",
-        "Content-Type": "application/json"
-    }
+    headers = get_headers(token)
     offset = 0; result = []
     try:
         while True:
@@ -48,17 +44,22 @@ def _call(url, token, changeVersionValues) -> list:
 
 # Get JSON from API endpoint and save to file
 def get_all() -> None:
+    import os
+    from multiprocessing import Pool
     toke = get_token()
-    changeVersionValues = get_ChangeVersionValues()
-    for endpoint in get_endpoint():
-        url = get_url(endpoint[PATH])
-        data = _call(url, toke, changeVersionValues)
-        endpoint_name = url.split("/")[-1]
-        save_file(JSONFile(endpoint_name), changeVersionValues.newestChangeVersion, data)
-        #Deletes endpoint
-        url_deletes = get_url(f"{url}/deletes")
-        data_deletes = _call(url_deletes, toke, changeVersionValues)
-        save_file(JSONFile(endpoint_name), f"deletes_{changeVersionValues.newestChangeVersion}", data_deletes)
+    changeVersionValues = _get_change_version_values()
+    os_cpu = config("OS_CPU", cast=int) if config("OS_CPU") else os.cpu_count()
+    with Pool(processes=os_cpu) as pool:
+        for endpoint in get_endpoint():
+            url = get_url(endpoint[PATH])
+            data = pool.apply_async(_call, args=(url, toke, changeVersionValues))
+            result = data.get()
+            endpoint_name = url.split("/")[-1]
+            save_file(JSONFile(endpoint_name), changeVersionValues.newestChangeVersion, result)
+            #Deletes endpoint
+            url_deletes = get_url(f"{url}/deletes")
+            data_deletes = _call(url_deletes, toke, changeVersionValues)
+            save_file(JSONFile(endpoint_name), f"deletes_{changeVersionValues.newestChangeVersion}", data_deletes)
     return None
 
 if __name__ == "__main__":

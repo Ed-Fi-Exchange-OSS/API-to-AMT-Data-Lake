@@ -19,6 +19,9 @@ Authentication is necessary to be able to download the different collections.
 
 
 ```shi
+---------------------------------------------------
+OS_CPU=4
+---------------------------------------------------
 PREX_DATA_V=data/v3
 PREX_TOKEN=oauth/token
 ---------------------------------------------------
@@ -30,17 +33,25 @@ API_LIMIT=500
 LOG_LEVEL=info
 ---------------------------------------------------
 CHANGE_VERSION_FILEPATH=<path_to_file>
+CHANGE_VERSION_FILENAME=<name_of_version_file>
 ---------------------------------------------------
 SILVER_DATA_LOCATION=<path_where_json_files_will_be_saved>
 PARQUET_FILES_LOCATION=C:\\temp\\edfi\\parquet\\
-
+---------------------------------------------------
 ```
+**CHANGE_VERSION_FILENAME:** Version change file name.
 
-CHANGE_VERSION_FILEPATH is the location where the changeVersion.txt file will be saved.
+**CHANGE_VERSION_FILEPATH:** The location where the changeVersion.txt file will be saved.
 
-SILVER_DATA_LOCATION is the location where the raw data will be saved. The raw data is a collection of json files in an staging phase. 
+**OS_CPU:** Defined as the number of CPUs to be used for parallel calls, this value must be less than the number of CPUs of the machine for proper performance, **by default is 4.**
 
-PARQUET_FILES_LOCATION is the location where the data in its final structure will be stored.
+**SILVER_DATA_LOCATION:** The location where the raw data will be saved., The raw data is a collection of json files in an staging phase.
+
+**PARQUET_FILES_LOCATION:** The location where the data in its final structure will be stored.
+
+**SILVER_DATA_LOCATION:** The location where the raw data will be saved., The raw data is a collection of json files in an staging phase.
+
+**PARQUET_FILES_LOCATION:** The location where the data in its final structure will be stored.
 
 ####  Continue with the next steps:
 
