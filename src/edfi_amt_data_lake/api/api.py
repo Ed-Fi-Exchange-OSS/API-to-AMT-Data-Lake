@@ -14,9 +14,9 @@ from edfi_amt_data_lake.helper.changeVersionValues import ChangeVersionValues
 API_LIMIT = config("API_LIMIT", cast=int)
 LIMIT = API_LIMIT if API_LIMIT else 500
 
-def _get_change_version_values() -> ChangeVersionValues:
-    path_filename = f"{config('CHANGE_VERSION_FILEPATH')}/API_TO_AMT/{config('CHANGE_VERSION_FILENAME')}"
-
+def _get_change_version_values(school_year="") -> ChangeVersionValues:
+    school_year_path = f"{school_year}/"  if school_year else ""
+    path_filename = f"{config('CHANGE_VERSION_FILEPATH')}/API_TO_AMT/{school_year_path}{config('CHANGE_VERSION_FILENAME')}"
     with open(path_filename, "r") as outfile:
         values = outfile.readlines()
         if len(values) == 2:
@@ -43,24 +43,23 @@ def _call(url, token, changeVersionValues) -> list:
     return result
 
 # Get JSON from API endpoint and save to file
-def get_all() -> None:
+def get_all(school_year="") -> None:
     import os
     from multiprocessing import Pool
     toke = get_token()
-    changeVersionValues = _get_change_version_values()
+    changeVersionValues = _get_change_version_values(school_year)
     os_cpu = config("OS_CPU", cast=int) if config("OS_CPU") else os.cpu_count()
     with Pool(processes=os_cpu) as pool:
         for endpoint in get_endpoint():
-            url = get_url(endpoint[PATH])
+            url = get_url(endpoint[PATH],school_year)
             data = pool.apply_async(_call, args=(url, toke, changeVersionValues))
             result = data.get()
             endpoint_name = url.split("/")[-1]
             save_file(JSONFile(endpoint_name), changeVersionValues.newestChangeVersion, result)
             #Deletes endpoint
-            url_deletes = get_url(endpoint[PATH],True)
+            url_deletes = get_url(endpoint[PATH],school_year,True)
             data_deletes = _call(url_deletes, toke, changeVersionValues)
             save_file(JSONFile(endpoint_name), f"deletes_{changeVersionValues.newestChangeVersion}", data_deletes)
-
     return None
 
 if __name__ == "__main__":
