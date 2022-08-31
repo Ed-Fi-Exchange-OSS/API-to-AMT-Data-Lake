@@ -204,6 +204,35 @@ def AssessmentFact() -> None:
         suffixRight='_objective'
     )
 
+    # Removes namespace from Category Descriptor
+    if not restultDataFrame['assessmentCategoryDescriptor'].empty:
+        if len(restultDataFrame['assessmentCategoryDescriptor'].str.split('#')) > 0:
+            restultDataFrame["assessmentCategoryDescriptor"] = restultDataFrame["assessmentCategoryDescriptor"].str.split("#").str.get(1)
+
+    # Removes namespace from Assessed Grade Level Descriptor
+    if not restultDataFrame['gradeLevelDescriptor'].empty:
+        if len(restultDataFrame['gradeLevelDescriptor'].str.split('#')) > 0:
+            restultDataFrame["gradeLevelDescriptor"] = restultDataFrame["gradeLevelDescriptor"].str.split("#").str.get(1)
+
+    # Removes namespace from Academic Subject Descriptor
+    if not restultDataFrame['academicSubjectDescriptor'].empty:
+        if len(restultDataFrame['academicSubjectDescriptor'].str.split('#')) > 0:
+            restultDataFrame["academicSubjectDescriptor"] = restultDataFrame["academicSubjectDescriptor"].str.split("#").str.get(1)
+
+    # Removes namespace from Result Data Type Descriptor
+    if not restultDataFrame['resultDatatypeTypeDescriptor'].empty:
+        if len(restultDataFrame['resultDatatypeTypeDescriptor'].str.split('#')) > 0:
+            restultDataFrame["resultDatatypeTypeDescriptor"] = restultDataFrame["resultDatatypeTypeDescriptor"].str.split("#").str.get(1)
+
+    # Removes namespace from Reporting Method Descriptor
+    if not restultDataFrame['assessmentReportingMethodDescriptor'].empty:
+        if len(restultDataFrame['assessmentReportingMethodDescriptor'].str.split('#')) > 0:
+            restultDataFrame["assessmentReportingMethodDescriptor"] = restultDataFrame["assessmentReportingMethodDescriptor"].str.split("#").str.get(1)
+
+    # Replace any N/A value with empty
+    restultDataFrame = restultDataFrame.fillna('')
+
+    # Concatanation fields
     restultDataFrame['AssessmentFactKey'] = (
         restultDataFrame['assessmentIdentifier'] + '-'
         + restultDataFrame['namespace'] + '-'
@@ -233,6 +262,9 @@ def AssessmentFact() -> None:
         + restultDataFrame['parentObjectiveAssessmentReference.namespace']
     )
 
+    # If this field has '--' it's because there is no Key
+    restultDataFrame.loc[restultDataFrame.ParentObjectiveAssessmentKey == '--', 'ParentObjectiveAssessmentKey'] = ''
+
     # Rename columns to match AMT
     restultDataFrame = renameColumns(restultDataFrame, 
         {
@@ -243,8 +275,8 @@ def AssessmentFact() -> None:
             'assessmentCategoryDescriptor': 'Category',
             'gradeLevelDescriptor': 'AssessedGradeLevel',
             'academicSubjectDescriptor': 'AcademicSubject',
-            'resultDatatypeTypeDescriptor': 'ResultDataType', # ***
-            'assessmentReportingMethodDescriptor': 'ReportingMethod', # ***
+            'resultDatatypeTypeDescriptor': 'ResultDataType',
+            'assessmentReportingMethodDescriptor': 'ReportingMethod',
             'identificationCode': 'IdentificationCode',
             'description': 'ObjectiveAssessmentDescription',
             'minimumScore': 'MinScore',
@@ -281,6 +313,5 @@ def AssessmentFact() -> None:
             'MaxScore',
             'LearningStandard'
         ]]
-
-    toCsv(restultDataFrame, "C:\\temp\\edfi\\restultDataFrame.csv")
     
+    saveParquetFile(restultDataFrame, f"{config('PARQUET_FILES_LOCATION')}asmt_AssessmentFact.parquet")
