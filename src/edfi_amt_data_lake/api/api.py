@@ -57,9 +57,10 @@ def get_all() -> None:
             endpoint_name = url.split("/")[-1]
             save_file(JSONFile(endpoint_name), changeVersionValues.newestChangeVersion, result)
             #Deletes endpoint
-            url_deletes = get_url(f"{url}/deletes")
+            url_deletes = get_url(endpoint[PATH],True)
             data_deletes = _call(url_deletes, toke, changeVersionValues)
             save_file(JSONFile(endpoint_name), f"deletes_{changeVersionValues.newestChangeVersion}", data_deletes)
+
     return None
 
 if __name__ == "__main__":
