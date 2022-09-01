@@ -7,5 +7,5 @@ from edfi_amt_data_lake.parquet.SchoolDim.script import schoolDim
 from edfi_amt_data_lake.parquet.AssessmentFact.script import AssessmentFact
 
 def run() -> None:
-    # schoolDim()
+    schoolDim()
     AssessmentFact()
