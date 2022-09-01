@@ -32,6 +32,9 @@ API_URL=https://example.com/v5.3/api/
 API_LIMIT=500
 LOG_LEVEL=info
 ---------------------------------------------------
+API_MODE=SharedInstance
+SCHOOL_YEAR=2021,2022
+---------------------------------------------------
 CHANGE_VERSION_FILEPATH=<path_to_file>
 CHANGE_VERSION_FILENAME=<name_of_version_file>
 ---------------------------------------------------
@@ -39,6 +42,10 @@ SILVER_DATA_LOCATION=<path_where_json_files_will_be_saved>
 PARQUET_FILES_LOCATION=C:\\temp\\edfi\\parquet\\
 ---------------------------------------------------
 ```
+**API_MODE:** SharedInstance or YearSpecific mode.
+
+**SCHOOL_YEAR:** If API_MODE is YearSpecific, you must set a list of school years that you want to load, separated by commas..
+
 **CHANGE_VERSION_FILENAME:** Version change file name.
 
 **CHANGE_VERSION_FILEPATH:** The location where the changeVersion.txt file will be saved.
