@@ -56,16 +56,6 @@ def AssessmentFact() -> None:
         errors='ignore'
     )
 
-    # Assessment Identification Codes normalization
-    assessmentsIdentificationCodesContentNormalized = jsonNormalize(
-        assessmentsContent,
-        recordPath=['identificationCodes'],
-        meta=['assessmentIdentifier', 'namespace'],
-        metaPrefix=None,
-        recordPrefix=None,
-        errors='ignore'
-    )
-
     # Assessment Academic Subjects normalization
     assessmentsAcademicSubjectsContentNormalized = jsonNormalize(
         assessmentsContent,
@@ -93,17 +83,6 @@ def AssessmentFact() -> None:
     restultDataFrame = pdMerge(
         left=restultDataFrame, 
         right=assessmentsScoresContentNormalized,
-        how='left',
-        leftOn=['assessmentIdentifier', 'namespace'],
-        rigthOn=['assessmentIdentifier', 'namespace'],
-        suffixLeft=None,
-        suffixRight=None
-    )
-
-    # Identification Codes merge
-    restultDataFrame = pdMerge(
-        left=restultDataFrame, 
-        right=assessmentsIdentificationCodesContentNormalized,
         how='left',
         leftOn=['assessmentIdentifier', 'namespace'],
         rigthOn=['assessmentIdentifier', 'namespace'],
@@ -229,6 +208,16 @@ def AssessmentFact() -> None:
         if len(restultDataFrame['assessmentReportingMethodDescriptor'].str.split('#')) > 0:
             restultDataFrame["assessmentReportingMethodDescriptor"] = restultDataFrame["assessmentReportingMethodDescriptor"].str.split("#").str.get(1)
 
+    # Removes namespace from Objective Assessment Reporting Method Descriptor
+    if not restultDataFrame['assessmentReportingMethodDescriptor_objective'].empty:
+        if len(restultDataFrame['assessmentReportingMethodDescriptor_objective'].str.split('#')) > 0:
+            restultDataFrame["assessmentReportingMethodDescriptor_objective"] = restultDataFrame["assessmentReportingMethodDescriptor_objective"].str.split("#").str.get(1)
+
+    # Removes namespace from Objective Result Datatype Type Descriptor
+    if not restultDataFrame['resultDatatypeTypeDescriptor_objective'].empty:
+        if len(restultDataFrame['resultDatatypeTypeDescriptor_objective'].str.split('#')) > 0:
+            restultDataFrame["resultDatatypeTypeDescriptor_objective"] = restultDataFrame["resultDatatypeTypeDescriptor_objective"].str.split("#").str.get(1)
+
     # Replace any N/A value with empty
     restultDataFrame = restultDataFrame.fillna('')
 
@@ -241,7 +230,7 @@ def AssessmentFact() -> None:
         + restultDataFrame['academicSubjectDescriptor'] + '-'
         + restultDataFrame['identificationCode'] + '-'
         + restultDataFrame['parentObjectiveAssessmentReference.identificationCode'] + '-'
-        + restultDataFrame['assessmentReportingMethodDescriptor_objective'] + '-'
+        + restultDataFrame['resultDatatypeTypeDescriptor_objective'] + '-'
         + restultDataFrame['learningStandardReference.learningStandardId']
     )
 
@@ -251,9 +240,9 @@ def AssessmentFact() -> None:
     )
 
     restultDataFrame['ObjectiveAssessmentKey'] = (
-        restultDataFrame['assessmentIdentifier'] + '-'
+        restultDataFrame['assessmentReference.assessmentIdentifier'] + '-'
         + restultDataFrame['identificationCode'] + '-'
-        + restultDataFrame['namespace']
+        + restultDataFrame['assessmentReference.namespace']
     )
 
     restultDataFrame['ParentObjectiveAssessmentKey'] = (
@@ -263,6 +252,7 @@ def AssessmentFact() -> None:
     )
 
     # If this field has '--' it's because there is no Key
+    restultDataFrame.loc[restultDataFrame.ObjectiveAssessmentKey == '--', 'ObjectiveAssessmentKey'] = ''
     restultDataFrame.loc[restultDataFrame.ParentObjectiveAssessmentKey == '--', 'ParentObjectiveAssessmentKey'] = ''
 
     # Rename columns to match AMT
@@ -317,5 +307,5 @@ def AssessmentFact() -> None:
             'MaxScore',
             'LearningStandard'
         ]]
-    
+
     saveParquetFile(restultDataFrame, f"{config('PARQUET_FILES_LOCATION')}asmt_AssessmentFact.parquet")
