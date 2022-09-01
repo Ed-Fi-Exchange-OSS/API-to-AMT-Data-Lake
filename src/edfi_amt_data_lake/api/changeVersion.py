@@ -25,9 +25,10 @@ def get_change_version_values_from_file(file) -> ChangeVersionValues:
         
     return ChangeVersionValues('0', '0')
 
-def get_change_version_values_from_api() -> ChangeVersionValues:
+def get_change_version_values_from_api(school_year="") -> ChangeVersionValues:
     token = get_token()
-    url = f"{config('API_URL')}{config('AVAILABLE_CHANGE_VERSIONS')}"
+    school_year_url = f"{school_year}/" if school_year else ""
+    url = f"{config('API_URL')}{config('AVAILABLE_CHANGE_VERSIONS').format(school_year_url)}"
     headers = {"Authorization": "Bearer " + token}
     response =  requests.get(url, headers=headers)
 
@@ -40,8 +41,9 @@ def get_change_version_values_from_api() -> ChangeVersionValues:
 
     return changeVersionValues
 
-def get_change_version_updated() -> bool:
-    path = config("CHANGE_VERSION_FILEPATH") + "API_TO_AMT/"
+def get_change_version_updated(school_year="") -> bool:
+    school_year_path = f"{school_year}/" if school_year else ""
+    path = config("CHANGE_VERSION_FILEPATH") + f"API_TO_AMT/{school_year_path}"
     filename = config("CHANGE_VERSION_FILENAME")
     pathfilename = f"{path}{filename}"
     
@@ -51,7 +53,7 @@ def get_change_version_updated() -> bool:
     changeVersionFromFile = get_change_version_values_from_file(pathfilename)
 
     # Get the Change Version values from the API.
-    changeVersionFromAPI =  get_change_version_values_from_api()
+    changeVersionFromAPI =  get_change_version_values_from_api(school_year)
 
     oldestChangeVersion = ''
     newestChangeVersion = ''
