@@ -291,6 +291,10 @@ def AssessmentFact() -> None:
     restultDataFrame.loc[restultDataFrame['MinScore'] == '','MinScore'] = restultDataFrame['minimumScore_objective']
     restultDataFrame.loc[restultDataFrame['MinScore'] == '','MinScore'] = restultDataFrame['maximumScore_objective']
 
+    # Converting some fields to str as preparation for the parquet file.
+    restultDataFrame['Version'] = restultDataFrame['Version'].astype(str)
+    restultDataFrame['PercentOfAssessment'] = restultDataFrame['PercentOfAssessment'].astype(str)
+
     # Reorder columns to match AMT
     restultDataFrame = restultDataFrame[[
             'AssessmentFactKey',

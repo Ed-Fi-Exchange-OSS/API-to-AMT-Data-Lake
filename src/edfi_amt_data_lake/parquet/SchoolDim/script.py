@@ -7,7 +7,7 @@ from distutils.util import subst_vars
 from operator import contains
 from decouple import config
 from edfi_amt_data_lake.parquet.Common.functions import getEndpointJson
-from edfi_amt_data_lake.parquet.Common.pandasWrapper import jsonNormalize, pdMerge, toCsv, subset, renameColumns, saveParquetFile
+from edfi_amt_data_lake.parquet.Common.pandasWrapper import jsonNormalize, pdMerge, subset, renameColumns, saveParquetFile, addColumnIfNotExists
 
 ENDPOINT_SCHOOLS = 'schools'
 ENDPOINT_LOCALEDUCATIONAGENCIES = 'localEducationAgencies'
@@ -39,6 +39,8 @@ def schoolDim(school_year="") -> None:
         errors='ignore'
     )
     
+    addColumnIfNotExists(localEducationAgenciesContentNormalized, 'stateEducationAgencyReference.stateEducationAgencyId')
+
     localEducationAgenciesContentNormalized = subset(localEducationAgenciesContentNormalized, ['localEducationAgencyId', 'nameOfInstitution', 'educationServiceCenterReference.educationServiceCenterId', 'stateEducationAgencyReference.stateEducationAgencyId'])
 
     restultDataFrame = pdMerge(
@@ -75,27 +77,31 @@ def schoolDim(school_year="") -> None:
         )
 
     # State Education Agency Join
-    stateEducationAgenciesContentNormalized = jsonNormalize(
-        stateEducationAgenciesContent,
-        recordPath=None,
-        meta=None,
-        metaPrefix=None,
-        recordPrefix=None,
-        errors='ignore'
-    )
-
-    if not stateEducationAgenciesContentNormalized.empty:
-        stateEducationAgenciesContentNormalized = subset(stateEducationAgenciesContentNormalized, ['stateEducationAgencyId', 'nameOfInstitution'])
-
-        restultDataFrame = pdMerge(
-            left=restultDataFrame, 
-            right=stateEducationAgenciesContentNormalized,
-            how='left',
-            leftOn=['stateEducationAgencyReference.stateEducationAgencyId'],
-            rigthOn=['stateEducationAgencyId'],
-            suffixLeft=None,
-            suffixRight='_stateEducationAgencies'
+    if stateEducationAgenciesContent != '':
+        stateEducationAgenciesContentNormalized = jsonNormalize(
+            stateEducationAgenciesContent,
+            recordPath=None,
+            meta=None,
+            metaPrefix=None,
+            recordPrefix=None,
+            errors='ignore'
         )
+
+        if not stateEducationAgenciesContentNormalized.empty:
+            stateEducationAgenciesContentNormalized = subset(stateEducationAgenciesContentNormalized, ['stateEducationAgencyId', 'nameOfInstitution'])
+
+            restultDataFrame = pdMerge(
+                left=restultDataFrame, 
+                right=stateEducationAgenciesContentNormalized,
+                how='left',
+                leftOn=['stateEducationAgencyReference.stateEducationAgencyId'],
+                rigthOn=['stateEducationAgencyId'],
+                suffixLeft=None,
+                suffixRight='_stateEducationAgencies'
+            )
+    else:
+        addColumnIfNotExists(restultDataFrame, 'stateEducationAgencyId')
+        addColumnIfNotExists(restultDataFrame, 'nameOfInstitution_stateEducationAgencies')
 
     restultDataFrame = restultDataFrame[restultDataFrame["addressaddressTypeDescriptor"].str.contains('Physical')]
 
