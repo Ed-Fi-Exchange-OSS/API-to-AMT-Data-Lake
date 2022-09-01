@@ -4,7 +4,8 @@
 # See the LICENSE and NOTICES files in the project root for more information.
 
 from edfi_amt_data_lake.parquet.SchoolDim.script import schoolDim
-
+from edfi_amt_data_lake.parquet.AssessmentFact.script import AssessmentFact
 
 def run() -> None:
     schoolDim()
+    AssessmentFact()
