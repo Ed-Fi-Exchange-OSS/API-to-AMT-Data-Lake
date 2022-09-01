@@ -15,7 +15,8 @@ SCHOOL_YEAR = config("SCHOOL_YEAR")
 # if API_MODE is YearSpecific, returns the SchoolYear list
 def get_school_year() -> list:
     school_year = f"{SCHOOL_YEAR}" if API_MODE == "YearSpecific" else ""
-    return school_year.split(",")
+    school_list = school_year.split(",") if school_year else [""]
+    return school_list
 
 # List of endpoints from API
 def get_endpoint() -> list:
