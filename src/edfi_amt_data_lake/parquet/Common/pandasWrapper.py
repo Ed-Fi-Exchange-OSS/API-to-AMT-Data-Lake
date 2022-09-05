@@ -54,3 +54,11 @@ def to_datetime_key(data = pd.DataFrame, column = str):
 
 def replace_null(data = pd.DataFrame, column = str, replace_value:any=None):
     data.loc[data[column].isnull(), column] = replace_value
+
+def toDateTime(series = pd.Series) -> pd.Series:
+    return pd.to_datetime(series)
+
+def createDataFrame(data, columns) -> pd.DataFrame:
+    return pd.DataFrame(
+        data=data,
+        columns=columns)

@@ -7,7 +7,7 @@ from distutils.util import subst_vars
 from operator import contains
 from decouple import config
 from edfi_amt_data_lake.parquet.Common.functions import getEndpointJson
-from edfi_amt_data_lake.parquet.Common.pandasWrapper import jsonNormalize, pdMerge, subset, renameColumns, saveParquetFile, addColumnIfNotExists, toCsv
+from edfi_amt_data_lake.parquet.Common.pandasWrapper import jsonNormalize, pdMerge, subset, renameColumns, saveParquetFile, addColumnIfNotExists, toCsv, toDateTime
 
 ENDPOINT_GRADES = 'grades'
 GRANDINGPERIODS_GRADES = 'gradingPeriods'
@@ -44,13 +44,14 @@ def StudentSectionGradeFact(school_year="") -> None:
         suffixRight='_gradingPeriods'
     )
 
-    toCsv(restultDataFrame, 'C:\\temp\\edfi\\studentSectionGradeFact.csv')
-
+    addColumnIfNotExists(restultDataFrame, 'letterGradeEarned')
+    
+    # Keep the fields I actually need.
     restultDataFrame = subset(restultDataFrame, [
         'studentSectionAssociationReference.studentUniqueId',
         'studentSectionAssociationReference.schoolId',
         'gradingPeriodReference.gradingPeriodDescriptor',
-        'beginDate',
+        'studentSectionAssociationReference.beginDate',
         'studentSectionAssociationReference.localCourseCode',
         'studentSectionAssociationReference.schoolYear',
         'studentSectionAssociationReference.sectionIdentifier',
@@ -60,7 +61,11 @@ def StudentSectionGradeFact(school_year="") -> None:
         'gradeTypeDescriptor'
     ])
 
-    # Removes namespace from Grading Period Descriptor
+    # Formatting begin date that will be used as part of the keys later
+    restultDataFrame['studentSectionAssociationReference.beginDate'] = toDateTime(restultDataFrame['studentSectionAssociationReference.beginDate'])
+    restultDataFrame['studentSectionAssociationReference.beginDate'] = restultDataFrame['studentSectionAssociationReference.beginDate'].dt.strftime('%Y%m%d')
+
+    # # Removes namespace from Grading Period Descriptor
     if not restultDataFrame['gradingPeriodReference.gradingPeriodDescriptor'].empty:
         if len(restultDataFrame['gradingPeriodReference.gradingPeriodDescriptor'].str.split('#')) > 0:
             restultDataFrame["gradingPeriodReference.gradingPeriodDescriptor"] = restultDataFrame["gradingPeriodReference.gradingPeriodDescriptor"].str.split("#").str.get(1)
@@ -77,28 +82,28 @@ def StudentSectionGradeFact(school_year="") -> None:
     # Creates concatanation for GradingPeriodKey field
     restultDataFrame['GradingPeriodKey'] = (
             restultDataFrame['gradingPeriodReference.gradingPeriodDescriptor']
-            + ', ' + restultDataFrame['studentSectionAssociationReference.schoolId']
-            + ' ' + restultDataFrame['beginDate']
+            + '-' + restultDataFrame['studentSectionAssociationReference.schoolId']
+            + '-' + restultDataFrame['studentSectionAssociationReference.beginDate']
         )
 
-    # Creates concatanation for GradingPeriodKey field
+    # Creates concatanation for StudentSectionKey field
     restultDataFrame['StudentSectionKey'] = (
             restultDataFrame['studentSectionAssociationReference.studentUniqueId']
-            + ', ' + restultDataFrame['studentSectionAssociationReference.schoolId']
-            + ' ' + restultDataFrame['studentSectionAssociationReference.localCourseCode']
-            + ' ' + restultDataFrame['studentSectionAssociationReference.schoolYear']
-            + ' ' + restultDataFrame['studentSectionAssociationReference.sectionIdentifier']
-            + ' ' + restultDataFrame['studentSectionAssociationReference.sessionName']
-            + ' ' + restultDataFrame['beginDate']
+            + '-' + restultDataFrame['studentSectionAssociationReference.schoolId']
+            + '-' + restultDataFrame['studentSectionAssociationReference.localCourseCode']
+            + '-' + restultDataFrame['studentSectionAssociationReference.schoolYear']
+            + '-' + restultDataFrame['studentSectionAssociationReference.sectionIdentifier']
+            + '-' + restultDataFrame['studentSectionAssociationReference.sessionName']
+            + '-' + restultDataFrame['studentSectionAssociationReference.beginDate']
         )
 
     # Creates concatanation for SectionKey field
     restultDataFrame['SectionKey'] = (
             restultDataFrame['studentSectionAssociationReference.schoolId']
-            + ' ' + restultDataFrame['studentSectionAssociationReference.localCourseCode']
-            + ' ' + restultDataFrame['studentSectionAssociationReference.schoolYear']
-            + ' ' + restultDataFrame['studentSectionAssociationReference.sectionIdentifier']
-            + ' ' + restultDataFrame['studentSectionAssociationReference.sessionName']
+            + '-' + restultDataFrame['studentSectionAssociationReference.localCourseCode']
+            + '-' + restultDataFrame['studentSectionAssociationReference.schoolYear']
+            + '-' + restultDataFrame['studentSectionAssociationReference.sectionIdentifier']
+            + '-' + restultDataFrame['studentSectionAssociationReference.sessionName']
         )
 
     # Rename columns to match AMT
@@ -123,4 +128,4 @@ def StudentSectionGradeFact(school_year="") -> None:
             'GradeType'
         ]]
 
-    toCsv(restultDataFrame, 'C:\\temp\\edfi\\studentSectionGradeFact2.csv')
+    toCsv(restultDataFrame, 'C:\\temp\\edfi\\studentSectionGradeFact.csv')

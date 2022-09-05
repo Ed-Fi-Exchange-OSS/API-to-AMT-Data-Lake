@@ -3,6 +3,7 @@
 # The Ed-Fi Alliance licenses this file to you under the Apache License, Version 2.0.
 # See the LICENSE and NOTICES files in the project root for more information.
 
+from time import time
 import requests
 from decouple import config
 
@@ -30,16 +31,18 @@ def _call(url, token, changeVersionValues) -> list:
     headers = get_headers(token)
     offset = 0; result = []
     try:
-        while True:
+        continue_loop = True
+        while continue_loop:
             endpoint = f"{url}?limit={LIMIT}&offset={offset}&minChangeVersion={changeVersionValues.oldestChangeVersion}&maxChangeVersion={changeVersionValues.newestChangeVersion}"
-            response =  requests.get(endpoint, headers=headers)
+            response =  requests.get(endpoint, headers=headers, verify=False, timeout=10)
             if response.ok:
                 data = response.json()
                 result.extend(data)
                 offset += LIMIT
-            raise Exception("No data found") if len(data) == 0 else None
+            if len(data) == 0:
+                continue_loop = False
     except Exception as _:
-        None
+        print (_)
     return result
 
 # Get JSON from API endpoint and save to file
