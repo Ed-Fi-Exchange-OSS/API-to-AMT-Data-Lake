@@ -128,4 +128,4 @@ def StudentSectionGradeFact(school_year="") -> None:
             'GradeType'
         ]]
 
-    toCsv(restultDataFrame, 'C:\\temp\\edfi\\studentSectionGradeFact.csv')
+    saveParquetFile(restultDataFrame, f"{config('PARQUET_FILES_LOCATION')}studentSectionGradeFact.parquet")
