@@ -33,7 +33,7 @@ def _call(url, token, changeVersionValues) -> list:
         continue_loop = True
         while continue_loop:
             endpoint = f"{url}?limit={LIMIT}&offset={offset}&minChangeVersion={changeVersionValues.oldestChangeVersion}&maxChangeVersion={changeVersionValues.newestChangeVersion}"
-            response =  requests.get(endpoint, headers=headers, verify=False, timeout=10)
+            response =  requests.get(endpoint, headers=headers)
             if response.ok:
                 data = response.json()
                 result.extend(data)

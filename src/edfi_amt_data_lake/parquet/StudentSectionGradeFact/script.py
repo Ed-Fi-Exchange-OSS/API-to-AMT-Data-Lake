@@ -7,7 +7,7 @@ from distutils.util import subst_vars
 from operator import contains
 from decouple import config
 from edfi_amt_data_lake.parquet.Common.functions import getEndpointJson
-from edfi_amt_data_lake.parquet.Common.pandasWrapper import jsonNormalize, pdMerge, subset, renameColumns, saveParquetFile, addColumnIfNotExists, toCsv, toDateTime
+from edfi_amt_data_lake.parquet.Common.pandasWrapper import jsonNormalize, pdMerge, subset, renameColumns, saveParquetFile, addColumnIfNotExists, toCsv, toDateTime, createDataFrame
 
 ENDPOINT_GRADES = 'grades'
 GRANDINGPERIODS_GRADES = 'gradingPeriods'
@@ -15,6 +15,14 @@ GRANDINGPERIODS_GRADES = 'gradingPeriods'
 def StudentSectionGradeFact(school_year="") -> None:
     gradesContent = getEndpointJson(ENDPOINT_GRADES, config('SILVER_DATA_LOCATION'), school_year)
     gradingPeriodsContent = getEndpointJson(GRANDINGPERIODS_GRADES, config('SILVER_DATA_LOCATION'), school_year)
+
+    letterGradeTranslation = createDataFrame(
+        data=[['A', 95],
+        ['B', 85],
+        ['C', 75],
+        ['D', 65],
+        ['F', 55]],
+        columns=['LetterGradeEarned', 'NumericGradeEarnedJoin'])
 
     gradesContentNormalized =  jsonNormalize(
         gradesContent,
@@ -45,6 +53,18 @@ def StudentSectionGradeFact(school_year="") -> None:
     )
 
     addColumnIfNotExists(restultDataFrame, 'letterGradeEarned')
+
+    restultDataFrame = pdMerge(
+        left=restultDataFrame,
+        right=letterGradeTranslation,
+        how='left',
+        leftOn=['letterGradeEarned'],
+        rigthOn=['LetterGradeEarned'],
+        suffixLeft=None,
+        suffixRight=None
+    )
+
+    restultDataFrame.numericGradeEarned[restultDataFrame.numericGradeEarned == 0] = restultDataFrame.NumericGradeEarnedJoin
     
     # Keep the fields I actually need.
     restultDataFrame = subset(restultDataFrame, [
@@ -127,5 +147,11 @@ def StudentSectionGradeFact(school_year="") -> None:
             'LetterGradeEarned',
             'GradeType'
         ]]
+
+    restultDataFrame = (
+        restultDataFrame[(restultDataFrame['GradeType'].str.contains ('Grading Period')) 
+        | (restultDataFrame['GradeType'].str.contains('Semester')) 
+        | (restultDataFrame['GradeType'].str.contains('Final'))]
+    )
 
     saveParquetFile(restultDataFrame, f"{config('PARQUET_FILES_LOCATION')}studentSectionGradeFact.parquet")
