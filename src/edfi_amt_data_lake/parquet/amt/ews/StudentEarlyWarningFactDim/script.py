@@ -21,7 +21,7 @@ ENDPOINT_STUDENT_SECTION_ASSOCIATION = 'studentSectionAssociations'
 ENDPOINT_STUDENT_SCHOOL_ATTENDANCE_EVENTS = 'studentSchoolAttendanceEvents'
 ENDPOINT_STUDENT_SECTION_ATTENDANCE_EVENTS = 'studentSectionAttendanceEvents'
 
-def StudentEarlyWarningFactDim(school_year="") -> None:
+def studentEarlyWarningFactDim(school_year="") -> None:
     calendarDatesContent = getEndpointJson(ENDPOINT_CALENDAR_DATES, config('SILVER_DATA_LOCATION'),school_year)
     disciplineIncidentContent = getEndpointJson(ENDPOINT_DISCIPLINE_INCIDENTS, config('SILVER_DATA_LOCATION'),school_year)
     studentDisciplineIncidentBehaviorAssociationsContent = getEndpointJson(ENDPOINT_STUDENT_DISCIPLINE_BEHAVIOR_ASSOCIATION, config('SILVER_DATA_LOCATION'))
