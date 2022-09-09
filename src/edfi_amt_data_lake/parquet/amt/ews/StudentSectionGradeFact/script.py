@@ -12,7 +12,7 @@ from edfi_amt_data_lake.parquet.Common.pandasWrapper import jsonNormalize, pdMer
 ENDPOINT_GRADES = 'grades'
 GRANDINGPERIODS_GRADES = 'gradingPeriods'
 
-def StudentSectionGradeFact(school_year="") -> None:
+def StudentSectionGradeFact(school_year) -> None:
     gradesContent = getEndpointJson(ENDPOINT_GRADES, config('SILVER_DATA_LOCATION'), school_year)
     gradingPeriodsContent = getEndpointJson(GRANDINGPERIODS_GRADES, config('SILVER_DATA_LOCATION'), school_year)
 
