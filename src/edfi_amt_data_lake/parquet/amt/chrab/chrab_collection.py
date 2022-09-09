@@ -4,5 +4,5 @@
 # See the LICENSE and NOTICES files in the project root for more information.
 
 
-def chrab_collection() -> None:
+def chrab_collection(school_year) -> None:
     None

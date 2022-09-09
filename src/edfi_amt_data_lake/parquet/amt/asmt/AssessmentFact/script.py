@@ -12,10 +12,10 @@ from edfi_amt_data_lake.parquet.Common.pandasWrapper import jsonNormalize, pdMer
 ENDPOINT_ASSESSSMENTS = 'assessments'
 ENDPOINT_OBJECTIVEASSESSMENTS = 'objectiveAssessments'
 
-def AssessmentFact() -> None:
+def AssessmentFact(school_year) -> None:
     silverDataLocation = config('SILVER_DATA_LOCATION')
-    assessmentsContent = getEndpointJson(ENDPOINT_ASSESSSMENTS, silverDataLocation)
-    objectiveAssessmentsContent = getEndpointJson(ENDPOINT_OBJECTIVEASSESSMENTS, silverDataLocation)
+    assessmentsContent = getEndpointJson(ENDPOINT_ASSESSSMENTS, silverDataLocation,school_year)
+    objectiveAssessmentsContent = getEndpointJson(ENDPOINT_OBJECTIVEASSESSMENTS, silverDataLocation,school_year)
     
     assessmentsContentNormalized = jsonNormalize(
         assessmentsContent,

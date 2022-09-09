@@ -5,5 +5,5 @@
 
 from edfi_amt_data_lake.parquet.amt.base.SchoolDim.script import schoolDim
 
-def base_collection() -> None:
-    schoolDim()
+def base_collection(school_year) -> None:
+    schoolDim(school_year)

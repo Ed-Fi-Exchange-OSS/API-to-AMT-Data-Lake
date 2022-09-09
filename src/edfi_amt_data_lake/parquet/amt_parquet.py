@@ -13,13 +13,13 @@ from edfi_amt_data_lake.parquet.amt.ews.ews_collection import ews_collection
 from edfi_amt_data_lake.parquet.amt.qews.qews_collection import qews_collection
 from edfi_amt_data_lake.parquet.amt.rls.rls_collection import rls_collection
 
-def generate_amt_parquet() -> None:
-    asmt_collection()
-    base_collection()
-    chrab_collection()
-    engage_collection()
-    epp_collection()
-    equity_collection()
-    ews_collection()
-    qews_collection()
-    rls_collection()
+def generate_amt_parquet(school_year="") -> None:
+    asmt_collection(school_year)
+    base_collection(school_year)
+    chrab_collection(school_year)
+    engage_collection(school_year)
+    epp_collection(school_year)
+    equity_collection(school_year)
+    ews_collection(school_year)
+    qews_collection(school_year)
+    rls_collection(school_year)

@@ -5,5 +5,5 @@
 
 from edfi_amt_data_lake.parquet.amt.ews.StudentEarlyWarningFactDim.script import studentEarlyWarningFactDim
 
-def ews_collection() -> None:
-    studentEarlyWarningFactDim()
+def ews_collection(school_year) -> None:
+    studentEarlyWarningFactDim(school_year)

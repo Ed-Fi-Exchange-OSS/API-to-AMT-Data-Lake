@@ -9,4 +9,4 @@ def api() -> None:
     for school_year in get_school_year():
         if get_change_version_updated(school_year):
             get_all(school_year)
-        generate_amt_parquet()
+        generate_amt_parquet(school_year)

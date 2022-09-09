@@ -4,5 +4,5 @@
 # See the LICENSE and NOTICES files in the project root for more information.
 
 
-def engage_collection() -> None:
+def engage_collection(school_year) -> None:
     None

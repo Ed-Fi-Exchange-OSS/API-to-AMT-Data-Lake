@@ -5,5 +5,5 @@
 
 from edfi_amt_data_lake.parquet.amt.asmt.AssessmentFact.script import AssessmentFact
 
-def asmt_collection() -> None:
-    AssessmentFact()
+def asmt_collection(school_year) -> None:
+    AssessmentFact(school_year)
