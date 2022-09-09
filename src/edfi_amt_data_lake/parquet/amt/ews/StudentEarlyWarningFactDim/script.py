@@ -5,13 +5,12 @@
 
 from distutils.util import subst_vars
 from operator import contains
+from queue import Empty
 from decouple import config
 from edfi_amt_data_lake.parquet.Common.functions import getEndpointJson
-from edfi_amt_data_lake.parquet.Common.pandasWrapper import toCsv, crossTab,jsonNormalize, pdMerge, subset, renameColumns, saveParquetFile, addColumnIfNotExists,to_datetime_key
-
+from edfi_amt_data_lake.parquet.Common.pandasWrapper import toCsv, crossTab,jsonNormalize, pdMerge, subset, renameColumns, saveParquetFile, addColumnIfNotExists,to_datetime_key,replace_null
 from datetime import timedelta
 from datetime import date
-
 
 ENDPOINT_CALENDAR_DATES = 'calendarDates'
 ENDPOINT_DISCIPLINE_INCIDENTS = 'disciplineIncidents'
@@ -111,7 +110,6 @@ def studentEarlyWarningFactDim(school_year="") -> None:
     )
     beginDate = date.today()
     endDate = beginDate + timedelta(days=366)
-    
     resultDataFrame[['exitWithdrawDate']].apply(lambda x: x.str.strip()).replace('', endDate)
     resultDataFrame[resultDataFrame['entryDate'] <= resultDataFrame['date']]
     resultDataFrame[resultDataFrame['exitWithdrawDate'] >= resultDataFrame['date']]
@@ -294,6 +292,10 @@ def studentEarlyWarningFactDim(school_year="") -> None:
     addColumnIfNotExists(studentSectionAttendanceEventsNormalized, 'IsAbsentFromAnyClassExcused', 0)
     addColumnIfNotExists(studentSectionAttendanceEventsNormalized, 'IsAbsentFromAnyClassUnexcused', 0)
     addColumnIfNotExists(studentSectionAttendanceEventsNormalized, 'IsTardyToAnyClass', 0)
+    studentSectionAttendanceEventsNormalized.loc[studentSectionAttendanceEventsNormalized['IsPresentAnyClass'] == '', 'IsPresentAnyClass'] = '0' 
+    studentSectionAttendanceEventsNormalized.loc[studentSectionAttendanceEventsNormalized['IsAbsentFromAnyClassExcused'] == '', 'IsAbsentFromAnyClassExcused'] = '0' 
+    studentSectionAttendanceEventsNormalized.loc[studentSectionAttendanceEventsNormalized['IsAbsentFromAnyClassUnexcused'] == '', 'IsAbsentFromAnyClassUnexcused'] = '0' 
+    studentSectionAttendanceEventsNormalized.loc[studentSectionAttendanceEventsNormalized['IsTardyToAnyClass'] == '', 'IsTardyToAnyClass'] = '0' 
 
     studentSectionAttendanceEventsNormalized = subset(studentSectionAttendanceEventsNormalized, 
         [
@@ -395,7 +397,6 @@ def studentEarlyWarningFactDim(school_year="") -> None:
             ,'schoolYear'
             ,'studentUniqueId'
             ,'eventDate']).max().reset_index()
-    
    
     ############################
     # Result - StudentSectionAttendance
@@ -536,6 +537,25 @@ def studentEarlyWarningFactDim(school_year="") -> None:
 
     addColumnIfNotExists(resultDataFrame, 'CountByDayOfStateOffenses', 0)
     addColumnIfNotExists(resultDataFrame, 'CountByDayOfConductOffenses', 0)
+    
+    # Replace null values by 0
+    replace_null(resultDataFrame,'IsPresentSchool',0)
+    replace_null(resultDataFrame,'IsAbsentFromSchoolExcused',0)
+    replace_null(resultDataFrame,'IsAbsentFromSchoolUnexcused',0)
+    replace_null(resultDataFrame,'IsTardyToSchool',0)
+
+    replace_null(resultDataFrame,'IsPresentAnyClass',0)
+    replace_null(resultDataFrame,'IsAbsentFromAnyClassExcused',0)
+    replace_null(resultDataFrame,'IsAbsentFromAnyClassUnexcused',0)
+    replace_null(resultDataFrame,'IsTardyToAnyClass',0)
+
+    replace_null(resultDataFrame,'IsPresentHomeroom',0)
+    replace_null(resultDataFrame,'IsAbsentFromHomeroomExcused',0)
+    replace_null(resultDataFrame,'IsAbsentFromHomeroomUnexcused',0)
+    replace_null(resultDataFrame,'IsTardyToHomeroom',0)
+
+    replace_null(resultDataFrame,'CountByDayOfStateOffenses',0)
+    replace_null(resultDataFrame,'CountByDayOfConductOffenses',0)
 
     resultDataFrame = renameColumns(resultDataFrame, 
         {
