@@ -14,11 +14,11 @@ ENDPOINT_LOCALEDUCATIONAGENCIES = 'localEducationAgencies'
 ENDPOINT_STATEEDUCATIONAGENCIES = 'stateEducationAgencies'
 ENDPOINT_EDUCATIONSERVICECENTERS = 'educationServiceCenters'
 
-def schoolDim(school_year="") -> None:
+def schoolDim(school_year) -> None:
     schoolsContent = getEndpointJson(ENDPOINT_SCHOOLS, config('SILVER_DATA_LOCATION'),school_year)
-    localEducationAgenciesContent = getEndpointJson(ENDPOINT_LOCALEDUCATIONAGENCIES, config('SILVER_DATA_LOCATION'))
-    stateEducationAgenciesContent = getEndpointJson(ENDPOINT_STATEEDUCATIONAGENCIES, config('SILVER_DATA_LOCATION'))
-    educationServiceCentersContent = getEndpointJson(ENDPOINT_EDUCATIONSERVICECENTERS, config('SILVER_DATA_LOCATION'))
+    localEducationAgenciesContent = getEndpointJson(ENDPOINT_LOCALEDUCATIONAGENCIES, config('SILVER_DATA_LOCATION'),school_year)
+    stateEducationAgenciesContent = getEndpointJson(ENDPOINT_STATEEDUCATIONAGENCIES, config('SILVER_DATA_LOCATION'),school_year)
+    educationServiceCentersContent = getEndpointJson(ENDPOINT_EDUCATIONSERVICECENTERS, config('SILVER_DATA_LOCATION'),school_year)
 
     schoolsContentNormalized =  jsonNormalize(
         schoolsContent,

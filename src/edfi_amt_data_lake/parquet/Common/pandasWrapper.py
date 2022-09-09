@@ -29,6 +29,10 @@ def jsonNormalize(data, recordPath, meta, metaPrefix, recordPrefix, errors) -> p
         errors=errors
     )
 
+def crossTab(index, columns)-> pd.DataFrame:
+    return pd.crosstab(index,columns)
+
+
 def fromDict(jsonContent, orient="index") -> pd.DataFrame:
     return  pd.DataFrame.from_dict(jsonContent, orient=orient)
 
@@ -41,6 +45,12 @@ def renameColumns(data = pd.DataFrame, renameColumns = {}, errors='ignore') -> p
 def saveParquetFile(data = pd.DataFrame, path = str) -> None:
     data.to_parquet(path, engine='fastparquet')
 
-def addColumnIfNotExists(data = pd.DataFrame, column = str) -> pd.DataFrame:
+def addColumnIfNotExists(data = pd.DataFrame, column = str, default_value='') -> pd.DataFrame:
     if column not in data:
-        data[column] = ''
+        data[column] = default_value
+
+def to_datetime_key(data = pd.DataFrame, column = str):
+    return data[column].astype(str).str.replace('-','')
+
+def replace_null(data = pd.DataFrame, column = str, replace_value:any=None):
+    data.loc[data[column].isnull(), column] = replace_value

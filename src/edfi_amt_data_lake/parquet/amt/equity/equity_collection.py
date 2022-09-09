@@ -3,9 +3,6 @@
 # The Ed-Fi Alliance licenses this file to you under the Apache License, Version 2.0.
 # See the LICENSE and NOTICES files in the project root for more information.
 
-from edfi_amt_data_lake.parquet.SchoolDim.script import schoolDim
-from edfi_amt_data_lake.parquet.AssessmentFact.script import AssessmentFact
 
-def run() -> None:
-    schoolDim()
-    AssessmentFact()
+def equity_collection(school_year) -> None:
+    None
