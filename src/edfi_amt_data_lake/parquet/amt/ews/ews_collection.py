@@ -4,6 +4,8 @@
 # See the LICENSE and NOTICES files in the project root for more information.
 
 from edfi_amt_data_lake.parquet.amt.ews.StudentEarlyWarningFactDim.script import studentEarlyWarningFactDim
+from edfi_amt_data_lake.parquet.amt.ews.StudentSectionGradeFact.script import StudentSectionGradeFact
 
 def ews_collection(school_year) -> None:
     studentEarlyWarningFactDim(school_year)
+    StudentSectionGradeFact(school_year)
