@@ -154,4 +154,4 @@ def StudentSectionGradeFact(school_year="") -> None:
         | (restultDataFrame['GradeType'].str.contains('Final'))]
     )
 
-    saveParquetFile(restultDataFrame, f"{config('PARQUET_FILES_LOCATION')}studentSectionGradeFact.parquet")
+    saveParquetFile(restultDataFrame, f"{config('PARQUET_FILES_LOCATION')}ews_studentSectionGradeFact.parquet")
