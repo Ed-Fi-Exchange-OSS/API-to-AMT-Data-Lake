@@ -586,4 +586,4 @@ def studentEarlyWarningFactDim(school_year) -> None:
             ,'CountByDayOfStateOffenses'
             ,'CountByDayOfConductOffenses'
         ])
-    saveParquetFile(resultDataFrame, f"{config('PARQUET_FILES_LOCATION')}ews_StudentEarlyWarningFactDim.parquet")
+    saveParquetFile(resultDataFrame, f"{config('PARQUET_FILES_LOCATION')}","ews_StudentEarlyWarningFactDim.parquet",school_year)

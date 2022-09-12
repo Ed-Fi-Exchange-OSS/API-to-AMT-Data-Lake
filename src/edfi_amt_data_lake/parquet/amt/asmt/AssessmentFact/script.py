@@ -308,4 +308,4 @@ def AssessmentFact(school_year) -> None:
             'LearningStandard'
         ]]
 
-    saveParquetFile(restultDataFrame, f"{config('PARQUET_FILES_LOCATION')}asmt_AssessmentFact.parquet")
+    saveParquetFile(restultDataFrame, f"{config('PARQUET_FILES_LOCATION')}","asmt_AssessmentFact.parquet",school_year)

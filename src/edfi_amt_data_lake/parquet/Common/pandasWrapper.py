@@ -4,6 +4,7 @@
 # See the LICENSE and NOTICES files in the project root for more information.
 
 import pandas as pd
+import os
 
 def pdMerge(left = pd.DataFrame, right = pd.DataFrame, how = str, leftOn = [str], rigthOn = [str], suffixLeft = '_x', suffixRight = '_y') -> pd.DataFrame:
     return pd.merge(
@@ -16,8 +17,15 @@ def pdMerge(left = pd.DataFrame, right = pd.DataFrame, how = str, leftOn = [str]
     )
 
 # Use this method to review a dataframe content
-def toCsv(csvContent = pd.DataFrame, filePathFile = str) -> None:
-    csvContent.to_csv(filePathFile)
+def toCsv(csvContent = pd.DataFrame, path = str, file_name=str, school_year=str) -> None:
+    school_year_path = f"{school_year}/" if school_year else ""
+    destination_folder = os.path.join(path,school_year_path)
+    destination_path = os.path.join(destination_folder,file_name)
+       
+    if not os.path.exists(destination_folder):
+        os.makedirs(destination_folder, exist_ok=True)
+    
+    csvContent.to_csv(destination_path)
 
 def jsonNormalize(data, recordPath, meta, metaPrefix, recordPrefix, errors) -> pd.DataFrame:
     return pd.json_normalize(
@@ -42,8 +50,14 @@ def subset(data = pd.DataFrame, columns = [str]) -> pd.DataFrame:
 def renameColumns(data = pd.DataFrame, renameColumns = {}, errors='ignore') -> pd.DataFrame:
     return data.rename(columns=renameColumns)
 
-def saveParquetFile(data = pd.DataFrame, path = str) -> None:
-    data.to_parquet(path, engine='fastparquet')
+def saveParquetFile(data = pd.DataFrame, path = str, file_name=str, school_year=str) -> None:
+    school_year_path = f"{school_year}/" if school_year else ""
+    destination_folder = os.path.join(path,school_year_path)
+    destination_path = os.path.join(destination_folder,file_name)
+    
+    if not os.path.exists(destination_folder):
+        os.makedirs(destination_folder, exist_ok=True)
+    data.to_parquet(f"{destination_path}", engine='fastparquet')
 
 def addColumnIfNotExists(data = pd.DataFrame, column = str, default_value='') -> pd.DataFrame:
     if column not in data:
