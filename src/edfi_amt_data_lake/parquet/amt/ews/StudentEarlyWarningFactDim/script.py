@@ -108,12 +108,15 @@ def studentEarlyWarningFactDim(school_year) -> None:
         suffixLeft='_studentSchoolAssociation',
         suffixRight='_calendarDates'
     )
-    beginDate = date.today()
-    endDate = beginDate + timedelta(days=366)
-    resultDataFrame[['exitWithdrawDate']].apply(lambda x: x.str.strip()).replace('', endDate)
-    resultDataFrame[resultDataFrame['entryDate'] <= resultDataFrame['date']]
-    resultDataFrame[resultDataFrame['exitWithdrawDate'] >= resultDataFrame['date']]
-    
+    resultDataFrame['exitWithdrawDateKey']=to_datetime_key(resultDataFrame,'exitWithdrawDate')
+    resultDataFrame['dateKey']=to_datetime_key(resultDataFrame,'date')
+    resultDataFrame['entryDateKey']=to_datetime_key(resultDataFrame,'entryDate')
+    resultDataFrame['date_now']=date.today()
+    resultDataFrame['date_now']=to_datetime_key(resultDataFrame,'date_now')
+    resultDataFrame = resultDataFrame[resultDataFrame['entryDateKey'] <= resultDataFrame['dateKey']]
+    resultDataFrame = resultDataFrame[resultDataFrame['exitWithdrawDateKey'] >= resultDataFrame['dateKey']]
+    resultDataFrame = resultDataFrame[resultDataFrame['dateKey'] <= resultDataFrame['date_now']]
+
     ############################
     # StudentSchoolAttendance
     ############################
