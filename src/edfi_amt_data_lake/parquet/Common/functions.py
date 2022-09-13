@@ -12,7 +12,7 @@ def getEndpointJson(endpoint = str, rawDataLocation = str,school_year="") -> str
         jsonFiles = [pos_json for pos_json in os.listdir(endpointFilePath) if pos_json.endswith('.json')]
 
         if len(jsonFiles):
-            with open(f"{endpointFilePath}\\{jsonFiles[0]}", "r") as jsonFile:
+            with open(f"{endpointFilePath}/{jsonFiles[0]}", "r") as jsonFile:
                 jsonContent = json.loads(jsonFile.read())
             return jsonContent
         else:

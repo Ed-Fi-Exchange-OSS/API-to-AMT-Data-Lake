@@ -4,6 +4,8 @@
 # See the LICENSE and NOTICES files in the project root for more information.
 
 from edfi_amt_data_lake.parquet.amt.asmt.AssessmentFact.script import AssessmentFact
+from edfi_amt_data_lake.parquet.amt.asmt.assessment_student.main import assessment_student
 
 def asmt_collection(school_year) -> None:
     AssessmentFact(school_year)
+    assessment_student(school_year)
