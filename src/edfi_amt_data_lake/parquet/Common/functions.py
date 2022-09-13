@@ -5,7 +5,7 @@
 
 import json,os
 
-def getEndpointJson(endpoint = str, rawDataLocation = str,school_year="") -> str:
+def getEndpointJson(endpoint = str, rawDataLocation = str,school_year = str) -> str:
     school_year_path = f"/{school_year}/" if school_year else ""
     endpointFilePath = f"{rawDataLocation}{endpoint}{school_year_path}"
     if os.path.isdir(endpointFilePath):

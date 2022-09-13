@@ -162,4 +162,4 @@ def schoolDim(school_year) -> None:
             'EducationServiceCenterKey'
         ]]
 
-    saveParquetFile(restultDataFrame, f"{config('PARQUET_FILES_LOCATION')}SchoolDim.parquet")
+    saveParquetFile(restultDataFrame, f"{config('PARQUET_FILES_LOCATION')}","SchoolDim.parquet",school_year)
