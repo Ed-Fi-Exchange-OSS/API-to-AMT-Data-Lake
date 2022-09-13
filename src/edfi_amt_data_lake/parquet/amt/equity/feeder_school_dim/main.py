@@ -37,7 +37,7 @@ def feeder_school_dim(school_year) -> None:
         feeder_school_association_normalized['date_now']=to_datetime_key(feeder_school_association_normalized,'date_now')
         feeder_school_association_normalized = feeder_school_association_normalized[feeder_school_association_normalized['endDate'] >= feeder_school_association_normalized['date_now']]
 
-    # Select needed coslumns.
+    # Select needed columns.
     feeder_school_association_normalized = subset(feeder_school_association_normalized, 
         [
             'feederSchoolReference.schoolId'
@@ -106,4 +106,3 @@ def feeder_school_dim(school_year) -> None:
             ,'feederSchoolName'
         ])
     saveParquetFile(result_data_frame, f"{config('PARQUET_FILES_LOCATION')}","equity_FeederSchoolDim.parquet",school_year)
-    toCsv(result_data_frame, f"{config('PARQUET_FILES_LOCATION')}","equity_FeederSchoolDim.csv",school_year)
