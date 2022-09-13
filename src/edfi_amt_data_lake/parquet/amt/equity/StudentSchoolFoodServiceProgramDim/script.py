@@ -223,4 +223,4 @@ def studentSchoolFoodServiceProgramDim(school_year) -> None:
             ,'programName'
             ,'schoolFoodServiceProgramServiceDescriptor'
         ])
-    saveParquetFile(resultDataFrame, f"{config('PARQUET_FILES_LOCATION')}equity_StudentSchoolFoodServiceProgramDim.parquet")
+    saveParquetFile(resultDataFrame, f"{config('PARQUET_FILES_LOCATION')}","equity_StudentSchoolFoodServiceProgramDim.parquet",school_year)
