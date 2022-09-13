@@ -41,7 +41,7 @@ def get_change_version_values_from_api(school_year="") -> ChangeVersionValues:
 
     return changeVersionValues
 
-def get_change_version_updated(school_year="") -> bool:
+def get_change_version_updated(school_year) -> bool:
     school_year_path = f"{school_year}/" if school_year else ""
     path = config("CHANGE_VERSION_FILEPATH") + f"API_TO_AMT/{school_year_path}"
     filename = config("CHANGE_VERSION_FILENAME")
