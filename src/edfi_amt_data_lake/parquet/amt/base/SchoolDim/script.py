@@ -3,27 +3,34 @@
 # The Ed-Fi Alliance licenses this file to you under the Apache License, Version 2.0.
 # See the LICENSE and NOTICES files in the project root for more information.
 
-from distutils.util import subst_vars
-from operator import contains
 from decouple import config
+
 from edfi_amt_data_lake.parquet.Common.functions import getEndpointJson
-from edfi_amt_data_lake.parquet.Common.pandasWrapper import jsonNormalize, pdMerge, subset, renameColumns, saveParquetFile, addColumnIfNotExists
+from edfi_amt_data_lake.parquet.Common.pandasWrapper import (
+    addColumnIfNotExists,
+    jsonNormalize,
+    pdMerge,
+    renameColumns,
+    saveParquetFile,
+    subset,
+)
 
 ENDPOINT_SCHOOLS = 'schools'
 ENDPOINT_LOCALEDUCATIONAGENCIES = 'localEducationAgencies'
 ENDPOINT_STATEEDUCATIONAGENCIES = 'stateEducationAgencies'
 ENDPOINT_EDUCATIONSERVICECENTERS = 'educationServiceCenters'
 
-def schoolDim(school_year) -> None:
-    schoolsContent = getEndpointJson(ENDPOINT_SCHOOLS, config('SILVER_DATA_LOCATION'),school_year)
-    localEducationAgenciesContent = getEndpointJson(ENDPOINT_LOCALEDUCATIONAGENCIES, config('SILVER_DATA_LOCATION'),school_year)
-    stateEducationAgenciesContent = getEndpointJson(ENDPOINT_STATEEDUCATIONAGENCIES, config('SILVER_DATA_LOCATION'),school_year)
-    educationServiceCentersContent = getEndpointJson(ENDPOINT_EDUCATIONSERVICECENTERS, config('SILVER_DATA_LOCATION'),school_year)
 
-    schoolsContentNormalized =  jsonNormalize(
+def schoolDim(school_year) -> None:
+    schoolsContent = getEndpointJson(ENDPOINT_SCHOOLS, config('SILVER_DATA_LOCATION'), school_year)
+    localEducationAgenciesContent = getEndpointJson(ENDPOINT_LOCALEDUCATIONAGENCIES, config('SILVER_DATA_LOCATION'), school_year)
+    stateEducationAgenciesContent = getEndpointJson(ENDPOINT_STATEEDUCATIONAGENCIES, config('SILVER_DATA_LOCATION'), school_year)
+    educationServiceCentersContent = getEndpointJson(ENDPOINT_EDUCATIONSERVICECENTERS, config('SILVER_DATA_LOCATION'), school_year)
+
+    schoolsContentNormalized = jsonNormalize(
         schoolsContent,
         ['addresses'],
-        ['schoolId', 'nameOfInstitution', 'schoolTypeDescriptor', ['localEducationAgencyReference','localEducationAgencyId' ]],
+        ['schoolId', 'nameOfInstitution', 'schoolTypeDescriptor', ['localEducationAgencyReference', 'localEducationAgencyId']],
         None,
         'address',
         'ignore'
@@ -38,13 +45,13 @@ def schoolDim(school_year) -> None:
         recordPrefix=None,
         errors='ignore'
     )
-    
+
     addColumnIfNotExists(localEducationAgenciesContentNormalized, 'stateEducationAgencyReference.stateEducationAgencyId')
 
     localEducationAgenciesContentNormalized = subset(localEducationAgenciesContentNormalized, ['localEducationAgencyId', 'nameOfInstitution', 'educationServiceCenterReference.educationServiceCenterId', 'stateEducationAgencyReference.stateEducationAgencyId'])
 
     restultDataFrame = pdMerge(
-        left=schoolsContentNormalized, 
+        left=schoolsContentNormalized,
         right=localEducationAgenciesContentNormalized,
         how='left',
         leftOn=['localEducationAgencyReference.localEducationAgencyId'],
@@ -67,7 +74,7 @@ def schoolDim(school_year) -> None:
         educationServiceCentersContentNormalized = subset(educationServiceCentersContentNormalized, ['educationServiceCenterId', 'nameOfInstitution'])
 
         restultDataFrame = pdMerge(
-            left=restultDataFrame, 
+            left=restultDataFrame,
             right=educationServiceCentersContentNormalized,
             how='left',
             leftOn=['educationServiceCenterReference.educationServiceCenterId'],
@@ -91,7 +98,7 @@ def schoolDim(school_year) -> None:
             stateEducationAgenciesContentNormalized = subset(stateEducationAgenciesContentNormalized, ['stateEducationAgencyId', 'nameOfInstitution'])
 
             restultDataFrame = pdMerge(
-                left=restultDataFrame, 
+                left=restultDataFrame,
                 right=stateEducationAgenciesContentNormalized,
                 how='left',
                 leftOn=['stateEducationAgencyReference.stateEducationAgencyId'],
@@ -122,44 +129,43 @@ def schoolDim(school_year) -> None:
 
     # Creates concatanation for Address field
     restultDataFrame['SchoolAddress'] = (
-            restultDataFrame['addressstreetNumberName'] 
-            + ', ' + restultDataFrame['addresscity'] 
-            + ' ' + restultDataFrame['addressstateAbbreviationDescriptor'] 
-            + ' ' + restultDataFrame['addressnameOfCounty']
-        )
+        restultDataFrame['addressstreetNumberName']
+        + ', ' + restultDataFrame['addresscity']
+        + ' ' + restultDataFrame['addressstateAbbreviationDescriptor']
+        + ' ' + restultDataFrame['addressnameOfCounty']
+    )
 
     # Rename columns to match AMT
-    restultDataFrame = renameColumns(restultDataFrame, 
-        {
-            'schoolId': 'SchoolKey',
-            'nameOfInstitution_schools': 'SchoolName',
-            'schoolTypeDescriptor': 'SchoolType',
-            'addresscity': 'SchoolCity',
-            'addressnameOfCounty': 'SchoolCounty',
-            'addressstateAbbreviationDescriptor': 'SchoolState',
-            'nameOfInstitution_localEducationAgencies': 'LocalEducationAgencyName',
-            'localEducationAgencyId': 'LocalEducationAgencyKey',
-            'nameOfInstitution_stateEducationAgencies': 'StateEducationAgencyName',
-            'stateEducationAgencyId': 'StateEducationAgencyKey',
-            'nameOfInstitution': 'EducationServiceCenterName',
-            'educationServiceCenterId': 'EducationServiceCenterKey'
-        })
+    restultDataFrame = renameColumns(restultDataFrame, {
+        'schoolId': 'SchoolKey',
+        'nameOfInstitution_schools': 'SchoolName',
+        'schoolTypeDescriptor': 'SchoolType',
+        'addresscity': 'SchoolCity',
+        'addressnameOfCounty': 'SchoolCounty',
+        'addressstateAbbreviationDescriptor': 'SchoolState',
+        'nameOfInstitution_localEducationAgencies': 'LocalEducationAgencyName',
+        'localEducationAgencyId': 'LocalEducationAgencyKey',
+        'nameOfInstitution_stateEducationAgencies': 'StateEducationAgencyName',
+        'stateEducationAgencyId': 'StateEducationAgencyKey',
+        'nameOfInstitution': 'EducationServiceCenterName',
+        'educationServiceCenterId': 'EducationServiceCenterKey'
+    })
 
     # Reorder columns to match AMT
     restultDataFrame = restultDataFrame[[
-            'SchoolKey', 
-            'SchoolName',
-            'SchoolType',
-            'SchoolAddress',
-            'SchoolCity',
-            'SchoolCounty',
-            'SchoolState',
-            'LocalEducationAgencyName',
-            'LocalEducationAgencyKey',
-            'StateEducationAgencyName',
-            'StateEducationAgencyKey',
-            'EducationServiceCenterName',
-            'EducationServiceCenterKey'
-        ]]
+        'SchoolKey',
+        'SchoolName',
+        'SchoolType',
+        'SchoolAddress',
+        'SchoolCity',
+        'SchoolCounty',
+        'SchoolState',
+        'LocalEducationAgencyName',
+        'LocalEducationAgencyKey',
+        'StateEducationAgencyName',
+        'StateEducationAgencyKey',
+        'EducationServiceCenterName',
+        'EducationServiceCenterKey'
+    ]]
 
-    saveParquetFile(restultDataFrame, f"{config('PARQUET_FILES_LOCATION')}","SchoolDim.parquet",school_year)
+    saveParquetFile(restultDataFrame, f"{config('PARQUET_FILES_LOCATION')}", "SchoolDim.parquet", school_year)

@@ -3,20 +3,28 @@
 # The Ed-Fi Alliance licenses this file to you under the Apache License, Version 2.0.
 # See the LICENSE and NOTICES files in the project root for more information.
 
-from distutils.util import subst_vars
-from operator import contains
 from decouple import config
+
 from edfi_amt_data_lake.parquet.Common.functions import getEndpointJson
-from edfi_amt_data_lake.parquet.Common.pandasWrapper import jsonNormalize, pdMerge, toCsv, subset, renameColumns, saveParquetFile, addColumnIfNotExists
+from edfi_amt_data_lake.parquet.Common.pandasWrapper import (
+    addColumnIfNotExists,
+    jsonNormalize,
+    pdMerge,
+    renameColumns,
+    saveParquetFile,
+    subset,
+)
 
 ENDPOINT_ASSESSSMENTS = 'assessments'
 ENDPOINT_OBJECTIVEASSESSMENTS = 'objectiveAssessments'
 
+
 def AssessmentFact(school_year) -> None:
+
     silverDataLocation = config('SILVER_DATA_LOCATION')
-    assessmentsContent = getEndpointJson(ENDPOINT_ASSESSSMENTS, silverDataLocation,school_year)
-    objectiveAssessmentsContent = getEndpointJson(ENDPOINT_OBJECTIVEASSESSMENTS, silverDataLocation,school_year)
-    
+    assessmentsContent = getEndpointJson(ENDPOINT_ASSESSSMENTS, silverDataLocation, school_year)
+    objectiveAssessmentsContent = getEndpointJson(ENDPOINT_OBJECTIVEASSESSMENTS, silverDataLocation, school_year)
+
     assessmentsContentNormalized = jsonNormalize(
         assessmentsContent,
         recordPath=None,
@@ -27,14 +35,13 @@ def AssessmentFact(school_year) -> None:
     )
 
     # Keep the fields I actually need
-    assessmentsContentNormalized = subset(assessmentsContentNormalized, 
-        [
-            'assessmentIdentifier', 
-            'namespace', 
-            'assessmentCategoryDescriptor', 
-            'assessmentTitle', 
-            'assessmentVersion'
-        ])
+    assessmentsContentNormalized = subset(assessmentsContentNormalized, [
+        'assessmentIdentifier',
+        'namespace',
+        'assessmentCategoryDescriptor',
+        'assessmentTitle',
+        'assessmentVersion'
+    ])
 
     # Assessment Assessed Grade Levels normalization
     assessmentsAssessedGradeLevelsContentNormalized = jsonNormalize(
@@ -66,11 +73,9 @@ def AssessmentFact(school_year) -> None:
         errors='ignore'
     )
 
-    ##  Then we need to merge the 4 data frames above:
-    
     # Assessed Grade Levels merge
     restultDataFrame = pdMerge(
-        left=assessmentsContentNormalized, 
+        left=assessmentsContentNormalized,
         right=assessmentsAssessedGradeLevelsContentNormalized,
         how='left',
         leftOn=['assessmentIdentifier', 'namespace'],
@@ -81,7 +86,7 @@ def AssessmentFact(school_year) -> None:
 
     # Scores merge
     restultDataFrame = pdMerge(
-        left=restultDataFrame, 
+        left=restultDataFrame,
         right=assessmentsScoresContentNormalized,
         how='left',
         leftOn=['assessmentIdentifier', 'namespace'],
@@ -92,7 +97,7 @@ def AssessmentFact(school_year) -> None:
 
     # Academic Subjects merge
     restultDataFrame = pdMerge(
-        left=restultDataFrame, 
+        left=restultDataFrame,
         right=assessmentsAcademicSubjectsContentNormalized,
         how='left',
         leftOn=['assessmentIdentifier', 'namespace'],
@@ -101,7 +106,7 @@ def AssessmentFact(school_year) -> None:
         suffixRight=None
     )
 
-    #### Objective Assessment
+    # Objective Assessment
     objectiveAssessmentsContentNormalized = jsonNormalize(
         objectiveAssessmentsContent,
         recordPath=None,
@@ -117,42 +122,48 @@ def AssessmentFact(school_year) -> None:
     addColumnIfNotExists(objectiveAssessmentsContentNormalized, 'description')
 
     # Keep the fields I actually need
-    objectiveAssessmentsContentNormalized = subset(objectiveAssessmentsContentNormalized, 
-        [
-            'assessmentReference.assessmentIdentifier',
-            'assessmentReference.namespace',
-            'identificationCode',
-            'parentObjectiveAssessmentReference.assessmentIdentifier',
-            'parentObjectiveAssessmentReference.identificationCode',
-            'parentObjectiveAssessmentReference.namespace',
-            'description',
-            'percentOfAssessment'
-        ])
+    objectiveAssessmentsContentNormalized = subset(objectiveAssessmentsContentNormalized, [
+        'assessmentReference.namespace',
+        'assessmentReference.assessmentIdentifier',
+        'identificationCode',
+        'parentObjectiveAssessmentReference.assessmentIdentifier',
+        'parentObjectiveAssessmentReference.identificationCode',
+        'parentObjectiveAssessmentReference.namespace',
+        'description',
+        'percentOfAssessment'
+    ])
 
     # Objective Assessment Scores normalization
     objectiveAssessmentsScoresContentNormalized = jsonNormalize(
         objectiveAssessmentsContent,
         recordPath=['scores'],
-        meta=[['assessmentReference', 'assessmentIdentifier'], ['assessmentReference','namespace'], 'identificationCode'],
+        meta=[
+            ['assessmentReference', 'assessmentIdentifier'],
+            ['assessmentReference', 'namespace'],
+            'identificationCode'
+        ],
         metaPrefix=None,
         recordPrefix=None,
         errors='ignore'
     )
-    
+
     # Objective Assessment Learning Standards normalization
     objectiveAssessmentsLearningStandardsContentNormalized = jsonNormalize(
         objectiveAssessmentsContent,
         recordPath=['learningStandards'],
-        meta=[['assessmentReference', 'assessmentIdentifier'], ['assessmentReference','namespace'], 'identificationCode'],
+        meta=[
+            ['assessmentReference', 'assessmentIdentifier'],
+            ['assessmentReference', 'namespace'],
+            'identificationCode'
+        ],
         metaPrefix=None,
         recordPrefix=None,
         errors='ignore'
     )
-    ##  Then we need to merge the objective data frames above:
-    
+
     # Objective Scores merge
     restultObjectiveDataFrame = pdMerge(
-        left=objectiveAssessmentsContentNormalized, 
+        left=objectiveAssessmentsContentNormalized,
         right=objectiveAssessmentsScoresContentNormalized,
         how='left',
         leftOn=['assessmentReference.assessmentIdentifier', 'assessmentReference.namespace', 'identificationCode'],
@@ -163,7 +174,7 @@ def AssessmentFact(school_year) -> None:
 
     # Objective Learning Standards merge
     restultObjectiveDataFrame = pdMerge(
-        left=restultObjectiveDataFrame, 
+        left=restultObjectiveDataFrame,
         right=objectiveAssessmentsLearningStandardsContentNormalized,
         how='left',
         leftOn=['assessmentReference.assessmentIdentifier', 'assessmentReference.namespace', 'identificationCode'],
@@ -174,7 +185,7 @@ def AssessmentFact(school_year) -> None:
 
     # Merge Assessment data and Objective Assessment data
     restultDataFrame = pdMerge(
-        left=restultDataFrame, 
+        left=restultDataFrame,
         right=restultObjectiveDataFrame,
         how='left',
         leftOn=['assessmentIdentifier', 'namespace'],
@@ -256,37 +267,37 @@ def AssessmentFact(school_year) -> None:
     restultDataFrame.loc[restultDataFrame.ParentObjectiveAssessmentKey == '--', 'ParentObjectiveAssessmentKey'] = ''
 
     # Rename columns to match AMT
-    restultDataFrame = renameColumns(restultDataFrame, 
-        {
-            'assessmentIdentifier': 'AssessmentIdentifier',
-            'namespace': 'Namespace',
-            'assessmentTitle': 'Title',
-            'assessmentVersion': 'Version',
-            'assessmentCategoryDescriptor': 'Category',
-            'gradeLevelDescriptor': 'AssessedGradeLevel',
-            'academicSubjectDescriptor': 'AcademicSubject',
-            'resultDatatypeTypeDescriptor': 'ResultDataType',
-            'assessmentReportingMethodDescriptor': 'ReportingMethod',
-            'identificationCode': 'IdentificationCode',
-            'description': 'ObjectiveAssessmentDescription',
-            'minimumScore': 'MinScore',
-            'maximumScore': 'MaxScore',
-            'percentOfAssessment': 'PercentOfAssessment',
-            'learningStandardReference.learningStandardId': 'LearningStandard'
-        })
+    restultDataFrame = renameColumns(restultDataFrame, {
+        'assessmentIdentifier': 'AssessmentIdentifier',
+        'namespace': 'Namespace',
+        'assessmentTitle': 'Title',
+        'assessmentVersion': 'Version',
+        'assessmentCategoryDescriptor': 'Category',
+        'gradeLevelDescriptor': 'AssessedGradeLevel',
+        'academicSubjectDescriptor': 'AcademicSubject',
+        'resultDatatypeTypeDescriptor': 'ResultDataType',
+        'assessmentReportingMethodDescriptor': 'ReportingMethod',
+        'identificationCode': 'IdentificationCode',
+        'description': 'ObjectiveAssessmentDescription',
+        'minimumScore': 'MinScore',
+        'maximumScore': 'MaxScore',
+        'percentOfAssessment': 'PercentOfAssessment',
+        'learningStandardReference.learningStandardId': 'LearningStandard'
+    })
 
-    restultDataFrame.loc[restultDataFrame['ResultDataType'] == '','ResultDataType'] = restultDataFrame['resultDatatypeTypeDescriptor_objective']
-    restultDataFrame.loc[restultDataFrame['ReportingMethod'] == '','ReportingMethod'] = restultDataFrame['assessmentReportingMethodDescriptor_objective']
+    restultDataFrame.loc[restultDataFrame['ResultDataType'] == '', 'ResultDataType'] = restultDataFrame['resultDatatypeTypeDescriptor_objective']
+    restultDataFrame.loc[restultDataFrame['ReportingMethod'] == '', 'ReportingMethod'] = restultDataFrame['assessmentReportingMethodDescriptor_objective']
 
-    restultDataFrame.loc[restultDataFrame['MinScore'] == '','MinScore'] = restultDataFrame['minimumScore_objective']
-    restultDataFrame.loc[restultDataFrame['MinScore'] == '','MinScore'] = restultDataFrame['maximumScore_objective']
+    restultDataFrame.loc[restultDataFrame['MinScore'] == '', 'MinScore'] = restultDataFrame['minimumScore_objective']
+    restultDataFrame.loc[restultDataFrame['MinScore'] == '', 'MinScore'] = restultDataFrame['maximumScore_objective']
 
     # Converting some fields to str as preparation for the parquet file.
     restultDataFrame['Version'] = restultDataFrame['Version'].astype(str)
     restultDataFrame['PercentOfAssessment'] = restultDataFrame['PercentOfAssessment'].astype(str)
 
     # Reorder columns to match AMT
-    restultDataFrame = restultDataFrame[[
+    restultDataFrame = restultDataFrame[
+        [
             'AssessmentFactKey',
             'AssessmentKey',
             'AssessmentIdentifier',
@@ -308,4 +319,4 @@ def AssessmentFact(school_year) -> None:
             'LearningStandard'
         ]]
 
-    saveParquetFile(restultDataFrame, f"{config('PARQUET_FILES_LOCATION')}","asmt_AssessmentFact.parquet",school_year)
+    saveParquetFile(restultDataFrame, f"{config('PARQUET_FILES_LOCATION')}", "asmt_AssessmentFact.parquet", school_year)

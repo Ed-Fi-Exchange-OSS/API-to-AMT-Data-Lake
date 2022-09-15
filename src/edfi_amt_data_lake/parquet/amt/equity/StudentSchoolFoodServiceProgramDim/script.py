@@ -3,64 +3,70 @@
 # The Ed-Fi Alliance licenses this file to you under the Apache License, Version 2.0.
 # See the LICENSE and NOTICES files in the project root for more information.
 
-from distutils.util import subst_vars
-from operator import contains
-from queue import Empty
-from decouple import config
-from edfi_amt_data_lake.parquet.Common.functions import getEndpointJson
-from edfi_amt_data_lake.parquet.Common.pandasWrapper import toCsv, crossTab,jsonNormalize, pdMerge, subset, renameColumns, saveParquetFile, addColumnIfNotExists,to_datetime_key,replace_null
-from datetime import timedelta
 from datetime import date
+
+from decouple import config
+
+from edfi_amt_data_lake.parquet.Common.functions import getEndpointJson
+from edfi_amt_data_lake.parquet.Common.pandasWrapper import (
+    jsonNormalize,
+    pdMerge,
+    renameColumns,
+    saveParquetFile,
+    subset,
+    to_datetime_key,
+)
 
 ENDPOINT_STUDENT_FOOD_SERVICE_PROGRAM_ASSOCIATION = 'studentSchoolFoodServiceProgramAssociations'
 ENDPOINT_STUDENT_SCHOOL_ASSOCIATION = 'studentSchoolAssociations'
 ENDPOINT_PROGRAM_TYPE_DESCRIPTOR = 'programTypeDescriptors'
 ENDPOINT_SCHOOL_FOOD_SERVICE_PROGRAM_SERVICE_DESCRIPTOR = 'schoolFoodServiceProgramServiceDescriptors'
 
+
 def studentSchoolFoodServiceProgramDim(school_year) -> None:
-    studentFoodServiceProgramAssociationContent = getEndpointJson(ENDPOINT_STUDENT_FOOD_SERVICE_PROGRAM_ASSOCIATION, config('SILVER_DATA_LOCATION'),school_year)
-    studentSchoolAssociationsContent = getEndpointJson(ENDPOINT_STUDENT_SCHOOL_ASSOCIATION, config('SILVER_DATA_LOCATION'),school_year)
-    programTypeDescriptorContent = getEndpointJson(ENDPOINT_PROGRAM_TYPE_DESCRIPTOR, config('SILVER_DATA_LOCATION'),school_year)
-    schoolFoodServiceProgramServiceDescriptorContent = getEndpointJson(ENDPOINT_SCHOOL_FOOD_SERVICE_PROGRAM_SERVICE_DESCRIPTOR, config('SILVER_DATA_LOCATION'),school_year)
-    
-    ############################
+    studentFoodServiceProgramAssociationContent = getEndpointJson(ENDPOINT_STUDENT_FOOD_SERVICE_PROGRAM_ASSOCIATION, config('SILVER_DATA_LOCATION'), school_year)
+    studentSchoolAssociationsContent = getEndpointJson(ENDPOINT_STUDENT_SCHOOL_ASSOCIATION, config('SILVER_DATA_LOCATION'), school_year)
+    programTypeDescriptorContent = getEndpointJson(ENDPOINT_PROGRAM_TYPE_DESCRIPTOR, config('SILVER_DATA_LOCATION'), school_year)
+    schoolFoodServiceProgramServiceDescriptorContent = getEndpointJson(ENDPOINT_SCHOOL_FOOD_SERVICE_PROGRAM_SERVICE_DESCRIPTOR, config('SILVER_DATA_LOCATION'), school_year)
+
     # studentFoodServiceProgramAssociationContent
-    ############################
-    studentFoodServiceProgramAssociationNormalized =  jsonNormalize(
+    studentFoodServiceProgramAssociationNormalized = jsonNormalize(
         studentFoodServiceProgramAssociationContent,
-        recordPath=['schoolFoodServiceProgramServices']
-        ,meta=[['studentReference','studentUniqueId']
-        ,['programReference','programName']
-        ,['programReference','programTypeDescriptor']
-        ,['programReference','educationOrganizationId']
-        ,'beginDate'
-        ,'schoolFoodServiceProgramServiceDescriptor'
-        ,['educationOrganizationReference','educationOrganizationId']
+        recordPath=['schoolFoodServiceProgramServices'],
+        meta=[
+            ['studentReference', 'studentUniqueId'],
+            ['programReference', 'programName'],
+            ['programReference', 'programTypeDescriptor'],
+            ['programReference', 'educationOrganizationId'],
+            'beginDate',
+            'schoolFoodServiceProgramServiceDescriptor',
+            ['educationOrganizationReference', 'educationOrganizationId']
         ],
         metaPrefix=None,
         recordPrefix='schoolFoodServiceProgramServices_',
         errors='ignore'
     )
+
     # Select needed columns.
-    studentFoodServiceProgramAssociationNormalized = subset(studentFoodServiceProgramAssociationNormalized, 
-        [
-            'studentReference.studentUniqueId'
-            ,'programReference.programName'
-            ,'programReference.programTypeDescriptor'
-            ,'programReference.educationOrganizationId'
-            ,'beginDate'
-            ,'schoolFoodServiceProgramServices_schoolFoodServiceProgramServiceDescriptor'
-            ,'educationOrganizationReference.educationOrganizationId'
-        ])
-    studentFoodServiceProgramAssociationNormalized = renameColumns(studentFoodServiceProgramAssociationNormalized, 
-        {
-            'studentReference.studentUniqueId': 'studentUniqueId'
-            ,'programReference.programName': 'programName'
-            ,'programReference.programTypeDescriptor': 'programTypeDescriptor'
-            ,'programReference.educationOrganizationId': 'programEducationOrganizationId'
-            ,'schoolFoodServiceProgramServices_schoolFoodServiceProgramServiceDescriptor': 'schoolFoodServiceProgramServiceDescriptor'
-            ,'educationOrganizationReference.educationOrganizationId': 'educationOrganizationId'
-        })
+    studentFoodServiceProgramAssociationNormalized = subset(studentFoodServiceProgramAssociationNormalized, [
+        'studentReference.studentUniqueId',
+        'programReference.programName',
+        'programReference.programTypeDescriptor',
+        'programReference.educationOrganizationId',
+        'beginDate',
+        'schoolFoodServiceProgramServices_schoolFoodServiceProgramServiceDescriptor',
+        'educationOrganizationReference.educationOrganizationId'
+    ])
+
+    studentFoodServiceProgramAssociationNormalized = renameColumns(studentFoodServiceProgramAssociationNormalized, {
+        'studentReference.studentUniqueId': 'studentUniqueId',
+        'programReference.programName': 'programName',
+        'programReference.programTypeDescriptor': 'programTypeDescriptor',
+        'programReference.educationOrganizationId': 'programEducationOrganizationId',
+        'schoolFoodServiceProgramServices_schoolFoodServiceProgramServiceDescriptor': 'schoolFoodServiceProgramServiceDescriptor',
+        'educationOrganizationReference.educationOrganizationId': 'educationOrganizationId'
+    })
+
     # Remove namespace
     if not studentFoodServiceProgramAssociationNormalized['programTypeDescriptor'].empty:
         if len(studentFoodServiceProgramAssociationNormalized['programTypeDescriptor'].str.split('#')) > 0:
@@ -74,11 +80,12 @@ def studentSchoolFoodServiceProgramDim(school_year) -> None:
     ############################
     # programTypeDescriptor
     ############################
-    programTypeDescriptorNormalized =  jsonNormalize(
+    programTypeDescriptorNormalized = jsonNormalize(
         programTypeDescriptorContent,
-        recordPath=None
-        ,meta=['programTypeDescriptorId'
-            ,'codeValue'
+        recordPath=None,
+        meta=[
+            'programTypeDescriptorId',
+            'codeValue'
         ],
         metaPrefix=None,
         recordPrefix='programTypeDescriptor_',
@@ -86,18 +93,17 @@ def studentSchoolFoodServiceProgramDim(school_year) -> None:
     )
 
     # Select needed columns.
-    programTypeDescriptorNormalized = subset(programTypeDescriptorNormalized, 
-        [
-            'programTypeDescriptorId'
-            ,'codeValue'
-        ])
-    programTypeDescriptorNormalized = renameColumns(programTypeDescriptorNormalized, 
-        {
-            'codeValue': 'programTypeDescriptor'
-        })    
+    programTypeDescriptorNormalized = subset(programTypeDescriptorNormalized, [
+        'programTypeDescriptorId',
+        'codeValue'
+    ])
+
+    programTypeDescriptorNormalized = renameColumns(programTypeDescriptorNormalized, {
+        'codeValue': 'programTypeDescriptor'
+    })
 
     studentFoodServiceProgramAssociationNormalized = pdMerge(
-        left=studentFoodServiceProgramAssociationNormalized, 
+        left=studentFoodServiceProgramAssociationNormalized,
         right=programTypeDescriptorNormalized,
         how='left',
         leftOn=['programTypeDescriptor'],
@@ -105,32 +111,32 @@ def studentSchoolFoodServiceProgramDim(school_year) -> None:
         suffixLeft='_studentSchoolAssociation',
         suffixRight='_studentFoodServiceProgramAssociation'
     )
-    ############################
+
     # schoolFoodServiceProgramServiceDescriptor
-    ############################
-    schoolFoodServiceProgramServiceDescriptorNormalized =  jsonNormalize(
+    schoolFoodServiceProgramServiceDescriptorNormalized = jsonNormalize(
         schoolFoodServiceProgramServiceDescriptorContent,
-        recordPath=None
-        ,meta=['schoolFoodServiceProgramServiceDescriptorId'
-            ,'codeValue'
+        recordPath=None,
+        meta=[
+            'schoolFoodServiceProgramServiceDescriptorId',
+            'codeValue'
         ],
         metaPrefix=None,
         recordPrefix='schoolFoodServiceProgramServiceDescriptor_',
         errors='ignore'
     )
+
     # Select needed columns.
-    schoolFoodServiceProgramServiceDescriptorNormalized = subset(schoolFoodServiceProgramServiceDescriptorNormalized, 
-        [
-            'schoolFoodServiceProgramServiceDescriptorId'
-            ,'codeValue'
-        ])
-    schoolFoodServiceProgramServiceDescriptorNormalized = renameColumns(schoolFoodServiceProgramServiceDescriptorNormalized, 
-        {
-            'codeValue': 'schoolFoodServiceProgramServiceDescriptor'
-        }) 
+    schoolFoodServiceProgramServiceDescriptorNormalized = subset(schoolFoodServiceProgramServiceDescriptorNormalized, [
+        'schoolFoodServiceProgramServiceDescriptorId',
+        'codeValue'
+    ])
+
+    schoolFoodServiceProgramServiceDescriptorNormalized = renameColumns(schoolFoodServiceProgramServiceDescriptorNormalized, {
+        'codeValue': 'schoolFoodServiceProgramServiceDescriptor'
+    })
 
     studentFoodServiceProgramAssociationNormalized = pdMerge(
-        left=studentFoodServiceProgramAssociationNormalized, 
+        left=studentFoodServiceProgramAssociationNormalized,
         right=schoolFoodServiceProgramServiceDescriptorNormalized,
         how='left',
         leftOn=['schoolFoodServiceProgramServiceDescriptor'],
@@ -139,40 +145,37 @@ def studentSchoolFoodServiceProgramDim(school_year) -> None:
         suffixRight='_studentFoodServiceProgramAssociation'
     )
 
-    ############################
     # studentSchoolAssociation
-    ############################
-    studentSchoolAssociationNormalized =  jsonNormalize(
+    studentSchoolAssociationNormalized = jsonNormalize(
         studentSchoolAssociationsContent,
-        recordPath=None
-        ,meta=['schoolReference.schoolId'
-            ,'studentReference.studentUniqueId'
-            ,'entryDate'
-            ,'exitWithdrawDate'
+        recordPath=None,
+        meta=[
+            'schoolReference.schoolId',
+            'studentReference.studentUniqueId',
+            'entryDate',
+            'exitWithdrawDate'
         ],
         metaPrefix=None,
         recordPrefix='studentSchoolAssociation_',
         errors='ignore'
     )
-    # Select needed columns.
-    studentSchoolAssociationNormalized = subset(studentSchoolAssociationNormalized, 
-        [
-            'schoolReference.schoolId'
-            ,'studentReference.studentUniqueId'
-            ,'entryDate'
-            ,'exitWithdrawDate'
-        ])
-    studentSchoolAssociationNormalized = renameColumns(studentSchoolAssociationNormalized, 
-        {
-            'schoolReference.schoolId': 'schoolId',
-            'studentReference.studentUniqueId': 'studentUniqueId'
-        })
 
-    ############################
+    # Select needed columns.
+    studentSchoolAssociationNormalized = subset(studentSchoolAssociationNormalized, [
+        'schoolReference.schoolId',
+        'studentReference.studentUniqueId',
+        'entryDate',
+        'exitWithdrawDate'
+    ])
+
+    studentSchoolAssociationNormalized = renameColumns(studentSchoolAssociationNormalized, {
+        'schoolReference.schoolId': 'schoolId',
+        'studentReference.studentUniqueId': 'studentUniqueId'
+    })
+
     # studentFoodServiceProgramAssociationContent - studentSchoolAssociations
-    ############################
     resultDataFrame = pdMerge(
-        left=studentSchoolAssociationNormalized, 
+        left=studentSchoolAssociationNormalized,
         right=studentFoodServiceProgramAssociationNormalized,
         how='inner',
         leftOn=['studentUniqueId'],
@@ -180,20 +183,21 @@ def studentSchoolFoodServiceProgramDim(school_year) -> None:
         suffixLeft='_studentSchoolAssociation',
         suffixRight='_studentFoodServiceProgramAssociation'
     )
-    resultDataFrame['exitWithdrawDate']=to_datetime_key(resultDataFrame,'exitWithdrawDate')
-    resultDataFrame['date_now']=date.today()
-    resultDataFrame['date_now']=to_datetime_key(resultDataFrame,'date_now')
+    resultDataFrame['exitWithdrawDate'] = to_datetime_key(resultDataFrame, 'exitWithdrawDate')
+    resultDataFrame['date_now'] = date.today()
+    resultDataFrame['date_now'] = to_datetime_key(resultDataFrame, 'date_now')
     resultDataFrame = resultDataFrame[resultDataFrame['exitWithdrawDate'] >= resultDataFrame['date_now']]
-    
+
     resultDataFrame['studentUniqueId'] = resultDataFrame['studentUniqueId'].astype(str)
     resultDataFrame['schoolId'] = resultDataFrame['schoolId'].astype(str)
     resultDataFrame['educationOrganizationId'] = resultDataFrame['educationOrganizationId'].astype(str)
     resultDataFrame['programEducationOrganizationId'] = resultDataFrame['programEducationOrganizationId'].astype(str)
     resultDataFrame['schoolFoodServiceProgramServiceDescriptorId'] = resultDataFrame['schoolFoodServiceProgramServiceDescriptorId'].astype(str)
     resultDataFrame['programTypeDescriptorId'] = resultDataFrame['programTypeDescriptorId'].astype(str)
-    resultDataFrame['beginDate']=to_datetime_key(resultDataFrame,'beginDate').astype(str)
-    
-    resultDataFrame['StudentSchoolFoodServiceProgramKey'] = (resultDataFrame['studentUniqueId']
+    resultDataFrame['beginDate'] = to_datetime_key(resultDataFrame, 'beginDate').astype(str)
+
+    resultDataFrame['StudentSchoolFoodServiceProgramKey'] = (
+        resultDataFrame['studentUniqueId']
         + '-' + resultDataFrame['schoolId']
         + '-' + resultDataFrame['programName']
         + '-' + resultDataFrame['programTypeDescriptorId']
@@ -203,7 +207,8 @@ def studentSchoolFoodServiceProgramDim(school_year) -> None:
         + '-' + resultDataFrame['schoolFoodServiceProgramServiceDescriptorId']
     )
 
-    resultDataFrame['StudentSchoolProgramKey'] = (resultDataFrame['studentUniqueId']
+    resultDataFrame['StudentSchoolProgramKey'] = (
+        resultDataFrame['studentUniqueId']
         + '-' + resultDataFrame['schoolId']
         + '-' + resultDataFrame['programName']
         + '-' + resultDataFrame['programTypeDescriptorId']
@@ -211,16 +216,18 @@ def studentSchoolFoodServiceProgramDim(school_year) -> None:
         + '-' + resultDataFrame['programEducationOrganizationId']
         + '-' + resultDataFrame['beginDate']
     )
-    resultDataFrame['StudentSchoolKey'] = (resultDataFrame['studentUniqueId']
+    resultDataFrame['StudentSchoolKey'] = (
+        resultDataFrame['studentUniqueId']
         + '-' + resultDataFrame['schoolId']
     )
+
     # Select needed columns.
-    resultDataFrame = subset(resultDataFrame, 
-        [
-            'StudentSchoolFoodServiceProgramKey'
-            ,'StudentSchoolProgramKey'
-            ,'StudentSchoolKey'
-            ,'programName'
-            ,'schoolFoodServiceProgramServiceDescriptor'
-        ])
-    saveParquetFile(resultDataFrame, f"{config('PARQUET_FILES_LOCATION')}","equity_StudentSchoolFoodServiceProgramDim.parquet",school_year)
+    resultDataFrame = subset(resultDataFrame, [
+        'StudentSchoolFoodServiceProgramKey',
+        'StudentSchoolProgramKey',
+        'StudentSchoolKey',
+        'programName',
+        'schoolFoodServiceProgramServiceDescriptor'
+    ])
+
+    saveParquetFile(resultDataFrame, f"{config('PARQUET_FILES_LOCATION')}", "equity_StudentSchoolFoodServiceProgramDim.parquet", school_year)
