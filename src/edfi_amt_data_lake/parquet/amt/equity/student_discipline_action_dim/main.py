@@ -47,8 +47,7 @@ def student_discipline_action_dim(school_year) -> None:
         metaPrefix=None,
         recordPrefix='staffs_',
         errors='ignore'
-    )
-    
+    )    
     addColumnIfNotExists(discipline_action_staff_normalized, 'staffs_staffReference.staffUniqueId', '')
     ############################
     # Join disciplineAction and Staffs
@@ -87,7 +86,7 @@ def student_discipline_action_dim(school_year) -> None:
         if len(discipline_action_normalized['disciplineDescriptorCodeValue'].str.split('#')) > 0:
             discipline_action_normalized["disciplineDescriptorCodeValue"] = discipline_action_normalized["disciplineDescriptorCodeValue"].str.split("#").str.get(1)
     ############################
-    # descriptor
+    # Discipline descriptor
     ############################
     discipline_descriptor_normalized =  jsonNormalize(
         discipline_descriptor_content,
@@ -158,7 +157,7 @@ def student_discipline_action_dim(school_year) -> None:
     )
     # Filter by exitWithdrawDate
     result_data_frame = result_data_frame[result_data_frame['exitWithdrawDate'] >= result_data_frame['date_now']]
-    # Cast as String
+    # Cast as String to concat columns and create keys.
     result_data_frame['disciplineActionIdentifier'] = result_data_frame['disciplineActionIdentifier'].astype(str)
     result_data_frame['studentKey'] = result_data_frame['studentUniqueId'].astype(str)
     result_data_frame['schoolKey'] = result_data_frame['schoolId'].astype(str)
@@ -177,8 +176,7 @@ def student_discipline_action_dim(school_year) -> None:
         result_data_frame['studentKey']
         + '-'
         + result_data_frame['schoolKey']
-    )
-   
+    )   
     # Select needed columns.
     result_data_frame = subset(result_data_frame, 
         [
@@ -190,4 +188,4 @@ def student_discipline_action_dim(school_year) -> None:
             ,'disciplineActionDescription'
             ,'userKey'
         ])
-    saveParquetFile(result_data_frame, f"{config('PARQUET_FILES_LOCATION')}","equity_equity_StudentDisciplineActionDim.parquet",school_year)    
+    saveParquetFile(result_data_frame, f"{config('PARQUET_FILES_LOCATION')}","equity_StudentDisciplineActionDim.parquet",school_year)    
