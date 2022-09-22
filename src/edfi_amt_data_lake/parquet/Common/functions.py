@@ -7,7 +7,8 @@ import json,os
 
 def getEndpointJson(endpoint = str, rawDataLocation = str,school_year = str) -> str:
     school_year_path = f"/{school_year}/" if school_year else ""
-    endpointFilePath = f"{rawDataLocation}{endpoint}{school_year_path}"
+    endpointFilePath = f"{rawDataLocation}{school_year_path}{endpoint}"
+    
     if os.path.isdir(endpointFilePath):
         jsonFiles = [pos_json for pos_json in os.listdir(endpointFilePath) if pos_json.endswith('.json')]
 
