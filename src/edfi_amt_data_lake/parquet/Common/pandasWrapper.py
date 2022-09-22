@@ -76,3 +76,13 @@ def createDataFrame(data, columns) -> pd.DataFrame:
     return pd.DataFrame(
         data=data,
         columns=columns)
+
+def get_descriptor_code_value_from_uri(data = pd.DataFrame, column = str):
+    if not data[column].empty:
+        if len(data[column].str.split('#')) > 0:
+            data[column]= data[column].str.split("#").str.get(1)
+
+def get_reference_from_href(data = pd.DataFrame, column = str, destination_column= str):
+    if not data[column].empty:
+        if len(data[column].str.split('/')) > 0:
+            data[destination_column] = data[column].str.split('/').str.get(3)#len(data[column].str.split('/'))-1)            

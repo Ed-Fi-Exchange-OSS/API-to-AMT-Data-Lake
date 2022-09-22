@@ -17,6 +17,7 @@
     {"endpoint": "/ed-fi/educationServiceCenters", "table_name": "base_edfi_education_service_centers" },
     {"endpoint": "/ed-fi/feederSchoolAssociations", "table_name": "base_edfi_feeder_school_associations" },
     {"endpoint": "/ed-fi/grades", "table_name": "base_edfi_grades" },
+    {"endpoint": "/ed-fi/gradeLevelDescriptors", "table_name": "base_edfi_grade_level_descriptor" },
     {"endpoint": "/ed-fi/gradingPeriodDescriptors", "table_name": "base_edfi_grading_period_descriptors" },
     {"endpoint": "/ed-fi/gradingPeriods", "table_name": "base_edfi_grading_periods" },
     {"endpoint": "/ed-fi/languageDescriptors", "table_name": "base_edfi_descriptors"},
