@@ -66,6 +66,9 @@ def addColumnIfNotExists(data = pd.DataFrame, column = str, default_value='') ->
 def to_datetime_key(data = pd.DataFrame, column = str):
     return data[column].astype(str).str.replace('-','')
 
+def to_datetime(data = pd.DataFrame, column = str):
+    return pd.to_datetime(data[column])
+
 def replace_null(data = pd.DataFrame, column = str, replace_value:any=None):
     data.loc[data[column].isnull(), column] = replace_value
 
