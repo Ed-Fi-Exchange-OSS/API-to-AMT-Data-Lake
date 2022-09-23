@@ -86,7 +86,7 @@ To validate the files you can execute :
 
 It serves to make a previous validation of all the files, in addition to validate the files before committing them.
 
-![Getting Started](../API-to-AMT-Data-Lake/docs/images/04bee0340fb6fbee51a0ff8e017cb1c9696e09587a11a0c7e0a3e5d71ac03778.png)
+![Getting Started](https://raw.githubusercontent.com/Ed-Fi-Exchange-OSS/API-to-AMT-Data-Lake/BIA-1218/docs/images/04bee0340fb6fbee51a0ff8e017cb1c9696e09587a11a0c7e0a3e5d71ac03778.png)
 
 
 1. Style check: `poetry run flake8`
