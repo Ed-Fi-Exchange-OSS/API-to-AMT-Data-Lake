@@ -31,7 +31,6 @@ def student_program_cohort_dim(school_year) -> None:
     student_cohort_association_content = getEndpointJson(ENDPOINT_STUDENT_COHORT_ASSOCIATION, config('SILVER_DATA_LOCATION'), school_year)
     cohort_content = getEndpointJson(ENDPOINT_COHORT, config('SILVER_DATA_LOCATION'), school_year)
     student_school_association_content = getEndpointJson(ENDPOINT_STUDENT_SCHOOL_ASSOCIATION, config('SILVER_DATA_LOCATION'), school_year)
-
     cohort_type_descriptor_content = getEndpointJson(ENDPOINT_COHORT_TYPE_DESCRIPTOR, config('SILVER_DATA_LOCATION'), school_year)
     grade_level_descriptor_content = getEndpointJson(ENDPOINT_GRADE_LEVEL_DESCRIPTOR, config('SILVER_DATA_LOCATION'), school_year)
     program_type_descriptor_content = getEndpointJson(ENDPOINT_PROGRAM_TYPE_DESCRIPTOR, config('SILVER_DATA_LOCATION'), school_year)
@@ -66,7 +65,6 @@ def student_program_cohort_dim(school_year) -> None:
         'beginDate',
         'studentUniqueId'
     ])
-
     ############################
     # cohort_content
     ############################

@@ -52,7 +52,6 @@ def date_dim(school_year) -> None:
     result_data_frame['calendarQuarter'] = result_data_frame['date'].dt.quarter
     result_data_frame['calendarQuarterName'] = result_data_frame['calendarQuarter'].map(
         {1: 'First', 2: 'Second', 3: 'Third', 4: 'Fourth'})
-
     # Select needed columns.
     result_data_frame = subset(result_data_frame, [
         'dateKey',
@@ -65,4 +64,5 @@ def date_dim(school_year) -> None:
         'year',
         'schoolYear'
     ])
+
     saveParquetFile(result_data_frame, f"{config('PARQUET_FILES_LOCATION')}", "dateDim.parquet", school_year)
