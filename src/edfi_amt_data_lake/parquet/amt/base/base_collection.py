@@ -6,6 +6,7 @@
 from edfi_amt_data_lake.parquet.amt.base.date_dim.main import date_dim
 from edfi_amt_data_lake.parquet.amt.base.SchoolDim.script import schoolDim
 
+
 def base_collection(school_year) -> None:
     date_dim(school_year)
     schoolDim(school_year)
