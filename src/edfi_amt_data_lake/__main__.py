@@ -6,6 +6,7 @@
 import logging
 import sys
 
+
 def main():
     log_format = (
         '[%(asctime)s] %(levelname)-8s %(name)-12s %(message)s')

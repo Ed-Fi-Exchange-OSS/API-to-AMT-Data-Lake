@@ -7,8 +7,8 @@
 PATH = 'endpoint'
 TABLE_NAME = 'table_name'
 
+
 class JSONFile:
     def __init__(self, name):
         self.name = name
         self.directory = name
-

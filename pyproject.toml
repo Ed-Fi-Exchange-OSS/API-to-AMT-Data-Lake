@@ -19,8 +19,15 @@ pandas = "^1.4.3"
 fastparquet = "^0.8.2"
 
 [tool.poetry.dev-dependencies]
-flake8 = "^4.0.1"
+isort = "^5.0"
+pytest = "^5.2"
+pytest-cov = "^2.10.1"
+autoflake = "^1.4"
+flake8 = "^3.8.4"
 mypy = "^0.971"
+pre-commit = "^2.8.2"
+black = "^20.8b1"
+pydantic = "^1.10.2"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

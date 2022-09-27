@@ -3,14 +3,22 @@
 # The Ed-Fi Alliance licenses this file to you under the Apache License, Version 2.0.
 # See the LICENSE and NOTICES files in the project root for more information.
 
-from distutils.util import subst_vars
-from operator import contains
-from queue import Empty
-from decouple import config
-from edfi_amt_data_lake.parquet.Common.functions import getEndpointJson
-from edfi_amt_data_lake.parquet.Common.pandasWrapper import toCsv, crossTab,jsonNormalize, pdMerge, subset, renameColumns, saveParquetFile, addColumnIfNotExists,to_datetime_key,replace_null
-from datetime import timedelta
 from datetime import date
+
+from decouple import config
+
+from edfi_amt_data_lake.parquet.Common.functions import getEndpointJson
+from edfi_amt_data_lake.parquet.Common.pandasWrapper import (
+    addColumnIfNotExists,
+    crossTab,
+    jsonNormalize,
+    pdMerge,
+    renameColumns,
+    replace_null,
+    saveParquetFile,
+    subset,
+    to_datetime_key,
+)
 
 ENDPOINT_CALENDAR_DATES = 'calendarDates'
 ENDPOINT_DISCIPLINE_INCIDENTS = 'disciplineIncidents'
@@ -20,87 +28,79 @@ ENDPOINT_STUDENT_SECTION_ASSOCIATION = 'studentSectionAssociations'
 ENDPOINT_STUDENT_SCHOOL_ATTENDANCE_EVENTS = 'studentSchoolAttendanceEvents'
 ENDPOINT_STUDENT_SECTION_ATTENDANCE_EVENTS = 'studentSectionAttendanceEvents'
 
+
 def studentEarlyWarningFactDim(school_year) -> None:
-    calendarDatesContent = getEndpointJson(ENDPOINT_CALENDAR_DATES, config('SILVER_DATA_LOCATION'),school_year)
-    disciplineIncidentContent = getEndpointJson(ENDPOINT_DISCIPLINE_INCIDENTS, config('SILVER_DATA_LOCATION'),school_year)
-    studentDisciplineIncidentBehaviorAssociationsContent = getEndpointJson(ENDPOINT_STUDENT_DISCIPLINE_BEHAVIOR_ASSOCIATION, config('SILVER_DATA_LOCATION'),school_year)
-    studentSchoolAssociationsContent = getEndpointJson(ENDPOINT_STUDENT_SCHOOL_ASSOCIATION, config('SILVER_DATA_LOCATION'),school_year)
-    studentSectionAssociationsContent = getEndpointJson(ENDPOINT_STUDENT_SECTION_ASSOCIATION, config('SILVER_DATA_LOCATION'),school_year)
-    studentSchoolAttendanceEventsContent = getEndpointJson(ENDPOINT_STUDENT_SCHOOL_ATTENDANCE_EVENTS, config('SILVER_DATA_LOCATION'),school_year)
-    studentSectionAttendanceEventsContent = getEndpointJson(ENDPOINT_STUDENT_SECTION_ATTENDANCE_EVENTS, config('SILVER_DATA_LOCATION'),school_year)
-    
+    calendarDatesContent = getEndpointJson(ENDPOINT_CALENDAR_DATES, config('SILVER_DATA_LOCATION'), school_year)
+    disciplineIncidentContent = getEndpointJson(ENDPOINT_DISCIPLINE_INCIDENTS, config('SILVER_DATA_LOCATION'), school_year)
+    studentDisciplineIncidentBehaviorAssociationsContent = getEndpointJson(ENDPOINT_STUDENT_DISCIPLINE_BEHAVIOR_ASSOCIATION, config('SILVER_DATA_LOCATION'), school_year)
+    studentSchoolAssociationsContent = getEndpointJson(ENDPOINT_STUDENT_SCHOOL_ASSOCIATION, config('SILVER_DATA_LOCATION'), school_year)
+    studentSectionAssociationsContent = getEndpointJson(ENDPOINT_STUDENT_SECTION_ASSOCIATION, config('SILVER_DATA_LOCATION'), school_year)
+    studentSchoolAttendanceEventsContent = getEndpointJson(ENDPOINT_STUDENT_SCHOOL_ATTENDANCE_EVENTS, config('SILVER_DATA_LOCATION'), school_year)
+    studentSectionAttendanceEventsContent = getEndpointJson(ENDPOINT_STUDENT_SECTION_ATTENDANCE_EVENTS, config('SILVER_DATA_LOCATION'), school_year)
+
     ############################
     # studentSchoolAssociation
     ############################
-    studentSchoolAssociationNormalized =  jsonNormalize(
+    studentSchoolAssociationNormalized = jsonNormalize(
         studentSchoolAssociationsContent,
-        recordPath=None
-        ,meta=['schoolReference.schoolId'
-            ,'studentReference.studentUniqueId'
-            ,'entryDate'
-            ,'exitWithdrawDate'
-        ],
+        recordPath=None,
+        meta=['schoolReference.schoolId', 'studentReference.studentUniqueId', 'entryDate', 'exitWithdrawDate'],
         metaPrefix=None,
         recordPrefix='calendarEvents_',
         errors='ignore'
     )
+
     # Select needed columns.
-    studentSchoolAssociationNormalized = subset(studentSchoolAssociationNormalized, 
-        [
-            'schoolReference.schoolId'
-            ,'studentReference.studentUniqueId'
-            ,'entryDate'
-            ,'exitWithdrawDate'
-        ])
-    studentSchoolAssociationNormalized = renameColumns(studentSchoolAssociationNormalized, 
-        {
-            'schoolReference.schoolId': 'schoolId',
-            'studentReference.studentUniqueId': 'studentUniqueId'
-        })
-    
+    studentSchoolAssociationNormalized = subset(studentSchoolAssociationNormalized, [
+        'schoolReference.schoolId',
+        'studentReference.studentUniqueId',
+        'entryDate',
+        'exitWithdrawDate'
+    ])
+
+    studentSchoolAssociationNormalized = renameColumns(studentSchoolAssociationNormalized, {
+        'schoolReference.schoolId': 'schoolId',
+        'studentReference.studentUniqueId': 'studentUniqueId'
+    })
+
     ############################
     # Calendar dates
     ############################
-    calendarDatesNormalized =  jsonNormalize(
+    calendarDatesNormalized = jsonNormalize(
         calendarDatesContent,
-        recordPath=['calendarEvents']
-        ,meta=['date'
-        ,['calendarReference', 'schoolId']
-        ,['calendarReference', 'schoolYear']
-        ],
+        recordPath=['calendarEvents'],
+        meta=['date', ['calendarReference', 'schoolId'], ['calendarReference', 'schoolYear']],
         metaPrefix=None,
         recordPrefix='calendarEvents_',
         errors='ignore'
     )
-    
+
     # Remove namespace
     if not calendarDatesNormalized['calendarEvents_calendarEventDescriptor'].empty:
         if len(calendarDatesNormalized['calendarEvents_calendarEventDescriptor'].str.split('#')) > 0:
             calendarDatesNormalized["calendarEvents_calendarEventDescriptor"] = calendarDatesNormalized["calendarEvents_calendarEventDescriptor"].str.split("#").str.get(1)
-    
-    calendarDatesNormalized.loc[calendarDatesNormalized['calendarEvents_calendarEventDescriptor'] == 'Instructional day', 'IsInstructionalDay'] = '1' 
-    calendarDatesNormalized.loc[calendarDatesNormalized['calendarEvents_calendarEventDescriptor'] != 'Instructional day', 'IsInstructionalDay'] = '0' 
+
+    calendarDatesNormalized.loc[calendarDatesNormalized['calendarEvents_calendarEventDescriptor'] == 'Instructional day', 'IsInstructionalDay'] = '1'
+    calendarDatesNormalized.loc[calendarDatesNormalized['calendarEvents_calendarEventDescriptor'] != 'Instructional day', 'IsInstructionalDay'] = '0'
 
     # Select needed columns.
-    calendarDatesNormalized = subset(calendarDatesNormalized, 
-        [
-            'IsInstructionalDay'
-            ,'calendarReference.schoolId'
-            ,'calendarReference.schoolYear'
-            ,'date'
-        ])
-    
-    calendarDatesNormalized = renameColumns(calendarDatesNormalized, 
-        {
-            'calendarReference.schoolId': 'schoolId'
-            ,'calendarReference.schoolYear': 'schoolYear'
-        })
-    
+    calendarDatesNormalized = subset(calendarDatesNormalized, [
+        'IsInstructionalDay',
+        'calendarReference.schoolId',
+        'calendarReference.schoolYear',
+        'date'
+    ])
+
+    calendarDatesNormalized = renameColumns(calendarDatesNormalized, {
+        'calendarReference.schoolId': 'schoolId',
+        'calendarReference.schoolYear': 'schoolYear'
+    })
+
     ############################
     # studentSchoolAssociations - calendarDates
     ############################
     resultDataFrame = pdMerge(
-        left=studentSchoolAssociationNormalized, 
+        left=studentSchoolAssociationNormalized,
         right=calendarDatesNormalized,
         how='inner',
         leftOn=['schoolId'],
@@ -108,22 +108,23 @@ def studentEarlyWarningFactDim(school_year) -> None:
         suffixLeft='_studentSchoolAssociation',
         suffixRight='_calendarDates'
     )
-    beginDate = date.today()
-    endDate = beginDate + timedelta(days=366)
-    resultDataFrame[['exitWithdrawDate']].apply(lambda x: x.str.strip()).replace('', endDate)
-    resultDataFrame[resultDataFrame['entryDate'] <= resultDataFrame['date']]
-    resultDataFrame[resultDataFrame['exitWithdrawDate'] >= resultDataFrame['date']]
-    
+
+    resultDataFrame['exitWithdrawDateKey'] = to_datetime_key(resultDataFrame, 'exitWithdrawDate')
+    resultDataFrame['dateKey'] = to_datetime_key(resultDataFrame, 'date')
+    resultDataFrame['entryDateKey'] = to_datetime_key(resultDataFrame, 'entryDate')
+    resultDataFrame['date_now'] = date.today()
+    resultDataFrame['date_now'] = to_datetime_key(resultDataFrame, 'date_now')
+    resultDataFrame = resultDataFrame[resultDataFrame['entryDateKey'] <= resultDataFrame['dateKey']]
+    resultDataFrame = resultDataFrame[resultDataFrame['exitWithdrawDateKey'] >= resultDataFrame['dateKey']]
+    resultDataFrame = resultDataFrame[resultDataFrame['dateKey'] <= resultDataFrame['date_now']]
+
     ############################
     # StudentSchoolAttendance
     ############################
-    studentSchoolAttendanceEventsNormalized =  jsonNormalize(
+    studentSchoolAttendanceEventsNormalized = jsonNormalize(
         studentSchoolAttendanceEventsContent,
         recordPath=None,
-        meta=['schoolReference.schoolId'
-        ,'studentReference.studentUniqueId'
-        ,'eventDate'
-        ,'attendanceEventCategoryDescriptor'],
+        meta=['schoolReference.schoolId', 'studentReference.studentUniqueId', 'eventDate', 'attendanceEventCategoryDescriptor'],
         metaPrefix=None,
         recordPrefix=None,
         errors='ignore'
@@ -133,50 +134,48 @@ def studentEarlyWarningFactDim(school_year) -> None:
         if len(studentSchoolAttendanceEventsNormalized['attendanceEventCategoryDescriptor'].str.split('#')) > 0:
             studentSchoolAttendanceEventsNormalized["attendanceEventCategoryDescriptor"] = studentSchoolAttendanceEventsNormalized["attendanceEventCategoryDescriptor"].str.split("#").str.get(1)
     # Select needed columns.
-    studentSchoolAttendanceEventsNormalized = subset(studentSchoolAttendanceEventsNormalized, 
-        [
-            'schoolReference.schoolId', 
-            'studentReference.studentUniqueId', 
-            'eventDate', 
-            'attendanceEventCategoryDescriptor'
-        ])
-    studentSchoolAttendanceEventsNormalized = renameColumns(studentSchoolAttendanceEventsNormalized, 
-        {
-            'schoolReference.schoolId': 'schoolId',
-            'studentReference.studentUniqueId': 'studentUniqueId'
-        })
+    studentSchoolAttendanceEventsNormalized = subset(studentSchoolAttendanceEventsNormalized, [
+        'schoolReference.schoolId',
+        'studentReference.studentUniqueId',
+        'eventDate',
+        'attendanceEventCategoryDescriptor'
+    ])
+
+    studentSchoolAttendanceEventsNormalized = renameColumns(studentSchoolAttendanceEventsNormalized, {
+        'schoolReference.schoolId': 'schoolId',
+        'studentReference.studentUniqueId': 'studentUniqueId'
+    })
 
     # 'Transpose' Attendance table.
     studentSchoolAttendanceEventsNormalized = crossTab(
-        index=[studentSchoolAttendanceEventsNormalized['schoolId']
-                ,studentSchoolAttendanceEventsNormalized['studentUniqueId']
-                ,studentSchoolAttendanceEventsNormalized['eventDate']]
-        ,columns=studentSchoolAttendanceEventsNormalized['attendanceEventCategoryDescriptor']).reset_index()
+        index=[
+            studentSchoolAttendanceEventsNormalized['schoolId'],
+            studentSchoolAttendanceEventsNormalized['studentUniqueId'],
+            studentSchoolAttendanceEventsNormalized['eventDate']
+        ],
+        columns=studentSchoolAttendanceEventsNormalized['attendanceEventCategoryDescriptor']).reset_index()
+
     # Rename attendance columns
-    studentSchoolAttendanceEventsNormalized = renameColumns(studentSchoolAttendanceEventsNormalized, 
-        {
-            'In Attendance': 'IsPresentSchool',
-            'Excused Absence': 'IsAbsentFromSchoolExcused',
-            'Unexcused Absence': 'IsAbsentFromSchoolUnexcused',
-            'Tardy': 'IsTardyToSchool'
-        })
+    studentSchoolAttendanceEventsNormalized = renameColumns(studentSchoolAttendanceEventsNormalized, {
+        'In Attendance': 'IsPresentSchool',
+        'Excused Absence': 'IsAbsentFromSchoolExcused',
+        'Unexcused Absence': 'IsAbsentFromSchoolUnexcused',
+        'Tardy': 'IsTardyToSchool'
+    })
 
     ############################
     # Result - studentSchoolAttendanceEventsNormalized
     ############################
     resultDataFrame = pdMerge(
-        left=resultDataFrame, 
+        left=resultDataFrame,
         right=studentSchoolAttendanceEventsNormalized,
         how='left',
-        leftOn=['schoolId'
-            , 'studentUniqueId'
-            ,'date'],
-        rigthOn=['schoolId'
-            , 'studentUniqueId'
-            ,'eventDate'],
+        leftOn=['schoolId', 'studentUniqueId', 'date'],
+        rigthOn=['schoolId', 'studentUniqueId', 'eventDate'],
         suffixLeft='_studentSchoolAssociation',
         suffixRight='_studentSchoolAttendanceEvents'
     )
+
     ####################################################################################
     # By Section
     ####################################################################################
@@ -184,152 +183,158 @@ def studentEarlyWarningFactDim(school_year) -> None:
     ############################
     # studentSectionAssociationsNormalized
     ############################
-    studentSectionAssociationsNormalized =  jsonNormalize(
+    studentSectionAssociationsNormalized = jsonNormalize(
         studentSectionAssociationsContent,
         recordPath=None,
-        meta=['sectionReference.localCourseCode'
-            ,'sectionReference.schoolId'
-            ,'sectionReference.schoolYear'
-            ,'sectionReference.sectionIdentifier'
-            ,'sectionReference.sessionName'
-            ,'studentReference.studentUniqueId'
-            ,'endDate'
-            ,'homeroomIndicator'],
+        meta=[
+            'sectionReference.localCourseCode',
+            'sectionReference.schoolId',
+            'sectionReference.schoolYear',
+            'sectionReference.sectionIdentifier',
+            'sectionReference.sessionName',
+            'studentReference.studentUniqueId',
+            'endDate',
+            'homeroomIndicator'],
         metaPrefix=None,
         recordPrefix=None,
         errors='ignore'
     )
-    # Select needed columns.
-    studentSectionAssociationsNormalized = subset(studentSectionAssociationsNormalized, 
-        [
-            'sectionReference.localCourseCode'
-            ,'sectionReference.schoolId'
-            ,'sectionReference.schoolYear'
-            ,'sectionReference.sectionIdentifier'
-            ,'sectionReference.sessionName'
-            ,'studentReference.studentUniqueId'
-            ,'endDate'
-            ,'homeroomIndicator'
-        ])
 
-    studentSectionAssociationsNormalized = renameColumns(studentSectionAssociationsNormalized, 
-        {
-            'sectionReference.localCourseCode' : 'localCourseCode'
-            ,'sectionReference.schoolId' : 'schoolId'
-            ,'sectionReference.schoolYear' : 'schoolYear'
-            ,'sectionReference.sectionIdentifier' : 'sectionIdentifier'
-            ,'sectionReference.sessionName' : 'sessionName'
-            ,'studentReference.studentUniqueId' : 'studentUniqueId'
-        })
+    # Select needed columns.
+    studentSectionAssociationsNormalized = subset(studentSectionAssociationsNormalized, [
+        'sectionReference.localCourseCode',
+        'sectionReference.schoolId',
+        'sectionReference.schoolYear',
+        'sectionReference.sectionIdentifier',
+        'sectionReference.sessionName',
+        'studentReference.studentUniqueId',
+        'endDate',
+        'homeroomIndicator'
+    ])
+
+    studentSectionAssociationsNormalized = renameColumns(studentSectionAssociationsNormalized, {
+        'sectionReference.localCourseCode' : 'localCourseCode',
+        'sectionReference.schoolId' : 'schoolId',
+        'sectionReference.schoolYear' : 'schoolYear',
+        'sectionReference.sectionIdentifier' : 'sectionIdentifier',
+        'sectionReference.sessionName' : 'sessionName',
+        'studentReference.studentUniqueId' : 'studentUniqueId'
+    })
+
     ############################
     # StudentSectionAttendance
     ############################
-    studentSectionAttendanceEventsNormalized=  jsonNormalize(
+    studentSectionAttendanceEventsNormalized = jsonNormalize(
         studentSectionAttendanceEventsContent,
         recordPath=None,
-        meta=['sectionReference.localCourseCode'
-            ,'sectionReference.schoolId'
-            ,'sectionReference.schoolYear'
-            ,'sectionReference.sectionIdentifier'
-            ,'sectionReference.sessionName'
-            ,'studentReference.studentUniqueId'
-            ,'eventDate'
-            ,'attendanceEventCategoryDescriptor'],
+        meta=[
+            'sectionReference.localCourseCode',
+            'sectionReference.schoolId',
+            'sectionReference.schoolYear',
+            'sectionReference.sectionIdentifier',
+            'sectionReference.sessionName',
+            'studentReference.studentUniqueId',
+            'eventDate',
+            'attendanceEventCategoryDescriptor'
+        ],
         metaPrefix=None,
         recordPrefix=None,
         errors='ignore'
     )
+
     # Remove namespace
     if not studentSectionAttendanceEventsNormalized['attendanceEventCategoryDescriptor'].empty:
         if len(studentSectionAttendanceEventsNormalized['attendanceEventCategoryDescriptor'].str.split('#')) > 0:
             studentSectionAttendanceEventsNormalized["attendanceEventCategoryDescriptor"] = studentSectionAttendanceEventsNormalized["attendanceEventCategoryDescriptor"].str.split("#").str.get(1)
-    
+
     # Select needed columns.
-    studentSectionAttendanceEventsNormalized = subset(studentSectionAttendanceEventsNormalized, 
-        [
-            'sectionReference.localCourseCode'
-            ,'sectionReference.schoolId'
-            ,'sectionReference.schoolYear'
-            ,'sectionReference.sectionIdentifier'
-            ,'sectionReference.sessionName'
-            ,'studentReference.studentUniqueId'
-            ,'eventDate'
-            ,'attendanceEventCategoryDescriptor'
-            ,'educationalEnvironmentDescriptor'
-        ])
+    studentSectionAttendanceEventsNormalized = subset(studentSectionAttendanceEventsNormalized, [
+        'sectionReference.localCourseCode',
+        'sectionReference.schoolId',
+        'sectionReference.schoolYear',
+        'sectionReference.sectionIdentifier',
+        'sectionReference.sessionName',
+        'studentReference.studentUniqueId',
+        'eventDate',
+        'attendanceEventCategoryDescriptor',
+        'educationalEnvironmentDescriptor'
+    ])
 
-    studentSectionAttendanceEventsNormalized = renameColumns(studentSectionAttendanceEventsNormalized, 
-        {
-            'sectionReference.localCourseCode' : 'localCourseCode'
-            ,'sectionReference.schoolId' : 'schoolId'
-            ,'sectionReference.schoolYear' : 'schoolYear'
-            ,'sectionReference.sectionIdentifier' : 'sectionIdentifier'
-            ,'sectionReference.sessionName' : 'sessionName'
-            ,'studentReference.studentUniqueId' : 'studentUniqueId'
-        })
-    
+    studentSectionAttendanceEventsNormalized = renameColumns(studentSectionAttendanceEventsNormalized, {
+        'sectionReference.localCourseCode' : 'localCourseCode',
+        'sectionReference.schoolId' : 'schoolId',
+        'sectionReference.schoolYear' : 'schoolYear',
+        'sectionReference.sectionIdentifier' : 'sectionIdentifier',
+        'sectionReference.sessionName' : 'sessionName',
+        'studentReference.studentUniqueId' : 'studentUniqueId'
+    })
+
     studentSectionAttendanceEventsNormalized = crossTab(
-        index=[studentSectionAttendanceEventsNormalized['localCourseCode']
-                ,studentSectionAttendanceEventsNormalized['schoolId']
-                ,studentSectionAttendanceEventsNormalized['schoolYear']
-                ,studentSectionAttendanceEventsNormalized['sectionIdentifier']
-                ,studentSectionAttendanceEventsNormalized['sessionName']
-                ,studentSectionAttendanceEventsNormalized['studentUniqueId']
-                ,studentSectionAttendanceEventsNormalized['eventDate']
-                ,studentSectionAttendanceEventsNormalized['educationalEnvironmentDescriptor']
-                ]
-        ,columns=studentSectionAttendanceEventsNormalized['attendanceEventCategoryDescriptor']).reset_index()
+        index=[
+            studentSectionAttendanceEventsNormalized['localCourseCode'],
+            studentSectionAttendanceEventsNormalized['schoolId'],
+            studentSectionAttendanceEventsNormalized['schoolYear'],
+            studentSectionAttendanceEventsNormalized['sectionIdentifier'],
+            studentSectionAttendanceEventsNormalized['sessionName'],
+            studentSectionAttendanceEventsNormalized['studentUniqueId'],
+            studentSectionAttendanceEventsNormalized['eventDate'],
+            studentSectionAttendanceEventsNormalized['educationalEnvironmentDescriptor']
+        ],
+        columns=studentSectionAttendanceEventsNormalized['attendanceEventCategoryDescriptor']).reset_index()
 
-    studentSectionAttendanceEventsNormalized = renameColumns(studentSectionAttendanceEventsNormalized, 
-        {
-            'In Attendance': 'IsPresentAnyClass',
-            'Excused Absence': 'IsAbsentFromAnyClassExcused',
-            'Unexcused Absence': 'IsAbsentFromAnyClassUnexcused',
-            'Tardy': 'IsTardyToAnyClass'
-        }).reset_index()
-    
+    studentSectionAttendanceEventsNormalized = renameColumns(studentSectionAttendanceEventsNormalized, {
+        'In Attendance': 'IsPresentAnyClass',
+        'Excused Absence': 'IsAbsentFromAnyClassExcused',
+        'Unexcused Absence': 'IsAbsentFromAnyClassUnexcused',
+        'Tardy': 'IsTardyToAnyClass'
+    }).reset_index()
+
     addColumnIfNotExists(studentSectionAttendanceEventsNormalized, 'IsPresentAnyClass', 0)
     addColumnIfNotExists(studentSectionAttendanceEventsNormalized, 'IsAbsentFromAnyClassExcused', 0)
     addColumnIfNotExists(studentSectionAttendanceEventsNormalized, 'IsAbsentFromAnyClassUnexcused', 0)
     addColumnIfNotExists(studentSectionAttendanceEventsNormalized, 'IsTardyToAnyClass', 0)
-    studentSectionAttendanceEventsNormalized.loc[studentSectionAttendanceEventsNormalized['IsPresentAnyClass'] == '', 'IsPresentAnyClass'] = '0' 
-    studentSectionAttendanceEventsNormalized.loc[studentSectionAttendanceEventsNormalized['IsAbsentFromAnyClassExcused'] == '', 'IsAbsentFromAnyClassExcused'] = '0' 
-    studentSectionAttendanceEventsNormalized.loc[studentSectionAttendanceEventsNormalized['IsAbsentFromAnyClassUnexcused'] == '', 'IsAbsentFromAnyClassUnexcused'] = '0' 
-    studentSectionAttendanceEventsNormalized.loc[studentSectionAttendanceEventsNormalized['IsTardyToAnyClass'] == '', 'IsTardyToAnyClass'] = '0' 
+    studentSectionAttendanceEventsNormalized.loc[studentSectionAttendanceEventsNormalized['IsPresentAnyClass'] == '', 'IsPresentAnyClass'] = '0'
+    studentSectionAttendanceEventsNormalized.loc[studentSectionAttendanceEventsNormalized['IsAbsentFromAnyClassExcused'] == '', 'IsAbsentFromAnyClassExcused'] = '0'
+    studentSectionAttendanceEventsNormalized.loc[studentSectionAttendanceEventsNormalized['IsAbsentFromAnyClassUnexcused'] == '', 'IsAbsentFromAnyClassUnexcused'] = '0'
+    studentSectionAttendanceEventsNormalized.loc[studentSectionAttendanceEventsNormalized['IsTardyToAnyClass'] == '', 'IsTardyToAnyClass'] = '0'
 
-    studentSectionAttendanceEventsNormalized = subset(studentSectionAttendanceEventsNormalized, 
-        [
-            'localCourseCode'
-            ,'schoolId'
-            ,'schoolYear'
-            ,'sectionIdentifier'
-            ,'sessionName'
-            ,'studentUniqueId'
-            ,'eventDate'
-            ,'IsPresentAnyClass'
-            ,'IsAbsentFromAnyClassExcused'
-            ,'IsAbsentFromAnyClassUnexcused'
-            ,'IsTardyToAnyClass'
-        ])
+    studentSectionAttendanceEventsNormalized = subset(studentSectionAttendanceEventsNormalized, [
+        'localCourseCode',
+        'schoolId',
+        'schoolYear',
+        'sectionIdentifier',
+        'sessionName',
+        'studentUniqueId',
+        'eventDate',
+        'IsPresentAnyClass',
+        'IsAbsentFromAnyClassExcused',
+        'IsAbsentFromAnyClassUnexcused',
+        'IsTardyToAnyClass'
+    ])
+
     ############################
     # StudentSectionAssociation - SectionAttendance
     ############################
     studentSectionAttendanceEventsNormalized = pdMerge(
-        left=studentSectionAssociationsNormalized, 
+        left=studentSectionAssociationsNormalized,
         right=studentSectionAttendanceEventsNormalized,
         how='inner',
-        leftOn=['localCourseCode'
-        ,'schoolId'
-        ,'schoolYear'
-        ,'sectionIdentifier'
-        ,'sessionName'
-        ,'studentUniqueId'],
-        rigthOn=['localCourseCode'
-        ,'schoolId'
-        ,'schoolYear'
-        ,'sectionIdentifier'
-        ,'sessionName'
-        ,'studentUniqueId'],
+        leftOn=[
+            'localCourseCode',
+            'schoolId',
+            'schoolYear',
+            'sectionIdentifier',
+            'sessionName',
+            'studentUniqueId'
+        ],
+        rigthOn=[
+            'localCourseCode',
+            'schoolId',
+            'schoolYear',
+            'sectionIdentifier',
+            'sessionName',
+            'studentUniqueId'
+        ],
         suffixLeft='_studentSchool',
         suffixRight='_studentSection'
     )
@@ -337,83 +342,87 @@ def studentEarlyWarningFactDim(school_year) -> None:
     ############################
     # Subset homeroom values
     ############################
-    studentSectionHomeroomDataFrame = studentSectionAttendanceEventsNormalized[studentSectionAttendanceEventsNormalized['homeroomIndicator']==True]
+    studentSectionHomeroomDataFrame = studentSectionAttendanceEventsNormalized[studentSectionAttendanceEventsNormalized['homeroomIndicator'] is True]
 
-    studentSectionHomeroomDataFrame = renameColumns(studentSectionHomeroomDataFrame, 
-        {
-            'IsPresentAnyClass': 'IsPresentHomeroom',
-            'IsAbsentFromAnyClassExcused': 'IsAbsentFromHomeroomExcused',
-            'IsAbsentFromAnyClassUnexcused': 'IsAbsentFromHomeroomUnexcused',
-            'IsTardyToAnyClass': 'IsTardyToHomeroom'            
-        })
-   
+    studentSectionHomeroomDataFrame = renameColumns(studentSectionHomeroomDataFrame, {
+        'IsPresentAnyClass': 'IsPresentHomeroom',
+        'IsAbsentFromAnyClassExcused': 'IsAbsentFromHomeroomExcused',
+        'IsAbsentFromAnyClassUnexcused': 'IsAbsentFromHomeroomUnexcused',
+        'IsTardyToAnyClass': 'IsTardyToHomeroom'
+    })
+
     ############################
     # Add Homeroom columns
     ############################
     studentSectionAttendanceEventsNormalized = pdMerge(
-        left=studentSectionAttendanceEventsNormalized, 
+        left=studentSectionAttendanceEventsNormalized,
         right=studentSectionHomeroomDataFrame,
         how='left',
-        leftOn=['localCourseCode'
-        ,'schoolId'
-        ,'schoolYear'
-        ,'sectionIdentifier'
-        ,'sessionName'
-        ,'studentUniqueId'
-        ,'eventDate'
-        ,'endDate'
-        ,'homeroomIndicator'],
-        rigthOn=['localCourseCode'
-        ,'schoolId'
-        ,'schoolYear'
-        ,'sectionIdentifier'
-        ,'sessionName'
-        ,'studentUniqueId'
-        ,'eventDate'
-        ,'endDate'
-        ,'homeroomIndicator'],
+        leftOn=[
+            'localCourseCode',
+            'schoolId',
+            'schoolYear',
+            'sectionIdentifier',
+            'sessionName',
+            'studentUniqueId',
+            'eventDate',
+            'endDate',
+            'homeroomIndicator'],
+        rigthOn=[
+            'localCourseCode',
+            'schoolId',
+            'schoolYear',
+            'sectionIdentifier',
+            'sessionName',
+            'studentUniqueId',
+            'eventDate',
+            'endDate',
+            'homeroomIndicator'],
         suffixLeft='_studentSectionAssociationAttendance',
         suffixRight='_studentSectionAssociationAttendanceHomeroom'
     )
 
-    studentSectionAttendanceEventsNormalized = subset(studentSectionAttendanceEventsNormalized, 
+    studentSectionAttendanceEventsNormalized = subset(studentSectionAttendanceEventsNormalized, [
+        'schoolId',
+        'schoolYear',
+        'studentUniqueId',
+        'eventDate',
+        'IsPresentAnyClass',
+        'IsAbsentFromAnyClassExcused',
+        'IsAbsentFromAnyClassUnexcused',
+        'IsTardyToAnyClass',
+        'IsPresentHomeroom',
+        'IsAbsentFromHomeroomExcused',
+        'IsAbsentFromHomeroomUnexcused',
+        'IsTardyToHomeroom'
+    ])
+
+    studentSectionAttendanceEventsNormalized = studentSectionAttendanceEventsNormalized.groupby(
         [
-            'schoolId'
-            ,'schoolYear'
-            ,'studentUniqueId'
-            ,'eventDate'
-            ,'IsPresentAnyClass'
-            ,'IsAbsentFromAnyClassExcused'
-            ,'IsAbsentFromAnyClassUnexcused'
-            ,'IsTardyToAnyClass'
-            ,'IsPresentHomeroom'
-            ,'IsAbsentFromHomeroomExcused'
-            ,'IsAbsentFromHomeroomUnexcused'
-            ,'IsTardyToHomeroom'
-        ])
-    
-    studentSectionAttendanceEventsNormalized=studentSectionAttendanceEventsNormalized.groupby([
-        'schoolId'
-            ,'schoolYear'
-            ,'studentUniqueId'
-            ,'eventDate']).max().reset_index()
-   
+            'schoolId',
+            'schoolYear',
+            'studentUniqueId',
+            'eventDate'
+        ]).max().reset_index()
+
     ############################
     # Result - StudentSectionAttendance
     ############################
     resultDataFrame = pdMerge(
-        left=resultDataFrame, 
+        left=resultDataFrame,
         right=studentSectionAttendanceEventsNormalized,
         how='left',
-        leftOn=['schoolId'
-        ,'studentUniqueId'
-        ,'date'
-        ,'schoolYear'
+        leftOn=[
+            'schoolId',
+            'studentUniqueId',
+            'date',
+            'schoolYear'
         ],
-        rigthOn=['schoolId'
-        ,'studentUniqueId'
-        ,'eventDate'
-        ,'schoolYear'
+        rigthOn=[
+            'schoolId',
+            'studentUniqueId',
+            'eventDate',
+            'schoolYear'
         ],
         suffixLeft='_result',
         suffixRight='_studentSectionAssociationAttendance'
@@ -422,12 +431,13 @@ def studentEarlyWarningFactDim(school_year) -> None:
     ############################
     # Discipline Incident
     ############################
-    disciplineIncidentNormalized =  jsonNormalize(
+    disciplineIncidentNormalized = jsonNormalize(
         disciplineIncidentContent,
-        recordPath=None
-        ,meta=['schoolReference.schoolId'
-            ,'incidentIdentifier'
-            ,'incidentDate'
+        recordPath=None,
+        meta=[
+            'schoolReference.schoolId',
+            'incidentIdentifier',
+            'incidentDate'
         ],
         metaPrefix=None,
         recordPrefix='',
@@ -435,28 +445,27 @@ def studentEarlyWarningFactDim(school_year) -> None:
     )
 
     # Select needed columns.
-    disciplineIncidentNormalized = subset(disciplineIncidentNormalized, 
-        [
-            'schoolReference.schoolId'
-            ,'incidentIdentifier'
-            ,'incidentDate'
-        ])
-    
-    disciplineIncidentNormalized = renameColumns(disciplineIncidentNormalized, 
-        {
-            'schoolReference.schoolId': 'schoolId'
-        })
+    disciplineIncidentNormalized = subset(disciplineIncidentNormalized, [
+        'schoolReference.schoolId',
+        'incidentIdentifier',
+        'incidentDate'
+    ])
+
+    disciplineIncidentNormalized = renameColumns(disciplineIncidentNormalized, {
+        'schoolReference.schoolId': 'schoolId'
+    })
 
     ############################
     # Student Discipline Behavior
     ############################
-    studentDisciplineIncidentBehaviorAssociationsNormalized =  jsonNormalize(
+    studentDisciplineIncidentBehaviorAssociationsNormalized = jsonNormalize(
         studentDisciplineIncidentBehaviorAssociationsContent,
-        recordPath=None
-        ,meta=['disciplineIncidentReference.incidentIdentifier'
-            ,'disciplineIncidentReference.schoolId'
-            ,'studentReference.studentUniqueId'
-            ,'behaviorDescriptor'
+        recordPath=None,
+        meta=[
+            'disciplineIncidentReference.incidentIdentifier',
+            'disciplineIncidentReference.schoolId',
+            'studentReference.studentUniqueId',
+            'behaviorDescriptor'
         ],
         metaPrefix=None,
         recordPrefix='calendarEvents_',
@@ -468,68 +477,73 @@ def studentEarlyWarningFactDim(school_year) -> None:
             studentDisciplineIncidentBehaviorAssociationsNormalized["behaviorDescriptor"] = studentDisciplineIncidentBehaviorAssociationsNormalized["behaviorDescriptor"].str.split("#").str.get(1)
 
     # Select needed columns.
-    studentDisciplineIncidentBehaviorAssociationsNormalized = subset(studentDisciplineIncidentBehaviorAssociationsNormalized, 
-        [
-            'disciplineIncidentReference.incidentIdentifier'
-            ,'disciplineIncidentReference.schoolId'
-            ,'studentReference.studentUniqueId'
-            ,'behaviorDescriptor'
-        ])
-    
-    studentDisciplineIncidentBehaviorAssociationsNormalized = renameColumns(studentDisciplineIncidentBehaviorAssociationsNormalized, 
-        {
-            'disciplineIncidentReference.incidentIdentifier': 'incidentIdentifier'
-            ,'disciplineIncidentReference.schoolId': 'schoolId'
-            ,'studentReference.studentUniqueId': 'studentUniqueId'
-        })
+    studentDisciplineIncidentBehaviorAssociationsNormalized = subset(studentDisciplineIncidentBehaviorAssociationsNormalized, [
+        'disciplineIncidentReference.incidentIdentifier',
+        'disciplineIncidentReference.schoolId',
+        'studentReference.studentUniqueId',
+        'behaviorDescriptor'
+    ])
+
+    studentDisciplineIncidentBehaviorAssociationsNormalized = renameColumns(studentDisciplineIncidentBehaviorAssociationsNormalized, {
+        'disciplineIncidentReference.incidentIdentifier': 'incidentIdentifier',
+        'disciplineIncidentReference.schoolId': 'schoolId',
+        'studentReference.studentUniqueId': 'studentUniqueId'
+    })
 
     resultDisciplineDataFrame = pdMerge(
-        left=disciplineIncidentNormalized, 
+        left=disciplineIncidentNormalized,
         right=studentDisciplineIncidentBehaviorAssociationsNormalized,
         how='inner',
-        leftOn=['schoolId'
-        ,'incidentIdentifier'],
-        rigthOn=['schoolId'
-        ,'incidentIdentifier'],
+        leftOn=[
+            'schoolId',
+            'incidentIdentifier'
+        ],
+        rigthOn=[
+            'schoolId',
+            'incidentIdentifier'
+        ],
         suffixLeft='_discipline',
         suffixRight='_disciplineBehavior'
     )
     resultDisciplineDataFrame = crossTab(
-        index=[resultDisciplineDataFrame['schoolId']
-                ,resultDisciplineDataFrame['studentUniqueId']
-                ,resultDisciplineDataFrame['incidentDate']]
-        ,columns=resultDisciplineDataFrame['behaviorDescriptor']).reset_index()
-    
+        index=[
+            resultDisciplineDataFrame['schoolId'],
+            resultDisciplineDataFrame['studentUniqueId'],
+            resultDisciplineDataFrame['incidentDate']
+        ],
+        columns=resultDisciplineDataFrame['behaviorDescriptor']).reset_index()
+
     # Select needed columns.
-    resultDisciplineDataFrame = renameColumns(resultDisciplineDataFrame, 
-        {
-            'State Offense': 'CountByDayOfStateOffenses'
-            ,'School Code of Conduct': 'CountByDayOfConductOffenses'
-        })
+    resultDisciplineDataFrame = renameColumns(resultDisciplineDataFrame, {
+        'State Offense': 'CountByDayOfStateOffenses',
+        'School Code of Conduct': 'CountByDayOfConductOffenses'
+    })
 
     resultDataFrame = pdMerge(
-        left=resultDataFrame, 
+        left=resultDataFrame,
         right=resultDisciplineDataFrame,
         how='left',
-        leftOn=['schoolId'
-        ,'studentUniqueId'
-        ,'date'],
-        rigthOn=['schoolId'
-        ,'studentUniqueId'
-        ,'incidentDate'],
+        leftOn=[
+            'schoolId',
+            'studentUniqueId',
+            'date'],
+        rigthOn=[
+            'schoolId',
+            'studentUniqueId',
+            'incidentDate'],
         suffixLeft='_attendanceDataFrame',
         suffixRight='_disciplineDataFrame'
     )
 
     resultDataFrame['studentUniqueId'] = resultDataFrame['studentUniqueId'].astype(str)
-    resultDataFrame['DateKey']=to_datetime_key(resultDataFrame,'date')
+    resultDataFrame['DateKey'] = to_datetime_key(resultDataFrame, 'date')
     resultDataFrame['IsEnrolled'] = 1
-    
+
     addColumnIfNotExists(resultDataFrame, 'IsPresentSchool', 0)
     addColumnIfNotExists(resultDataFrame, 'IsAbsentFromSchoolExcused', 0)
     addColumnIfNotExists(resultDataFrame, 'IsAbsentFromSchoolUnexcused', 0)
     addColumnIfNotExists(resultDataFrame, 'IsTardyToSchool', 0)
-    
+
     addColumnIfNotExists(resultDataFrame, 'IsPresentHomeroom', 0)
     addColumnIfNotExists(resultDataFrame, 'IsAbsentFromHomeroomExcused', 0)
     addColumnIfNotExists(resultDataFrame, 'IsAbsentFromHomeroomUnexcused', 0)
@@ -537,53 +551,49 @@ def studentEarlyWarningFactDim(school_year) -> None:
 
     addColumnIfNotExists(resultDataFrame, 'CountByDayOfStateOffenses', 0)
     addColumnIfNotExists(resultDataFrame, 'CountByDayOfConductOffenses', 0)
-    
+
     # Replace null values by 0
-    replace_null(resultDataFrame,'IsPresentSchool',0)
-    replace_null(resultDataFrame,'IsAbsentFromSchoolExcused',0)
-    replace_null(resultDataFrame,'IsAbsentFromSchoolUnexcused',0)
-    replace_null(resultDataFrame,'IsTardyToSchool',0)
+    replace_null(resultDataFrame, 'IsPresentSchool', 0)
+    replace_null(resultDataFrame, 'IsAbsentFromSchoolExcused', 0)
+    replace_null(resultDataFrame, 'IsAbsentFromSchoolUnexcused', 0)
+    replace_null(resultDataFrame, 'IsTardyToSchool', 0)
+    replace_null(resultDataFrame, 'IsPresentAnyClass', 0)
+    replace_null(resultDataFrame, 'IsAbsentFromAnyClassExcused', 0)
+    replace_null(resultDataFrame, 'IsAbsentFromAnyClassUnexcused', 0)
+    replace_null(resultDataFrame, 'IsTardyToAnyClass', 0)
+    replace_null(resultDataFrame, 'IsPresentHomeroom', 0)
+    replace_null(resultDataFrame, 'IsAbsentFromHomeroomExcused', 0)
+    replace_null(resultDataFrame, 'IsAbsentFromHomeroomUnexcused', 0)
+    replace_null(resultDataFrame, 'IsTardyToHomeroom', 0)
+    replace_null(resultDataFrame, 'CountByDayOfStateOffenses', 0)
+    replace_null(resultDataFrame, 'CountByDayOfConductOffenses', 0)
 
-    replace_null(resultDataFrame,'IsPresentAnyClass',0)
-    replace_null(resultDataFrame,'IsAbsentFromAnyClassExcused',0)
-    replace_null(resultDataFrame,'IsAbsentFromAnyClassUnexcused',0)
-    replace_null(resultDataFrame,'IsTardyToAnyClass',0)
-
-    replace_null(resultDataFrame,'IsPresentHomeroom',0)
-    replace_null(resultDataFrame,'IsAbsentFromHomeroomExcused',0)
-    replace_null(resultDataFrame,'IsAbsentFromHomeroomUnexcused',0)
-    replace_null(resultDataFrame,'IsTardyToHomeroom',0)
-
-    replace_null(resultDataFrame,'CountByDayOfStateOffenses',0)
-    replace_null(resultDataFrame,'CountByDayOfConductOffenses',0)
-
-    resultDataFrame = renameColumns(resultDataFrame, 
-        {
-            'studentUniqueId': 'StudentKey'
-            ,'schoolId': 'SchoolKey'
-        })
+    resultDataFrame = renameColumns(resultDataFrame, {
+        'studentUniqueId': 'StudentKey',
+        'schoolId': 'SchoolKey'
+    })
 
     # Select needed columns.
-    resultDataFrame = subset(resultDataFrame, 
-        [
-            'StudentKey'
-            ,'SchoolKey'
-            ,'DateKey'
-            ,'IsInstructionalDay'
-            ,'IsEnrolled'
-            ,'IsPresentSchool'
-            ,'IsAbsentFromSchoolExcused'
-            ,'IsAbsentFromSchoolUnexcused'
-            ,'IsTardyToSchool'
-            ,'IsPresentHomeroom'
-            ,'IsAbsentFromHomeroomExcused'
-            ,'IsAbsentFromHomeroomUnexcused'
-            ,'IsTardyToHomeroom'
-            ,'IsPresentAnyClass'
-            ,'IsAbsentFromAnyClassExcused'
-            ,'IsAbsentFromAnyClassUnexcused'
-            ,'IsTardyToAnyClass'
-            ,'CountByDayOfStateOffenses'
-            ,'CountByDayOfConductOffenses'
-        ])
-    saveParquetFile(resultDataFrame, f"{config('PARQUET_FILES_LOCATION')}ews_StudentEarlyWarningFactDim.parquet")
+    resultDataFrame = subset(resultDataFrame, [
+        'StudentKey',
+        'SchoolKey',
+        'DateKey',
+        'IsInstructionalDay',
+        'IsEnrolled',
+        'IsPresentSchool',
+        'IsAbsentFromSchoolExcused',
+        'IsAbsentFromSchoolUnexcused',
+        'IsTardyToSchool',
+        'IsPresentHomeroom',
+        'IsAbsentFromHomeroomExcused',
+        'IsAbsentFromHomeroomUnexcused',
+        'IsTardyToHomeroom',
+        'IsPresentAnyClass',
+        'IsAbsentFromAnyClassExcused',
+        'IsAbsentFromAnyClassUnexcused',
+        'IsTardyToAnyClass',
+        'CountByDayOfStateOffenses',
+        'CountByDayOfConductOffenses'
+    ])
+
+    saveParquetFile(resultDataFrame, f"{config('PARQUET_FILES_LOCATION')}", "ews_StudentEarlyWarningFactDim.parquet", school_year)

@@ -3,17 +3,18 @@
 # The Ed-Fi Alliance licenses this file to you under the Apache License, Version 2.0.
 # See the LICENSE and NOTICES files in the project root for more information.
 
-import requests
 import base64
 
+import requests
 from decouple import config
+
 
 # Get the API key from the environment variables
 def get_token() -> str:
     # Get the token from the Ed-Fi API
     api_user = config('API_KEY')
     api_password = config('API_SECRET')
-    api_url_token = config('API_URL') +"/"+ config('PREX_TOKEN')
+    api_url_token = f"{config('API_URL')}/{config('PREX_TOKEN')}"
 
     credential = ":".join((api_user, api_password))
     credential_encoded = base64.b64encode(credential.encode("utf-8"))
