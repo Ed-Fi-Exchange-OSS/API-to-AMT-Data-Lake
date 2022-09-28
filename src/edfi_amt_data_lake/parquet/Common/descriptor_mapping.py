@@ -23,6 +23,8 @@ def get_descriptor_constant(data = pd.DataFrame, column = str):
         recordPrefix=None,
         errors='ignore'
     )
+    descriptor_mapping_normalized['codeValue']=descriptor_mapping_normalized['codeValue']
+    descriptor_mapping_normalized['descriptor']=descriptor_mapping_normalized['descriptor']
     descriptor_mapping_normalized = renameColumns(descriptor_mapping_normalized, 
         {
             'codeValue': f"{column}_codeValue"
@@ -35,6 +37,7 @@ def get_descriptor_constant(data = pd.DataFrame, column = str):
             if len(data[f"{column}_descriptor_tail"].str.split('#')) > 0:
                 data[f"{column}_descriptor"] = data[f"{column}_descriptor_tail"].str.split("#").str.get(-2)
                 data[f"{column}_codeValue"] = data[f"{column}_descriptor_tail"].str.split("#").str.get(-1)
+                
 
     data = data.drop(f"{column}_descriptor_tail", axis=1)
     ############################
@@ -43,13 +46,12 @@ def get_descriptor_constant(data = pd.DataFrame, column = str):
     data = pdMerge(
         left=descriptor_mapping_normalized, 
         right=data,
-        how='inner',
-        leftOn=[f"{column}_descriptor"
-            ,f"{column}_codeValue"],
-        rigthOn=[f"{column}_descriptor"
-            ,f"{column}_codeValue"
-            ],
-        suffixLeft=None,
-        suffixRight=None
+        how='right',
+        leftOn=[descriptor_mapping_normalized[f"{column}_descriptor"].str.lower()
+            ,descriptor_mapping_normalized[f"{column}_codeValue"].str.lower()],
+        rigthOn=[data[f"{column}_descriptor"].str.lower()
+            ,data[f"{column}_codeValue"].str.lower()],
+        suffixLeft='_descriptor_mapping_normalized',
+        suffixRight='_data'
     )
     return data
