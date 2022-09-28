@@ -22,7 +22,7 @@ ENDPOINT_STUDENT_ASSESSSMENTS = "studentAssessments"
 ENDPOINT_STUDENT_SCHOOL_ASSOCIATION = "studentSchoolAssociations"
 
 
-def assessment_student(school_year) -> None:
+def student_assessment_fact(school_year) -> None:
     silverDataLocation = config("SILVER_DATA_LOCATION")
     student_assessment_json = getEndpointJson(ENDPOINT_STUDENT_ASSESSSMENTS, silverDataLocation, school_year)
     student_school_association_json = getEndpointJson(ENDPOINT_STUDENT_SCHOOL_ASSOCIATION, silverDataLocation, school_year)

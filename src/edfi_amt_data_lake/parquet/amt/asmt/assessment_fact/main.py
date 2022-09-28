@@ -20,7 +20,7 @@ ENDPOINT_ASSESSSMENTS = 'assessments'
 ENDPOINT_OBJECTIVEASSESSMENTS = 'objectiveAssessments'
 
 
-def AssessmentFact(school_year) -> None:
+def assessment_fact(school_year) -> None:
 
     silverDataLocation = config('SILVER_DATA_LOCATION')
     assessmentsContent = getEndpointJson(ENDPOINT_ASSESSSMENTS, silverDataLocation, school_year)
