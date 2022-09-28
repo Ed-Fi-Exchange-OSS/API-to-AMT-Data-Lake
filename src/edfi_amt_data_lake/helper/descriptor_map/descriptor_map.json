@@ -1,0 +1,217 @@
+[
+	{
+		"constantName": "Address.Mailing",
+		"descriptor": "AddressTypeDescriptor",
+		"codeValue": "Mailing"
+	},
+	{
+		"constantName": "Address.Physical",
+		"descriptor": "AddressTypeDescriptor",
+		"codeValue": "Physical"
+	},
+	{
+		"constantName": "Address.Work",
+		"descriptor": "AddressTypeDescriptor",
+		"codeValue": "Work"
+	},
+	{
+		"constantName": "AssignmentCategory.Assignment",
+		"descriptor": "Schoology",
+		"codeValue": "Assignment"
+	},
+	{
+		"constantName": "AssignmentCategory.Assignment",
+		"descriptor": "Google",
+		"codeValue": "Assignment"
+	},
+	{
+		"constantName": "AttendanceEvent.Present",
+		"descriptor": "AttendanceEventCategoryDescriptor",
+		"codeValue": "In Attendance"
+	},
+	{
+		"constantName": "AttendanceEvent.Tardy",
+		"descriptor": "AttendanceEventCategoryDescriptor",
+		"codeValue": "Tardy"
+	},
+	{
+		"constantName": "AttendanceEvent.UnexcusedAbsence",
+		"descriptor": "AttendanceEventCategoryDescriptor",
+		"codeValue": "Unexcused Absence"
+	},
+	{
+		"constantName": "AuthorizationScope.School",
+		"descriptor": "StaffClassificationDescriptor",
+		"codeValue": "Principal"
+	},
+	{
+		"constantName": "AuthorizationScope.Section",
+		"descriptor": "StaffClassificationDescriptor",
+		"codeValue": "Teacher"
+	},
+	{
+		"constantName": "Behavior.SchoolCodeOfConductOffense",
+		"descriptor": "BehaviorDescriptor",
+		"codeValue": "School Code of Conduct"
+	},
+	{
+		"constantName": "Behavior.StateOffense",
+		"descriptor": "BehaviorDescriptor",
+		"codeValue": "State Offense"
+	},
+	{
+		"constantName": "CalendarEvent.InstructionalDay",
+		"descriptor": "CalendarEventDescriptor",
+		"codeValue": "Instructional day"
+	},
+	{
+		"constantName": "CalendarEvent.InstructionalDay",
+		"descriptor": "CalendarEventDescriptor",
+		"codeValue": "Make-up day"
+	},
+	{
+		"constantName": "Email.Work",
+		"descriptor": "ElectronicMailTypeDescriptor",
+		"codeValue": "Work"
+	},
+	{
+		"constantName": "GradeType.GradingPeriod",
+		"descriptor": "GradeTypeDescriptor",
+		"codeValue": "Grading Period"
+	},
+	{
+		"constantName": "GradeType.Semester",
+		"descriptor": "GradeTypeDescriptor",
+		"codeValue": "Semester"
+	},
+	{
+		"constantName": "SubmissionStatus.IsPastDue",
+		"descriptor": "Canvas",
+		"codeValue": "missing"
+	},
+	{
+		"constantName": "SubmissionStatus.IsPastDue",
+		"descriptor": "Google",
+		"codeValue": "MISSING"
+	},
+	{
+		"constantName": "SubmissionStatus.SubmittedLate",
+		"descriptor": "Schoology",
+		"codeValue": "late"
+	},
+	{
+		"constantName": "SubmissionStatus.SubmittedLate",
+		"descriptor": "Canvas",
+		"codeValue": "late"
+	},
+	{
+		"constantName": "SubmissionStatus.SubmittedLate",
+		"descriptor": "Google",
+		"codeValue": "LATE"
+	},
+	{
+		"constantName": "SubmissionStatus.SubmittedOnTime",
+		"descriptor": "Schoology",
+		"codeValue": "on-time"
+	},
+	{
+		"constantName": "SubmissionStatus.SubmittedOnTime",
+		"descriptor": "Canvas",
+		"codeValue": "graded"
+	},
+	{
+		"constantName": "SubmissionStatus.SubmittedOnTime",
+		"descriptor": "Canvas",
+		"codeValue": "on-time"
+	},
+	{
+		"constantName": "SubmissionStatus.SubmittedOnTime",
+		"descriptor": "Google",
+		"codeValue": "TURNED_IN"
+	},
+	{
+		"constantName": "SubmissionStatus.SubmittedOnTime",
+		"descriptor": "Google",
+		"codeValue": "RETURNED"
+	},
+	{
+		"constantName": "SubmissionStatus.Upcoming",
+		"descriptor": "Schoology",
+		"codeValue": "Upcoming"
+	},
+	{
+		"constantName": "SubmissionStatus.Upcoming",
+		"descriptor": "Canvas",
+		"codeValue": "Upcoming"
+	},
+	{
+		"constantName": "SubmissionStatus.Upcoming",
+		"descriptor": "Google",
+		"codeValue": "NEW"
+	},
+	{
+		"constantName": "SubmissionStatus.Upcoming",
+		"descriptor": "Google",
+		"codeValue": "CREATED"
+	},
+	{
+		"constantName": "SubmissionStatus.Upcoming",
+		"descriptor": "Google",
+		"codeValue": "RECLAIMED_BY_STUDENT"
+	},
+	{
+		"constantName": "Telephone.Mobile",
+		"descriptor": "TelephoneNumberTypeDescriptor",
+		"codeValue": "Mobile"
+	},
+	{
+		"constantName": "Telephone.Work",
+		"descriptor": "TelephoneNumberTypeDescriptor",
+		"codeValue": "Work"
+	},
+	{
+		"constantName": "Telephone.Home",
+		"descriptor": "TelephoneNumberTypeDescriptor",
+		"codeValue": "Home"
+	},
+	{
+		"constantName": "SubmissionStatus.IsPastDue",
+		"descriptor": "Schoology",
+		"codeValue": "missing"
+	},
+	{
+		"constantName": "GradeType.Final",
+		"descriptor": "GradeTypeDescriptor",
+		"codeValue": "Final"
+	},
+	{
+		"constantName": "Email.Personal",
+		"descriptor": "ElectronicMailTypeDescriptor",
+		"codeValue": "Home/Personal"
+	},
+	{
+		"constantName": "AuthorizationScope.District",
+		"descriptor": "StaffClassificationDescriptor",
+		"codeValue": "Superintendent"
+	},
+	{
+		"constantName": "AttendanceEvent.ExcusedAbsence",
+		"descriptor": "AttendanceEventCategoryDescriptor",
+		"codeValue": "Excused Absence"
+	},
+	{
+		"constantName": "AssignmentCategory.Assignment",
+		"descriptor": "Canvas",
+		"codeValue": "Assignment"
+	},
+	{
+		"constantName": "Address.Temporary",
+		"descriptor": "AddressTypeDescriptor",
+		"codeValue": "Temporary"
+	},
+	{
+		"constantName": "Address.Home",
+		"descriptor": "AddressTypeDescriptor",
+		"codeValue": "Home"
+	}
+]

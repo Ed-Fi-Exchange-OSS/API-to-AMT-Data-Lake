@@ -9,6 +9,7 @@ from decouple import config
 
 from edfi_amt_data_lake.parquet.Common.functions import getEndpointJson
 from edfi_amt_data_lake.parquet.Common.pandasWrapper import (
+    get_descriptor_code_value_from_uri,
     jsonNormalize,
     pdMerge,
     renameColumns,
@@ -194,41 +195,23 @@ def assessment_student(school_year) -> None:
     data_frame['date_now'] = to_datetime_key(data_frame, 'date_now')
     data_frame = data_frame[data_frame['exitWithdrawDate'] >= data_frame['date_now']]
 
-    if not data_frame['whenAssessedGradeLevelDescriptor'].empty:
-        if len(data_frame['whenAssessedGradeLevelDescriptor'].str.split('#')) > 0:
-            data_frame["whenAssessedGradeLevelDescriptor"] = data_frame["whenAssessedGradeLevelDescriptor"].str.split("#").str.get(1)
+    get_descriptor_code_value_from_uri(data_frame, 'whenAssessedGradeLevelDescriptor')
 
-    if not data_frame['assessmentReportingMethodDescriptor'].empty:
-        if len(data_frame['assessmentReportingMethodDescriptor'].str.split('#')) > 0:
-            data_frame["assessmentReportingMethodDescriptor"] = data_frame["assessmentReportingMethodDescriptor"].str.split("#").str.get(1)
+    get_descriptor_code_value_from_uri(data_frame, 'assessmentReportingMethodDescriptor')
 
-    if not data_frame['resultDatatypeTypeDescriptor'].empty:
-        if len(data_frame['resultDatatypeTypeDescriptor'].str.split('#')) > 0:
-            data_frame["resultDatatypeTypeDescriptor"] = data_frame["resultDatatypeTypeDescriptor"].str.split("#").str.get(1)
+    get_descriptor_code_value_from_uri(data_frame, 'resultDatatypeTypeDescriptor')
 
-    if not data_frame['assessmentReportingMethodDescriptor_performance_levels'].empty:
-        if len(data_frame['assessmentReportingMethodDescriptor_performance_levels'].str.split('#')) > 0:
-            data_frame["assessmentReportingMethodDescriptor_performance_levels"] = data_frame["assessmentReportingMethodDescriptor_performance_levels"].str.split("#").str.get(1)
+    get_descriptor_code_value_from_uri(data_frame, 'assessmentReportingMethodDescriptor_performance_levels')
 
-    if not data_frame['performanceLevelDescriptor'].empty:
-        if len(data_frame['performanceLevelDescriptor'].str.split('#')) > 0:
-            data_frame["performanceLevelDescriptor"] = data_frame["performanceLevelDescriptor"].str.split("#").str.get(1)
+    get_descriptor_code_value_from_uri(data_frame, 'performanceLevelDescriptor')
 
-    if not data_frame['assessmentReportingMethodDescriptor_student_objective_performanceLevels'].empty:
-        if len(data_frame['assessmentReportingMethodDescriptor_student_objective_performanceLevels'].str.split('#')) > 0:
-            data_frame["assessmentReportingMethodDescriptor_student_objective_performanceLevels"] = data_frame["assessmentReportingMethodDescriptor_student_objective_performanceLevels"].str.split("#").str.get(1)
+    get_descriptor_code_value_from_uri(data_frame, 'assessmentReportingMethodDescriptor_student_objective_performanceLevels')
 
-    if not data_frame['performanceLevelDescriptor_student_objective_performanceLevels'].empty:
-        if len(data_frame['performanceLevelDescriptor_student_objective_performanceLevels'].str.split('#')) > 0:
-            data_frame["performanceLevelDescriptor_student_objective_performanceLevels"] = data_frame["performanceLevelDescriptor_student_objective_performanceLevels"].str.split("#").str.get(1)
+    get_descriptor_code_value_from_uri(data_frame, 'performanceLevelDescriptor_student_objective_performanceLevels')
 
-    if not data_frame['assessmentReportingMethodDescriptor_student_objective_scoreResults'].empty:
-        if len(data_frame['assessmentReportingMethodDescriptor_student_objective_scoreResults'].str.split('#')) > 0:
-            data_frame["assessmentReportingMethodDescriptor_student_objective_scoreResults"] = data_frame["assessmentReportingMethodDescriptor_student_objective_scoreResults"].str.split("#").str.get(1)
+    get_descriptor_code_value_from_uri(data_frame, 'assessmentReportingMethodDescriptor_student_objective_scoreResults')
 
-    if not data_frame['resultDatatypeTypeDescriptor_student_objective_scoreResults'].empty:
-        if len(data_frame['resultDatatypeTypeDescriptor_student_objective_scoreResults'].str.split('#')) > 0:
-            data_frame["resultDatatypeTypeDescriptor_student_objective_scoreResults"] = data_frame["resultDatatypeTypeDescriptor_student_objective_scoreResults"].str.split("#").str.get(1)
+    get_descriptor_code_value_from_uri(data_frame, 'resultDatatypeTypeDescriptor_student_objective_scoreResults')
 
     data_frame = subset(data_frame, [
         'id',
@@ -355,7 +338,4 @@ def assessment_student(school_year) -> None:
         'StudentAssessmentPerformanceResult'
     ]]
 
-    saveParquetFile(
-        data_frame,
-        f"{config('PARQUET_FILES_LOCATION')}/asmt_student_assessment_fact.parquet"
-    )
+    saveParquetFile(data_frame, f"{config('PARQUET_FILES_LOCATION')}", "asmt_student_assessment_fact.parquet", school_year)

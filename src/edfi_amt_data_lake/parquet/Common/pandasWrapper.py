@@ -73,6 +73,10 @@ def addColumnIfNotExists(data=pd.DataFrame, column=str, default_value='') -> pd.
         data[column] = default_value
 
 
+def to_datetime_key(data=pd.DataFrame, column=str):
+    return data[column].astype(str).str.replace('-', '')
+
+
 def to_datetime(data=pd.DataFrame, column=str):
     return pd.to_datetime(data[column])
 
@@ -94,10 +98,10 @@ def createDataFrame(data, columns) -> pd.DataFrame:
 def get_descriptor_code_value_from_uri(data=pd.DataFrame, column=str):
     if not data[column].empty:
         if len(data[column].str.split('#')) > 0:
-            data[column] = data[column].str.split("#").str.get(1)
+            data[column] = data[column].str.split("#").str.get(-1)
 
 
 def get_reference_from_href(data=pd.DataFrame, column=str, destination_column=str):
     if not data[column].empty:
         if len(data[column].str.split('/')) > 0:
-            data[destination_column] = data[column].str.split('/').str.get(3)
+            data[destination_column] = data[column].str.split('/').str.get(-1)

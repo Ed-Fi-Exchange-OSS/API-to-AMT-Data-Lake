@@ -8,6 +8,7 @@ from decouple import config
 from edfi_amt_data_lake.parquet.Common.functions import getEndpointJson
 from edfi_amt_data_lake.parquet.Common.pandasWrapper import (
     addColumnIfNotExists,
+    get_descriptor_code_value_from_uri,
     jsonNormalize,
     pdMerge,
     renameColumns,
@@ -195,39 +196,25 @@ def AssessmentFact(school_year) -> None:
     )
 
     # Removes namespace from Category Descriptor
-    if not restultDataFrame['assessmentCategoryDescriptor'].empty:
-        if len(restultDataFrame['assessmentCategoryDescriptor'].str.split('#')) > 0:
-            restultDataFrame["assessmentCategoryDescriptor"] = restultDataFrame["assessmentCategoryDescriptor"].str.split("#").str.get(1)
+    get_descriptor_code_value_from_uri(restultDataFrame, 'assessmentCategoryDescriptor')
 
     # Removes namespace from Assessed Grade Level Descriptor
-    if not restultDataFrame['gradeLevelDescriptor'].empty:
-        if len(restultDataFrame['gradeLevelDescriptor'].str.split('#')) > 0:
-            restultDataFrame["gradeLevelDescriptor"] = restultDataFrame["gradeLevelDescriptor"].str.split("#").str.get(1)
+    get_descriptor_code_value_from_uri(restultDataFrame, 'gradeLevelDescriptor')
 
     # Removes namespace from Academic Subject Descriptor
-    if not restultDataFrame['academicSubjectDescriptor'].empty:
-        if len(restultDataFrame['academicSubjectDescriptor'].str.split('#')) > 0:
-            restultDataFrame["academicSubjectDescriptor"] = restultDataFrame["academicSubjectDescriptor"].str.split("#").str.get(1)
+    get_descriptor_code_value_from_uri(restultDataFrame, 'academicSubjectDescriptor')
 
     # Removes namespace from Result Data Type Descriptor
-    if not restultDataFrame['resultDatatypeTypeDescriptor'].empty:
-        if len(restultDataFrame['resultDatatypeTypeDescriptor'].str.split('#')) > 0:
-            restultDataFrame["resultDatatypeTypeDescriptor"] = restultDataFrame["resultDatatypeTypeDescriptor"].str.split("#").str.get(1)
+    get_descriptor_code_value_from_uri(restultDataFrame, 'resultDatatypeTypeDescriptor')
 
     # Removes namespace from Reporting Method Descriptor
-    if not restultDataFrame['assessmentReportingMethodDescriptor'].empty:
-        if len(restultDataFrame['assessmentReportingMethodDescriptor'].str.split('#')) > 0:
-            restultDataFrame["assessmentReportingMethodDescriptor"] = restultDataFrame["assessmentReportingMethodDescriptor"].str.split("#").str.get(1)
+    get_descriptor_code_value_from_uri(restultDataFrame, 'assessmentReportingMethodDescriptor')
 
     # Removes namespace from Objective Assessment Reporting Method Descriptor
-    if not restultDataFrame['assessmentReportingMethodDescriptor_objective'].empty:
-        if len(restultDataFrame['assessmentReportingMethodDescriptor_objective'].str.split('#')) > 0:
-            restultDataFrame["assessmentReportingMethodDescriptor_objective"] = restultDataFrame["assessmentReportingMethodDescriptor_objective"].str.split("#").str.get(1)
+    get_descriptor_code_value_from_uri(restultDataFrame, 'assessmentReportingMethodDescriptor_objective')
 
     # Removes namespace from Objective Result Datatype Type Descriptor
-    if not restultDataFrame['resultDatatypeTypeDescriptor_objective'].empty:
-        if len(restultDataFrame['resultDatatypeTypeDescriptor_objective'].str.split('#')) > 0:
-            restultDataFrame["resultDatatypeTypeDescriptor_objective"] = restultDataFrame["resultDatatypeTypeDescriptor_objective"].str.split("#").str.get(1)
+    get_descriptor_code_value_from_uri(restultDataFrame, 'resultDatatypeTypeDescriptor_objective')
 
     # Replace any N/A value with empty
     restultDataFrame = restultDataFrame.fillna('')

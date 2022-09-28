@@ -7,10 +7,12 @@ from datetime import date
 
 from decouple import config
 
+from edfi_amt_data_lake.parquet.Common.descriptor_mapping import get_descriptor_constant
 from edfi_amt_data_lake.parquet.Common.functions import getEndpointJson
 from edfi_amt_data_lake.parquet.Common.pandasWrapper import (
     addColumnIfNotExists,
     crossTab,
+    get_descriptor_code_value_from_uri,
     jsonNormalize,
     pdMerge,
     renameColumns,
@@ -27,9 +29,10 @@ ENDPOINT_STUDENT_SCHOOL_ASSOCIATION = 'studentSchoolAssociations'
 ENDPOINT_STUDENT_SECTION_ASSOCIATION = 'studentSectionAssociations'
 ENDPOINT_STUDENT_SCHOOL_ATTENDANCE_EVENTS = 'studentSchoolAttendanceEvents'
 ENDPOINT_STUDENT_SECTION_ATTENDANCE_EVENTS = 'studentSectionAttendanceEvents'
+IS_INSTRUCTIONAL_DAY = 'CalendarEvent.InstructionalDay'
 
 
-def studentEarlyWarningFactDim(school_year) -> None:
+def student_early_warning_fact(school_year) -> None:
     calendarDatesContent = getEndpointJson(ENDPOINT_CALENDAR_DATES, config('SILVER_DATA_LOCATION'), school_year)
     disciplineIncidentContent = getEndpointJson(ENDPOINT_DISCIPLINE_INCIDENTS, config('SILVER_DATA_LOCATION'), school_year)
     studentDisciplineIncidentBehaviorAssociationsContent = getEndpointJson(ENDPOINT_STUDENT_DISCIPLINE_BEHAVIOR_ASSOCIATION, config('SILVER_DATA_LOCATION'), school_year)
@@ -75,13 +78,9 @@ def studentEarlyWarningFactDim(school_year) -> None:
         errors='ignore'
     )
 
-    # Remove namespace
-    if not calendarDatesNormalized['calendarEvents_calendarEventDescriptor'].empty:
-        if len(calendarDatesNormalized['calendarEvents_calendarEventDescriptor'].str.split('#')) > 0:
-            calendarDatesNormalized["calendarEvents_calendarEventDescriptor"] = calendarDatesNormalized["calendarEvents_calendarEventDescriptor"].str.split("#").str.get(1)
-
-    calendarDatesNormalized.loc[calendarDatesNormalized['calendarEvents_calendarEventDescriptor'] == 'Instructional day', 'IsInstructionalDay'] = '1'
-    calendarDatesNormalized.loc[calendarDatesNormalized['calendarEvents_calendarEventDescriptor'] != 'Instructional day', 'IsInstructionalDay'] = '0'
+    calendarDatesNormalized = get_descriptor_constant(calendarDatesNormalized, 'calendarEvents_calendarEventDescriptor')
+    calendarDatesNormalized.loc[calendarDatesNormalized['calendarEvents_calendarEventDescriptor_constantName'] == IS_INSTRUCTIONAL_DAY, 'IsInstructionalDay'] = '1'
+    calendarDatesNormalized.loc[calendarDatesNormalized['calendarEvents_calendarEventDescriptor_constantName'] != IS_INSTRUCTIONAL_DAY, 'IsInstructionalDay'] = '0'
 
     # Select needed columns.
     calendarDatesNormalized = subset(calendarDatesNormalized, [
@@ -129,23 +128,20 @@ def studentEarlyWarningFactDim(school_year) -> None:
         recordPrefix=None,
         errors='ignore'
     )
-    # Remove namespace
-    if not studentSchoolAttendanceEventsNormalized['attendanceEventCategoryDescriptor'].empty:
-        if len(studentSchoolAttendanceEventsNormalized['attendanceEventCategoryDescriptor'].str.split('#')) > 0:
-            studentSchoolAttendanceEventsNormalized["attendanceEventCategoryDescriptor"] = studentSchoolAttendanceEventsNormalized["attendanceEventCategoryDescriptor"].str.split("#").str.get(1)
+    # Get descriptor code value
+    studentSchoolAttendanceEventsNormalized = get_descriptor_constant(studentSchoolAttendanceEventsNormalized, 'attendanceEventCategoryDescriptor')
     # Select needed columns.
     studentSchoolAttendanceEventsNormalized = subset(studentSchoolAttendanceEventsNormalized, [
         'schoolReference.schoolId',
         'studentReference.studentUniqueId',
         'eventDate',
-        'attendanceEventCategoryDescriptor'
+        'attendanceEventCategoryDescriptor_constantName'
     ])
 
     studentSchoolAttendanceEventsNormalized = renameColumns(studentSchoolAttendanceEventsNormalized, {
         'schoolReference.schoolId': 'schoolId',
         'studentReference.studentUniqueId': 'studentUniqueId'
     })
-
     # 'Transpose' Attendance table.
     studentSchoolAttendanceEventsNormalized = crossTab(
         index=[
@@ -153,14 +149,13 @@ def studentEarlyWarningFactDim(school_year) -> None:
             studentSchoolAttendanceEventsNormalized['studentUniqueId'],
             studentSchoolAttendanceEventsNormalized['eventDate']
         ],
-        columns=studentSchoolAttendanceEventsNormalized['attendanceEventCategoryDescriptor']).reset_index()
-
+        columns=studentSchoolAttendanceEventsNormalized['attendanceEventCategoryDescriptor_constantName']).reset_index()
     # Rename attendance columns
     studentSchoolAttendanceEventsNormalized = renameColumns(studentSchoolAttendanceEventsNormalized, {
-        'In Attendance': 'IsPresentSchool',
-        'Excused Absence': 'IsAbsentFromSchoolExcused',
-        'Unexcused Absence': 'IsAbsentFromSchoolUnexcused',
-        'Tardy': 'IsTardyToSchool'
+        'AttendanceEvent.Present': 'IsPresentSchool',
+        'AttendanceEvent.ExcusedAbsence': 'IsAbsentFromSchoolExcused',
+        'AttendanceEvent.UnexcusedAbsence': 'IsAbsentFromSchoolUnexcused',
+        'AttendanceEvent.Tardy': 'IsTardyToSchool'
     })
 
     ############################
@@ -242,10 +237,8 @@ def studentEarlyWarningFactDim(school_year) -> None:
         errors='ignore'
     )
 
-    # Remove namespace
-    if not studentSectionAttendanceEventsNormalized['attendanceEventCategoryDescriptor'].empty:
-        if len(studentSectionAttendanceEventsNormalized['attendanceEventCategoryDescriptor'].str.split('#')) > 0:
-            studentSectionAttendanceEventsNormalized["attendanceEventCategoryDescriptor"] = studentSectionAttendanceEventsNormalized["attendanceEventCategoryDescriptor"].str.split("#").str.get(1)
+    # Get descriptor code value
+    get_descriptor_code_value_from_uri(studentSectionAttendanceEventsNormalized, 'attendanceEventCategoryDescriptor')
 
     # Select needed columns.
     studentSectionAttendanceEventsNormalized = subset(studentSectionAttendanceEventsNormalized, [
@@ -342,7 +335,7 @@ def studentEarlyWarningFactDim(school_year) -> None:
     ############################
     # Subset homeroom values
     ############################
-    studentSectionHomeroomDataFrame = studentSectionAttendanceEventsNormalized[studentSectionAttendanceEventsNormalized['homeroomIndicator'] is True]
+    studentSectionHomeroomDataFrame = studentSectionAttendanceEventsNormalized[studentSectionAttendanceEventsNormalized['homeroomIndicator']]
 
     studentSectionHomeroomDataFrame = renameColumns(studentSectionHomeroomDataFrame, {
         'IsPresentAnyClass': 'IsPresentHomeroom',
@@ -471,10 +464,6 @@ def studentEarlyWarningFactDim(school_year) -> None:
         recordPrefix='calendarEvents_',
         errors='ignore'
     )
-    # Remove namespace
-    if not studentDisciplineIncidentBehaviorAssociationsNormalized['behaviorDescriptor'].empty:
-        if len(studentDisciplineIncidentBehaviorAssociationsNormalized['behaviorDescriptor'].str.split('#')) > 0:
-            studentDisciplineIncidentBehaviorAssociationsNormalized["behaviorDescriptor"] = studentDisciplineIncidentBehaviorAssociationsNormalized["behaviorDescriptor"].str.split("#").str.get(1)
 
     # Select needed columns.
     studentDisciplineIncidentBehaviorAssociationsNormalized = subset(studentDisciplineIncidentBehaviorAssociationsNormalized, [
@@ -505,18 +494,20 @@ def studentEarlyWarningFactDim(school_year) -> None:
         suffixLeft='_discipline',
         suffixRight='_disciplineBehavior'
     )
+
+    resultDisciplineDataFrame = get_descriptor_constant(resultDisciplineDataFrame, 'behaviorDescriptor')
     resultDisciplineDataFrame = crossTab(
         index=[
             resultDisciplineDataFrame['schoolId'],
             resultDisciplineDataFrame['studentUniqueId'],
             resultDisciplineDataFrame['incidentDate']
         ],
-        columns=resultDisciplineDataFrame['behaviorDescriptor']).reset_index()
+        columns=resultDisciplineDataFrame['behaviorDescriptor_constantName']).reset_index()
 
     # Select needed columns.
     resultDisciplineDataFrame = renameColumns(resultDisciplineDataFrame, {
-        'State Offense': 'CountByDayOfStateOffenses',
-        'School Code of Conduct': 'CountByDayOfConductOffenses'
+        'Behavior.StateOffense': 'CountByDayOfStateOffenses',
+        'Behavior.SchoolCodeOfConductOffense': 'CountByDayOfConductOffenses'
     })
 
     resultDataFrame = pdMerge(

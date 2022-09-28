@@ -5,10 +5,12 @@
 
 from decouple import config
 
+from edfi_amt_data_lake.parquet.Common.descriptor_mapping import get_descriptor_constant
 from edfi_amt_data_lake.parquet.Common.functions import getEndpointJson
 from edfi_amt_data_lake.parquet.Common.pandasWrapper import (
     addColumnIfNotExists,
     createDataFrame,
+    get_descriptor_code_value_from_uri,
     jsonNormalize,
     pdMerge,
     renameColumns,
@@ -21,7 +23,7 @@ ENDPOINT_GRADES = 'grades'
 GRANDINGPERIODS_GRADES = 'gradingPeriods'
 
 
-def StudentSectionGradeFact(school_year) -> None:
+def student_section_grade_fact(school_year) -> None:
     gradesContent = getEndpointJson(ENDPOINT_GRADES, config('SILVER_DATA_LOCATION'), school_year)
     gradingPeriodsContent = getEndpointJson(GRANDINGPERIODS_GRADES, config('SILVER_DATA_LOCATION'), school_year)
 
@@ -101,20 +103,16 @@ def StudentSectionGradeFact(school_year) -> None:
         'letterGradeEarned',
         'gradeTypeDescriptor'
     ])
-
+    restultDataFrame = get_descriptor_constant(restultDataFrame, 'gradeTypeDescriptor')
     # Formatting begin date that will be used as part of the keys later
     restultDataFrame['studentSectionAssociationReference.beginDate'] = toDateTime(restultDataFrame['studentSectionAssociationReference.beginDate'])
     restultDataFrame['studentSectionAssociationReference.beginDate'] = restultDataFrame['studentSectionAssociationReference.beginDate'].dt.strftime('%Y%m%d')
 
     # # Removes namespace from Grading Period Descriptor
-    if not restultDataFrame['gradingPeriodReference.gradingPeriodDescriptor'].empty:
-        if len(restultDataFrame['gradingPeriodReference.gradingPeriodDescriptor'].str.split('#')) > 0:
-            restultDataFrame["gradingPeriodReference.gradingPeriodDescriptor"] = restultDataFrame["gradingPeriodReference.gradingPeriodDescriptor"].str.split("#").str.get(1)
+    get_descriptor_code_value_from_uri(restultDataFrame, 'gradingPeriodReference.gradingPeriodDescriptor')
 
     # Removes namespace from Grade Type Descriptor
-    if not restultDataFrame['gradeTypeDescriptor'].empty:
-        if len(restultDataFrame['gradeTypeDescriptor'].str.split('#')) > 0:
-            restultDataFrame["gradeTypeDescriptor"] = restultDataFrame["gradeTypeDescriptor"].str.split("#").str.get(1)
+    get_descriptor_code_value_from_uri(restultDataFrame, 'gradeTypeDescriptor')
 
     # Converting some fields to str as preparation for the parquet file.
     restultDataFrame['studentSectionAssociationReference.schoolId'] = restultDataFrame['studentSectionAssociationReference.schoolId'].astype(str)
@@ -156,6 +154,9 @@ def StudentSectionGradeFact(school_year) -> None:
         'gradeTypeDescriptor': 'GradeType'
     })
 
+    restultDataFrame = (
+        restultDataFrame[(restultDataFrame['gradeTypeDescriptor_constantName'].str.contains('GradeType.GradingPeriod')) | (restultDataFrame['gradeTypeDescriptor_constantName'].str.contains('GradeType.Semester')) | (restultDataFrame['gradeTypeDescriptor_constantName'].str.contains('GradeType.Final'))]
+    )
     # Reorder columns to match AMT
     restultDataFrame = restultDataFrame[[
         'StudentKey',
@@ -167,9 +168,5 @@ def StudentSectionGradeFact(school_year) -> None:
         'LetterGradeEarned',
         'GradeType'
     ]]
-
-    restultDataFrame = (
-        restultDataFrame[(restultDataFrame['GradeType'].str.contains('Grading Period')) | (restultDataFrame['GradeType'].str.contains('Semester')) | (restultDataFrame['GradeType'].str.contains('Final'))]
-    )
 
     saveParquetFile(restultDataFrame, f"{config('PARQUET_FILES_LOCATION')}", "ews_studentSectionGradeFact.parquet", school_year)
