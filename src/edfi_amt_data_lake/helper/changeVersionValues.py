@@ -4,6 +4,6 @@
 # See the LICENSE and NOTICES files in the project root for more information.
 
 class ChangeVersionValues:
-  def __init__(self, oldestChangeVersion, newestChangeVersion):
-    self.oldestChangeVersion = oldestChangeVersion
-    self.newestChangeVersion = newestChangeVersion
+    def __init__(self, oldestChangeVersion, newestChangeVersion):
+        self.oldestChangeVersion = oldestChangeVersion
+        self.newestChangeVersion = newestChangeVersion

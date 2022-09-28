@@ -1,11 +1,12 @@
-/*
- * SPDX-License-Identifier: Apache-2.0
- * Licensed to the Ed-Fi Alliance under one or more agreements.
- * The Ed-Fi Alliance licenses this file to you under the Apache License, Version 2.0.
- * See the LICENSE and NOTICES files in the project root for more information.
- */
-
 [flake8]
-max-line-length = 110
-extend-ignore = E203, W503, E501
-exclude = .git, __pycache__, .venv
+max-line-length = 88
+max-complexity = 20
+select = C,E,F,W,B,B950
+ignore = E203,E501,W503
+exclude =
+    .git,
+    __pycache__,
+    *.egg-info,
+    .nox,
+    .pytest_cache,
+    .mypy_cache
