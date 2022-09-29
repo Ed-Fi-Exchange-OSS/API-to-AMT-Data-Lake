@@ -10,6 +10,7 @@ from decouple import config
 from edfi_amt_data_lake.parquet.Common.functions import getEndpointJson
 from edfi_amt_data_lake.parquet.Common.pandasWrapper import (
     addColumnIfNotExists,
+    get_descriptor_code_value_from_uri,
     jsonNormalize,
     pdMerge,
     renameColumns,
@@ -92,9 +93,8 @@ def student_discipline_action_dim(school_year) -> None:
 
     discipline_action_normalized['disciplineDateKey'] = to_datetime_key(discipline_action_normalized, 'disciplineDate')
     # Removes namespace
-    if not discipline_action_normalized['disciplineDescriptorCodeValue'].empty:
-        if len(discipline_action_normalized['disciplineDescriptorCodeValue'].str.split('#')) > 0:
-            discipline_action_normalized["disciplineDescriptorCodeValue"] = discipline_action_normalized["disciplineDescriptorCodeValue"].str.split("#").str.get(1)
+    get_descriptor_code_value_from_uri(discipline_action_normalized, 'disciplineDescriptorCodeValue')
+
     ############################
     # Discipline descriptor
     ############################

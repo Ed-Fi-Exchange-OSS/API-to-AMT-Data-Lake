@@ -9,6 +9,7 @@ from decouple import config
 
 from edfi_amt_data_lake.parquet.Common.functions import getEndpointJson
 from edfi_amt_data_lake.parquet.Common.pandasWrapper import (
+    get_descriptor_code_value_from_uri,
     jsonNormalize,
     pdMerge,
     renameColumns,
@@ -23,7 +24,7 @@ ENDPOINT_PROGRAM_TYPE_DESCRIPTOR = 'programTypeDescriptors'
 ENDPOINT_SCHOOL_FOOD_SERVICE_PROGRAM_SERVICE_DESCRIPTOR = 'schoolFoodServiceProgramServiceDescriptors'
 
 
-def studentSchoolFoodServiceProgramDim(school_year) -> None:
+def student_school_food_service_program_dim(school_year) -> None:
     studentFoodServiceProgramAssociationContent = getEndpointJson(ENDPOINT_STUDENT_FOOD_SERVICE_PROGRAM_ASSOCIATION, config('SILVER_DATA_LOCATION'), school_year)
     studentSchoolAssociationsContent = getEndpointJson(ENDPOINT_STUDENT_SCHOOL_ASSOCIATION, config('SILVER_DATA_LOCATION'), school_year)
     programTypeDescriptorContent = getEndpointJson(ENDPOINT_PROGRAM_TYPE_DESCRIPTOR, config('SILVER_DATA_LOCATION'), school_year)
@@ -68,14 +69,10 @@ def studentSchoolFoodServiceProgramDim(school_year) -> None:
     })
 
     # Remove namespace
-    if not studentFoodServiceProgramAssociationNormalized['programTypeDescriptor'].empty:
-        if len(studentFoodServiceProgramAssociationNormalized['programTypeDescriptor'].str.split('#')) > 0:
-            studentFoodServiceProgramAssociationNormalized["programTypeDescriptor"] = studentFoodServiceProgramAssociationNormalized["programTypeDescriptor"].str.split("#").str.get(1)
+    get_descriptor_code_value_from_uri(studentFoodServiceProgramAssociationNormalized, 'programTypeDescriptor')
 
     # Remove namespace
-    if not studentFoodServiceProgramAssociationNormalized['schoolFoodServiceProgramServiceDescriptor'].empty:
-        if len(studentFoodServiceProgramAssociationNormalized['schoolFoodServiceProgramServiceDescriptor'].str.split('#')) > 0:
-            studentFoodServiceProgramAssociationNormalized["schoolFoodServiceProgramServiceDescriptor"] = studentFoodServiceProgramAssociationNormalized["schoolFoodServiceProgramServiceDescriptor"].str.split("#").str.get(1)
+    get_descriptor_code_value_from_uri(studentFoodServiceProgramAssociationNormalized, 'schoolFoodServiceProgramServiceDescriptor')
 
     ############################
     # programTypeDescriptor

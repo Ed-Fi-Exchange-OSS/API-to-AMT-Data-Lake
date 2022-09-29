@@ -5,9 +5,11 @@
 
 from decouple import config
 
+from edfi_amt_data_lake.parquet.Common.descriptor_mapping import get_descriptor_constant
 from edfi_amt_data_lake.parquet.Common.functions import getEndpointJson
 from edfi_amt_data_lake.parquet.Common.pandasWrapper import (
     addColumnIfNotExists,
+    get_descriptor_code_value_from_uri,
     jsonNormalize,
     pdMerge,
     renameColumns,
@@ -21,7 +23,7 @@ ENDPOINT_STATEEDUCATIONAGENCIES = 'stateEducationAgencies'
 ENDPOINT_EDUCATIONSERVICECENTERS = 'educationServiceCenters'
 
 
-def schoolDim(school_year) -> None:
+def school_dim(school_year) -> None:
     schoolsContent = getEndpointJson(ENDPOINT_SCHOOLS, config('SILVER_DATA_LOCATION'), school_year)
     localEducationAgenciesContent = getEndpointJson(ENDPOINT_LOCALEDUCATIONAGENCIES, config('SILVER_DATA_LOCATION'), school_year)
     stateEducationAgenciesContent = getEndpointJson(ENDPOINT_STATEEDUCATIONAGENCIES, config('SILVER_DATA_LOCATION'), school_year)
@@ -110,23 +112,14 @@ def schoolDim(school_year) -> None:
         addColumnIfNotExists(restultDataFrame, 'stateEducationAgencyId')
         addColumnIfNotExists(restultDataFrame, 'nameOfInstitution_stateEducationAgencies')
 
-    restultDataFrame = restultDataFrame[restultDataFrame["addressaddressTypeDescriptor"].str.contains('Physical')]
-
+    restultDataFrame = get_descriptor_constant(restultDataFrame, 'addressaddressTypeDescriptor')
+    restultDataFrame = restultDataFrame[restultDataFrame["addressaddressTypeDescriptor_constantName"].str.contains('Address.Physical')]
     # Removes namespace from Address Type Descriptor
-    if not restultDataFrame['addressaddressTypeDescriptor'].empty:
-        if len(restultDataFrame['addressaddressTypeDescriptor'].str.split('#')) > 0:
-            restultDataFrame["addressaddressTypeDescriptor"] = restultDataFrame["addressaddressTypeDescriptor"].str.split("#").str.get(1)
-
+    get_descriptor_code_value_from_uri(restultDataFrame, 'addressaddressTypeDescriptor')
     # Removes namespace from School Type Descriptor
-    if not restultDataFrame['schoolTypeDescriptor'].empty:
-        if len(restultDataFrame['schoolTypeDescriptor'].str.split('#')) > 0:
-            restultDataFrame["schoolTypeDescriptor"] = restultDataFrame["schoolTypeDescriptor"].str.split("#").str.get(1)
-
+    get_descriptor_code_value_from_uri(restultDataFrame, 'schoolTypeDescriptor')
     # Removes namespace from State Abbreviation Descriptor
-    if not restultDataFrame['addressstateAbbreviationDescriptor'].empty:
-        if len(restultDataFrame['addressstateAbbreviationDescriptor'].str.split('#')) > 0:
-            restultDataFrame["addressstateAbbreviationDescriptor"] = restultDataFrame["addressstateAbbreviationDescriptor"].str.split("#").str.get(1)
-
+    get_descriptor_code_value_from_uri(restultDataFrame, 'addressstateAbbreviationDescriptor')
     # Creates concatanation for Address field
     restultDataFrame['SchoolAddress'] = (
         restultDataFrame['addressstreetNumberName']
@@ -168,4 +161,4 @@ def schoolDim(school_year) -> None:
         'EducationServiceCenterKey'
     ]]
 
-    saveParquetFile(restultDataFrame, f"{config('PARQUET_FILES_LOCATION')}", "SchoolDim.parquet", school_year)
+    saveParquetFile(restultDataFrame, f"{config('PARQUET_FILES_LOCATION')}", "schoolDim.parquet", school_year)

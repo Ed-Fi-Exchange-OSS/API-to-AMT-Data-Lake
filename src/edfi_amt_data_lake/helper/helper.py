@@ -55,4 +55,11 @@ def get_headers(token) -> dict:
     return {
         "Authorization": f"Bearer {token}",
         "Content-Type": "application/json",
+        "Accept": "application/json"
     }
+
+
+def get_descriptor_mapping_config() -> list:
+    with open(file_relative_path(__file__, './descriptor_map/descriptor_map.json'), "r") as file:
+        data = json.load(file)
+    return data
