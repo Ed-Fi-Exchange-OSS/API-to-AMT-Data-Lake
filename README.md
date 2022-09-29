@@ -79,7 +79,7 @@ dagit -w dagster/workspace.yaml
 After you have finished the above steps, you can open your localhost or http://127.0.0.1:3000 and you will be able to see in the launcher the list of tests or collections available.
 
 ## Descriptor Mapping
-    	
+
   *"Some views in the Analytics Middle Tier need to filter data by a string value. For example, a query on the attendance events table looking only for the excused absences uses a string value to represent the concept of excused absences. This is because the Ed-Fi ODS database provides enumerations such as "Excused Absence" and "Unexcused Absence" via Ed-Fi Descriptors. Descriptors are customizable, and so each installation of the Ed-Fi ODS may have different descriptor values for the same "universal" concept. Therefore, the views cannot simply include a preset, static filter for the concepts expressed by a Descriptor value.*
 
   *To get around this variability, the Analytics Middle Tier introduces a DescriptorConstant table to represent those universal values. Each installation of the Analytics Middle Tier must then map its Descriptors to the DescriptorConstants as appropriate for the situation, via the DescriptorMap table."* [Descriptor Mapping](https://techdocs.ed-fi.org/display/EDFITOOLS/Descriptor+Mapping)
@@ -89,7 +89,7 @@ For the generation of the parquet files equivalent to the AMT views, the mapping
 On this page you can find more context about the descriptors: [Descriptor Mapping](https://techdocs.ed-fi.org/display/EDFITOOLS/Descriptor+Mapping)
 
 
-To update the list of constants, you can edit the [descriptor_map.json](./src/edfi_amt_data_lake/helper/descriptor_map/descriptor_map.json) file located at: 
+To update the list of constants, you can edit the [descriptor_map.json](./src/edfi_amt_data_lake/helper/descriptor_map/descriptor_map.json) file located at:
 
 `.\src\edfi_amt_data_lake\helper\descriptor_map\descriptor_map.json`
 
@@ -111,7 +111,7 @@ FROM(
         ,REVERSE(SUBSTRING(REVERSE([Namespace]), 1, CHARINDEX('/', REVERSE([Namespace])) - 1)) AS descriptor
         ,Descriptor.CodeValue as codeValue
     FROM analytics_config.DescriptorMap
-    INNER JOIN analytics_config.DescriptorConstant ON 
+    INNER JOIN analytics_config.DescriptorConstant ON
         analytics_config.DescriptorMap.DescriptorConstantId = analytics_config.DescriptorConstant.DescriptorConstantId
     INNER JOIN edfi.Descriptor ON
         analytics_config.DescriptorMap.DescriptorId = edfi.Descriptor.DescriptorId
