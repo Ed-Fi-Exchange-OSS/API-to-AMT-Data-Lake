@@ -3,6 +3,7 @@
 # The Ed-Fi Alliance licenses this file to you under the Apache License, Version 2.0.
 # See the LICENSE and NOTICES files in the project root for more information.
 
+import pandas as pd
 from decouple import config
 
 from edfi_amt_data_lake.parquet.Common.functions import getEndpointJson
@@ -20,7 +21,7 @@ ENDPOINT_GRADING_PERIOD = 'gradingPeriods'
 ENDPOINT_GRADING_PERIOD_DESCRIPTOR = 'gradingPeriodDescriptors'
 
 
-def grading_period_dim(school_year) -> None:
+def grading_period_dim_dataframe(school_year) -> pd.DataFrame:
     grading_period_content = getEndpointJson(ENDPOINT_GRADING_PERIOD, config('SILVER_DATA_LOCATION'), school_year)
     grading_period_descriptor_content = getEndpointJson(ENDPOINT_GRADING_PERIOD_DESCRIPTOR, config('SILVER_DATA_LOCATION'), school_year)
     ############################
@@ -117,5 +118,11 @@ def grading_period_dim(school_year) -> None:
         'schoolKey',
         'schoolYear'
     ])
+
+    return result_data_frame
+
+
+def grading_period_dim(school_year) -> None:
+    result_data_frame = grading_period_dim_dataframe(school_year)
 
     saveParquetFile(result_data_frame, f"{config('PARQUET_FILES_LOCATION')}", "gradingPeriodDim.parquet", school_year)
