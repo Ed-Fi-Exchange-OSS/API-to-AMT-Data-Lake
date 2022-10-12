@@ -148,7 +148,6 @@ It serves to make a previous validation of all the files, in addition to validat
 2. Static typing check: `poetry run mypy .`
 3. Run unit tests: `poetry run pytest`
 
-
 ## Legal Information
 
 Copyright (c) 2021 Ed-Fi Alliance, LLC and contributors.
