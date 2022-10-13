@@ -13,11 +13,9 @@ from edfi_amt_data_lake.parquet.Common.pandasWrapper import (
     jsonNormalize,
     pdMerge,
     renameColumns,
+    replace_null,
     saveParquetFile,
     subset,
-    to_datetime_key,
-    toCsv,
-    replace_null,
 )
 
 ENDPOINT_CANDIDATE = 'candidates'
@@ -27,6 +25,7 @@ ENDPOINT_SURVEY_RESPONSE = 'surveyResponses'
 ENDPOINT_SURVEY_QUESTION_RESPONSE = 'surveyQuestionResponses'
 ENDPOINT_SURVEY_RESPONSE_PERSON_TARGET_ASSOCIATION = 'surveyResponsePersonTargetAssociations'
 
+
 def candidate_survey_dim_dataframe(school_year) -> pd.DataFrame:
     candidate_content = getEndpointJson(ENDPOINT_CANDIDATE, config('SILVER_DATA_LOCATION'), school_year)
     survey_content = getEndpointJson(ENDPOINT_SURVEY, config('SILVER_DATA_LOCATION'), school_year)
@@ -34,7 +33,7 @@ def candidate_survey_dim_dataframe(school_year) -> pd.DataFrame:
     survey_response_content = getEndpointJson(ENDPOINT_SURVEY_RESPONSE, config('SILVER_DATA_LOCATION'), school_year)
     survey_question_response_content = getEndpointJson(ENDPOINT_SURVEY_QUESTION_RESPONSE, config('SILVER_DATA_LOCATION'), school_year)
     survey_response_person_target_association_content = getEndpointJson(ENDPOINT_SURVEY_RESPONSE_PERSON_TARGET_ASSOCIATION, config('SILVER_DATA_LOCATION'), school_year)
-    
+
     ############################
     # surveys
     ############################
@@ -77,8 +76,8 @@ def candidate_survey_dim_dataframe(school_year) -> pd.DataFrame:
         recordPrefix=None,
         errors='ignore'
     )
-    get_reference_from_href(survey_question_normalize,'id','surveyQuestionReferenceId')
-    get_reference_from_href(survey_question_normalize,'surveyReference.link.href','surveyReferenceId')
+    get_reference_from_href(survey_question_normalize, 'id', 'surveyQuestionReferenceId')
+    get_reference_from_href(survey_question_normalize, 'surveyReference.link.href', 'surveyReferenceId')
     survey_question_normalize = renameColumns(survey_question_normalize, {
         'surveySectionReference.surveyIdentifier': 'surveyIdentifier',
         'surveySectionReference.surveySectionTitle': 'surveySectionTitle',
@@ -109,11 +108,11 @@ def candidate_survey_dim_dataframe(school_year) -> pd.DataFrame:
         recordPrefix=None,
         errors='ignore'
     )
-    get_reference_from_href(survey_response_normalize,'studentReference.link.href','studentReferenceId')
-    get_reference_from_href(survey_response_normalize,'surveyReference.link.href','surveyReferenceId')
+    get_reference_from_href(survey_response_normalize, 'studentReference.link.href', 'studentReferenceId')
+    get_reference_from_href(survey_response_normalize, 'surveyReference.link.href', 'surveyReferenceId')
     survey_response_normalize = renameColumns(survey_response_normalize, {
-        'studentReference.studentUniqueId':'studentUniqueId',
-        'id':'surveyResponseReferenceId',
+        'studentReference.studentUniqueId': 'studentUniqueId',
+        'id': 'surveyResponseReferenceId',
     })
     # Select needed columns.
     survey_response_normalize = subset(survey_response_normalize, [
@@ -138,7 +137,7 @@ def candidate_survey_dim_dataframe(school_year) -> pd.DataFrame:
         errors='ignore'
     )
     survey_question_response_values_normalize = renameColumns(survey_question_response_values_normalize, {
-        'id':'surveyQuestionResponseReferenceId',
+        'id': 'surveyQuestionResponseReferenceId',
         'values_numericResponse': 'numericResponse',
         'values_textResponse': 'textResponse',
     })
@@ -165,12 +164,12 @@ def candidate_survey_dim_dataframe(school_year) -> pd.DataFrame:
         recordPrefix=None,
         errors='ignore'
     )
-    get_reference_from_href(survey_question_response_normalize,'surveyQuestionReference.link.href','surveyQuestionReferenceId')
-    get_reference_from_href(survey_question_response_normalize,'surveyResponseReference.link.href','surveyResponseReferenceId')
+    get_reference_from_href(survey_question_response_normalize, 'surveyQuestionReference.link.href', 'surveyQuestionReferenceId')
+    get_reference_from_href(survey_question_response_normalize, 'surveyResponseReference.link.href', 'surveyResponseReferenceId')
     survey_question_response_normalize = renameColumns(survey_question_response_normalize, {
-        'id':'surveyQuestionResponseReferenceId',
-        'surveyQuestionReference.questionCode':'questionCode',
-        'surveyQuestionReference.surveyIdentifier':'surveyIdentifier'
+        'id': 'surveyQuestionResponseReferenceId',
+        'surveyQuestionReference.questionCode': 'questionCode',
+        'surveyQuestionReference.surveyIdentifier': 'surveyIdentifier'
     })
     # Select needed columns.
     survey_question_response_normalize = subset(survey_question_response_normalize, [
@@ -187,8 +186,12 @@ def candidate_survey_dim_dataframe(school_year) -> pd.DataFrame:
         left=survey_question_response_values_normalize,
         right=survey_question_response_normalize,
         how='inner',
-        leftOn=['surveyQuestionResponseReferenceId'],
-        rigthOn=['surveyQuestionResponseReferenceId'],
+        leftOn=[
+            'surveyQuestionResponseReferenceId'
+        ],
+        rigthOn=[
+            'surveyQuestionResponseReferenceId'
+        ],
         suffixLeft=None,
         suffixRight=None
     )
@@ -199,10 +202,12 @@ def candidate_survey_dim_dataframe(school_year) -> pd.DataFrame:
         left=survey_normalize,
         right=survey_question_response_normalize,
         how='inner',
-        leftOn=['surveyIdentifier'
-                ],
-        rigthOn=['surveyIdentifier'
-                ],
+        leftOn=[
+            'surveyIdentifier'
+        ],
+        rigthOn=[
+            'surveyIdentifier'
+        ],
         suffixLeft='_survey',
         suffixRight='_question_response'
     )
@@ -213,10 +218,12 @@ def candidate_survey_dim_dataframe(school_year) -> pd.DataFrame:
         left=result_data_frame,
         right=survey_response_normalize,
         how='inner',
-        leftOn=['surveyResponseReferenceId'
-                ],
-        rigthOn=['surveyResponseReferenceId'
-                ],
+        leftOn=[
+            'surveyResponseReferenceId'
+        ],
+        rigthOn=[
+            'surveyResponseReferenceId'
+        ],
         suffixLeft='_survey',
         suffixRight='_question_response'
     )
@@ -227,15 +234,17 @@ def candidate_survey_dim_dataframe(school_year) -> pd.DataFrame:
         left=result_data_frame,
         right=survey_question_normalize,
         how='inner',
-        leftOn=['surveyQuestionReferenceId',
-                'questionCode'
-                ],
-        rigthOn=['surveyQuestionReferenceId',
-                'questionCode'
-                ],
+        leftOn=[
+            'surveyQuestionReferenceId',
+            'questionCode'
+        ],
+        rigthOn=[
+            'surveyQuestionReferenceId',
+            'questionCode'
+        ],
         suffixLeft='_survey',
         suffixRight='_question_response'
-    )    
+    )
     ############################
     # survey_response_person_target_association
     ############################
@@ -251,10 +260,10 @@ def candidate_survey_dim_dataframe(school_year) -> pd.DataFrame:
         recordPrefix="response_",
         errors='ignore'
     )
-    get_reference_from_href(survey_response_person_target_association_normalize,'surveyResponseReference.link.href','surveyResponseReferenceId')
-    get_reference_from_href(survey_response_person_target_association_normalize,'personReference.link.href','personReferenceId')
+    get_reference_from_href(survey_response_person_target_association_normalize, 'surveyResponseReference.link.href', 'surveyResponseReferenceId')
+    get_reference_from_href(survey_response_person_target_association_normalize, 'personReference.link.href', 'personReferenceId')
     survey_response_person_target_association_normalize = renameColumns(survey_response_person_target_association_normalize, {
-        'personReference.personId':'personId'
+        'personReference.personId': 'personId'
     })
     # Select needed columns.
     survey_response_person_target_association_normalize = subset(survey_response_person_target_association_normalize, [
@@ -288,13 +297,13 @@ def candidate_survey_dim_dataframe(school_year) -> pd.DataFrame:
         recordPrefix=None,
         errors='ignore'
     )
-    addColumnIfNotExists(candidate_normalize, 'personReference.id','')
-    addColumnIfNotExists(candidate_normalize, 'personReference.link.href','/')
-    get_reference_from_href(candidate_normalize,'personReference.link.href','personReferenceId')
+    addColumnIfNotExists(candidate_normalize, 'personReference.id', '')
+    addColumnIfNotExists(candidate_normalize, 'personReference.link.href', '/')
+    get_reference_from_href(candidate_normalize, 'personReference.link.href', 'personReferenceId')
     # Select needed columns.
     candidate_normalize = subset(candidate_normalize, [
         'candidateIdentifier'
-        ,'personReferenceId'
+        , 'personReferenceId'
     ])
     ############################
     # survey - candidate
@@ -318,21 +327,22 @@ def candidate_survey_dim_dataframe(school_year) -> pd.DataFrame:
     result_data_frame['candidateIdentifier'] = result_data_frame['candidateIdentifier'].astype(str)
     result_data_frame['candidateSurveyKey'] = (
         result_data_frame['surveyIdentifier'].astype(str)
-        + '-'+result_data_frame['questionCode']
-        + '-'+result_data_frame['surveyResponseIdentifier']
-        + '-'+result_data_frame['personId']
+        + '-' + result_data_frame['questionCode']
+        + '-' + result_data_frame['surveyResponseIdentifier']
+        + '-' + result_data_frame['personId']
     )
     result_data_frame['candidateKey'] = result_data_frame['candidateIdentifier']
     result_data_frame = subset(result_data_frame, [
         'candidateSurveyKey'
-        ,'candidateKey'
-        ,'surveyTitle'
-        ,'surveySectionTitle'
-        ,'questionCode'
-        ,'numericResponse'
-        ,'textResponse'
+        , 'candidateKey'
+        , 'surveyTitle'
+        , 'surveySectionTitle'
+        , 'questionCode'
+        , 'numericResponse'
+        , 'textResponse'
     ])
     return result_data_frame
+
 
 def candidate_survey_dim(school_year) -> None:
     result_data_frame = candidate_survey_dim_dataframe(school_year)
