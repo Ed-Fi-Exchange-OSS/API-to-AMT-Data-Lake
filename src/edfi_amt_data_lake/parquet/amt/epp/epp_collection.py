@@ -13,9 +13,14 @@ from edfi_amt_data_lake.parquet.amt.epp.sex_descriptor_dim.main import (
     sex_descriptor_dim,
 )
 
+from edfi_amt_data_lake.parquet.amt.epp.candidate_dim.main import (
+    candidate_dim,
+)
+
 
 def epp_collection(school_year) -> None:
     candidate_survey_dim(school_year)
     race_descriptor_dim(school_year)
     sex_descriptor_dim(school_year)
     epp_dim(school_year)
+    candidate_dim(school_year)
