@@ -4,5 +4,10 @@
 # See the LICENSE and NOTICES files in the project root for more information.
 
 
+from edfi_amt_data_lake.parquet.amt.rls.rls_student_data_authorization.main import (
+    rls_student_data_authorization,
+)
+
+
 def rls_collection(school_year) -> None:
-    None
+    rls_student_data_authorization(school_year)
