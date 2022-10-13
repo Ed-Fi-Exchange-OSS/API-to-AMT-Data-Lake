@@ -120,7 +120,8 @@ def candidate_dim(school_year) -> None:
         leftOn=['candidateIdentifier'],
         rigthOn=['candidateReference.candidateIdentifier'],
         suffixLeft=None,
-        suffixRight='_person'
+        suffixRight=None
     )
+    # toCsv(result_data_frame, "C:/temp/edfi/parquet", "result_data_frame.csv", "")
 
-    saveParquetFile(result_data_frame, f"{config('PARQUET_FILES_LOCATION')}", "epp_CandidateDim.parquet", school_year)
+    # saveParquetFile(result_data_frame, f"{config('PARQUET_FILES_LOCATION')}", "epp_CandidateDim.parquet", school_year)
