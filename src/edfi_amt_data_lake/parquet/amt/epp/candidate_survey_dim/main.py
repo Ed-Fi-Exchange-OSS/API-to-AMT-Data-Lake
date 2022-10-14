@@ -16,6 +16,7 @@ from edfi_amt_data_lake.parquet.Common.pandasWrapper import (
     replace_null,
     saveParquetFile,
     subset,
+    to_datetime_key,
 )
 
 ENDPOINT_CANDIDATE = 'candidates'
@@ -70,7 +71,7 @@ def candidate_survey_dim_dataframe(school_year) -> pd.DataFrame:
             'surveySectionReference.surveyIdentifier',
             'surveySectionReference.surveySectionTitle',
             'questionCode',
-            'questionCode'
+            'questionText'
         ],
         metaPrefix=None,
         recordPrefix=None,
@@ -87,7 +88,8 @@ def candidate_survey_dim_dataframe(school_year) -> pd.DataFrame:
         'surveyReferenceId',
         'surveyQuestionReferenceId',
         'surveySectionTitle',
-        'questionCode'
+        'questionCode',
+        'questionText'
     ])
     ############################
     # survey response
@@ -108,6 +110,7 @@ def candidate_survey_dim_dataframe(school_year) -> pd.DataFrame:
         recordPrefix=None,
         errors='ignore'
     )
+    survey_response_normalize['responseDateKey'] = to_datetime_key(survey_response_normalize, 'responseDate')
     get_reference_from_href(survey_response_normalize, 'studentReference.link.href', 'studentReferenceId')
     get_reference_from_href(survey_response_normalize, 'surveyReference.link.href', 'surveyReferenceId')
     survey_response_normalize = renameColumns(survey_response_normalize, {
@@ -120,7 +123,7 @@ def candidate_survey_dim_dataframe(school_year) -> pd.DataFrame:
         'studentReferenceId',
         'surveyReferenceId',
         'surveyResponseReferenceId',
-        'responseDate',
+        'responseDateKey',
         'surveyResponseIdentifier'
     ])
     ############################
@@ -337,7 +340,9 @@ def candidate_survey_dim_dataframe(school_year) -> pd.DataFrame:
         , 'candidateKey'
         , 'surveyTitle'
         , 'surveySectionTitle'
+        , 'responseDateKey'
         , 'questionCode'
+        , 'questionText'
         , 'numericResponse'
         , 'textResponse'
     ])
