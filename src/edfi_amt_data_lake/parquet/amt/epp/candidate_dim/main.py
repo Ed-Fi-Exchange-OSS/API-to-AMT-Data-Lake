@@ -4,6 +4,7 @@
 # See the LICENSE and NOTICES files in the project root for more information.
 
 from datetime import date
+from unittest import result
 
 from decouple import config
 
@@ -86,7 +87,7 @@ def candidate_dim(school_year) -> None:
 
     candidates_normalized = jsonNormalize(
         candidates_content,
-        recordPath=['races'],
+        recordPath=None,
         meta=[
             ['personReference','personId'],
             'candidateIdentifier',
@@ -101,6 +102,18 @@ def candidate_dim(school_year) -> None:
         errors='ignore'
     )
     toCsv(candidates_normalized, "C:/temp/edfi/parquet", "candidates_normalized.csv", "")
+
+    candidates_races_normalized = jsonNormalize(
+        candidates_content,
+        recordPath=['races'],
+        meta=[
+            'candidateIdentifier'
+        ],
+        metaPrefix=None,
+        recordPrefix='candidates_races_',
+        errors='ignore'
+    )
+    toCsv(candidates_races_normalized, "C:/temp/edfi/parquet", "candidates_races_normalized.csv", "")
 
     students_normalized = jsonNormalize(
         students_content,
@@ -140,13 +153,16 @@ def candidate_dim(school_year) -> None:
         recordPrefix='credentials_',
         errors='ignore'
     )
+
+    credentials_normalized = credentials_normalized.fillna('')
+    credentials_normalized["hasPersonId"] = credentials_normalized['_ext.tpdm.personReference.personId'].astype(bool)
+    credentials_normalized = credentials_normalized[credentials_normalized['hasPersonId'].astype(bool)]   
+
     toCsv(credentials_normalized, "C:/temp/edfi/parquet", "credentials_normalized.csv", "")
 
     candidate_educator_preparation_program_associations_normalized = jsonNormalize(
         candidate_educator_preparation_program_associations_content,
-        recordPath=[
-            'cohortYears'
-        ],
+        recordPath=None,
         meta=['beginDate',
             'reasonExitedDescriptor',
             ['candidateReference','candidateIdentifier'],
@@ -158,7 +174,19 @@ def candidate_dim(school_year) -> None:
     )
     toCsv(candidate_educator_preparation_program_associations_normalized, "C:/temp/edfi/parquet", "candidate_educator_preparation_program_associations_normalized.csv", "")
 
-    students_normalized['person'] = '|'
+    candidate_educator_preparation_program_associations_cohortyears_normalized = jsonNormalize(
+        candidate_educator_preparation_program_associations_content,
+        recordPath=[
+            'cohortYears'
+        ],
+        meta=[
+            ['candidateReference','candidateIdentifier'],
+            ['educatorPreparationProgramReference','programName']],
+        metaPrefix=None,
+        recordPrefix='candidate_educator_preparation_program_',
+        errors='ignore'
+    )
+    toCsv(candidate_educator_preparation_program_associations_cohortyears_normalized, "C:/temp/edfi/parquet", "candidate_educator_preparation_program_associations_cohortyears_normalized.csv", "")
 
     # Join student to person
     student_person_data_frame = pdMerge(
@@ -170,18 +198,44 @@ def candidate_dim(school_year) -> None:
         suffixLeft=None,
         suffixRight='_person'
     )
-    toCsv(student_person_data_frame, "C:/temp/edfi/parquet", "student_person_data_frame.csv", "")
+    # toCsv(student_person_data_frame, "C:/temp/edfi/parquet", "student_person_data_frame.csv", "")
 
-    candidates_normalized['candidate_prep'] = '|'
+    candidates_normalized['candidate_prep_program'] = '|'
 
     result_data_frame = pdMerge(
         left=candidates_normalized,
         right=candidate_educator_preparation_program_associations_normalized,
-        how='left',
+        how='inner',
         leftOn=['candidateIdentifier'],
         rigthOn=['candidateReference.candidateIdentifier'],
         suffixLeft=None,
-        suffixRight=None
+        suffixRight="_candidate_educator_preparation_program_associations"
+    )
+    # toCsv(result_data_frame, "C:/temp/edfi/parquet", "result_data_frame.csv", "")
+
+    result_data_frame['candidate_prep_program_cohortyears'] = '|'
+
+    result_data_frame = pdMerge(
+        left=result_data_frame,
+        right=candidate_educator_preparation_program_associations_cohortyears_normalized,
+        how='left',
+        leftOn=['candidateIdentifier','educatorPreparationProgramReference.programName'],
+        rigthOn=['candidateReference.candidateIdentifier','educatorPreparationProgramReference.programName'],
+        suffixLeft=None,
+        suffixRight="_candidate_prep_program_cohortyears"
+    )
+    # toCsv(result_data_frame, "C:/temp/edfi/parquet", "result_data_frame.csv", "")
+
+    result_data_frame['candidate_races'] = '|'
+
+    result_data_frame = pdMerge(
+        left=result_data_frame,
+        right=candidates_races_normalized,
+        how='left',
+        leftOn=['candidateIdentifier'],
+        rigthOn=['candidateIdentifier'],
+        suffixLeft=None,
+        suffixRight="_candidate_races"
     )
     # toCsv(result_data_frame, "C:/temp/edfi/parquet", "result_data_frame.csv", "")
 
@@ -196,7 +250,7 @@ def candidate_dim(school_year) -> None:
         suffixLeft=None,
         suffixRight='_student'
     )
-    # toCsv(result_data_frame, "C:/temp/edfi/parquet", "result_data_frame.csv", "")
+    # toCsv(result_data_frame, "C:/temp/edfi/parquet", "result_data_frame_before.csv", "")
 
     result_data_frame['credentials'] = '|'
 
@@ -211,20 +265,20 @@ def candidate_dim(school_year) -> None:
     )
     # toCsv(result_data_frame, "C:/temp/edfi/parquet", "result_data_frame.csv", "")
 
-    result_data_frame['races'] = '|'
+    result_data_frame['races_descriptor'] = '|'
 
     result_data_frame = pdMerge(
         left=result_data_frame,
         right=races_descriptor_normalized,
         how='left',
-        leftOn=['candidates_raceDescriptor'],
+        leftOn=['candidates_races_raceDescriptor'],
         rigthOn=['namespace_codevalue'],
         suffixLeft=None,
         suffixRight='_race'
     )
     # toCsv(result_data_frame, "C:/temp/edfi/parquet", "result_data_frame.csv", "")
 
-    result_data_frame['sex'] = '|'
+    result_data_frame['sex_descriptor'] = '|'
 
     result_data_frame = pdMerge(
         left=result_data_frame,
@@ -236,9 +290,6 @@ def candidate_dim(school_year) -> None:
         suffixRight='_sex'
     )
     # toCsv(result_data_frame, "C:/temp/edfi/parquet", "result_data_frame.csv", "")
-
-    # Removes namespace from Category Descriptor
-    get_descriptor_code_value_from_uri(result_data_frame, 'candidate_educator_preparation_program_termDescriptor')
 
     result_data_frame = result_data_frame[
         [
@@ -259,9 +310,16 @@ def candidate_dim(school_year) -> None:
             'personReference.personId',
             'reasonExitedDescriptor',
             'candidate_educator_preparation_program_termDescriptor',
-            'credentialIdentifier',
             'issuanceDate'
         ]]
+    # toCsv(result_data_frame, "C:/temp/edfi/parquet", "result_data_frame_before.csv", "")
+
+    get_descriptor_code_value_from_uri(result_data_frame, 'reasonExitedDescriptor')
+    get_descriptor_code_value_from_uri(result_data_frame, 'candidate_educator_preparation_program_termDescriptor')
+
+    result_data_frame = result_data_frame.fillna('')
+
+    result_data_frame['ProgramComplete'] = [True if x == 'Completed' else False for x in result_data_frame['reasonExitedDescriptor']]
 
     result_data_frame = renameColumns(result_data_frame, {
         'candidateIdentifier': 'CandidateKey',
@@ -269,9 +327,9 @@ def candidate_dim(school_year) -> None:
         'lastSurname': 'LastSurname',
         'sexDescriptorId': 'SexDescriptorKey',
         'codeValue_sex': 'SexDescriptor',
+        'raceDescriptorId': 'RaceDescriptorKey',
         'codeValue': 'RaceDescriptor',
         'hispanicLatinoEthnicity': 'HispanicLatinoEthnicity',
-        'localEducationAgencyId': 'LocalEducationAgencyKey',
         'economicDisadvantaged': 'EconomicDisadvantaged',
         'candidate_educator_preparation_program_schoolYearTypeReference.schoolYear': 'Cohort',
         'studentUniqueId': 'StudentKey',
@@ -279,8 +337,37 @@ def candidate_dim(school_year) -> None:
         'beginDate': 'BeginDate',
         'educatorPreparationProgramReference.educationOrganizationId': 'EducationOrganizationId',
         'personReference.personId': 'PersonId',
-        'candidate_educator_preparation_program_termDescriptor': 'CohortYearTermDescription'
+        'candidate_educator_preparation_program_termDescriptor': 'CohortYearTermDescription',
+        'issuanceDate': 'IssuanceDate'
     })
+    
+    result_data_frame.loc[result_data_frame['EconomicDisadvantaged'] == '', 'EconomicDisadvantaged'] = False
+
+    result_data_frame['RaceDescriptorKey'] = result_data_frame['RaceDescriptorKey'].astype(str)
+    result_data_frame['Cohort'] = result_data_frame['Cohort'].astype(str)
+
+    result_data_frame = result_data_frame.groupby([
+        'CandidateKey'
+        ,'FirstName'
+        ,'LastSurname'
+        ,'SexDescriptorKey'
+        ,'SexDescriptor'
+        ,'RaceDescriptorKey'
+        ,'RaceDescriptor'
+        ,'HispanicLatinoEthnicity'
+        ,'EconomicDisadvantaged'
+        ,'Cohort'
+        ,'ProgramComplete'
+        ,'StudentKey'
+        ,'ProgramName'
+        ,'BeginDate'
+        ,'EducationOrganizationId'
+        ,'PersonId'
+        ,'CohortYearTermDescription'
+    ], sort=False)['IssuanceDate'].min()
+
+    result_data_frame = result_data_frame.to_frame()
+
     toCsv(result_data_frame, "C:/temp/edfi/parquet", "result_data_frame.csv", "")
 
-    # saveParquetFile(result_data_frame, f"{config('PARQUET_FILES_LOCATION')}", "epp_CandidateDim.parquet", school_year)
+    saveParquetFile(result_data_frame, f"{config('PARQUET_FILES_LOCATION')}", "epp_CandidateDim.parquet", school_year)
