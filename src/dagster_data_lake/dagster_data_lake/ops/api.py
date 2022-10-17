@@ -21,6 +21,6 @@ def get_api_data() -> None:
 
 @op
 def generate_parquet(api_result_sucess) -> None:
-    if api_result_sucess:
+    if(api_result_sucess):
         for school_year in get_school_year():
             generate_amt_parquet(school_year)
