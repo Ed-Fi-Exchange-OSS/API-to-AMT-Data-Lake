@@ -8,8 +8,8 @@ from decouple import config
 
 from edfi_amt_data_lake.parquet.Common.functions import getEndpointJson
 from edfi_amt_data_lake.parquet.Common.pandasWrapper import (
-    get_reference_from_href,
     addColumnIfNotExists,
+    get_reference_from_href,
     jsonNormalize,
     renameColumns,
     saveParquetFile,
@@ -43,7 +43,7 @@ def rls_student_data_authorization_dataframe(school_year) -> pd.DataFrame:
         'studentReference.studentUniqueId': 'studentKey',
         'sectionReference.schoolId': 'schoolKey',
     })
-    addColumnIfNotExists(student_section_association_normalize,'endDate')
+    addColumnIfNotExists(student_section_association_normalize, 'endDate')
     get_reference_from_href(student_section_association_normalize, 'sectionReference.link.href', 'sectionId')
     # Select needed columns.
     result_data_frame = subset(student_section_association_normalize, [
