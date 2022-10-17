@@ -102,6 +102,10 @@ def get_descriptor_code_value_from_uri(data=pd.DataFrame, column=str):
 
 
 def get_reference_from_href(data=pd.DataFrame, column=str, destination_column=str):
-    if not data[column].empty:
-        if len(data[column].str.split('/')) > 0:
-            data[destination_column] = data[column].str.split('/').str.get(-1)
+    if column in data:
+        if not data[column].empty:
+            if len(data[column].str.split('/')) > 0:
+                data[destination_column] = data[column].str.split('/').str.get(-1)
+    # add the column if it was not added.
+    if not (destination_column in data):
+        data[destination_column] = ""
