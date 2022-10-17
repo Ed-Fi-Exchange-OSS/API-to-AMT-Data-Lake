@@ -15,9 +15,6 @@ from edfi_amt_data_lake.parquet.Common.pandasWrapper import (
     pdMerge,
     renameColumns,
     saveParquetFile,
-    subset,
-    to_datetime_key,
-    toCsv,
 )
 
 
@@ -67,7 +64,6 @@ def candidate_dim(school_year) -> None:
         errors='ignore'
     )
     races_descriptor_normalized["namespace_codevalue"] = races_descriptor_normalized['namespace'] + '#' + races_descriptor_normalized['codeValue']
-    toCsv(races_descriptor_normalized, "C:/temp/edfi/parquet", "races_descriptor_normalized.csv", "")
 
     sex_descriptor_normalized = jsonNormalize(
         sex_descriptor_content,
@@ -83,7 +79,6 @@ def candidate_dim(school_year) -> None:
         errors='ignore'
     )
     sex_descriptor_normalized["namespace_codevalue"] = sex_descriptor_normalized['namespace'] + '#' + sex_descriptor_normalized['codeValue']
-    toCsv(sex_descriptor_normalized, "C:/temp/edfi/parquet", "sex_descriptor_normalized.csv", "")
 
     candidates_normalized = jsonNormalize(
         candidates_content,
@@ -101,7 +96,6 @@ def candidate_dim(school_year) -> None:
         recordPrefix='candidates_',
         errors='ignore'
     )
-    toCsv(candidates_normalized, "C:/temp/edfi/parquet", "candidates_normalized.csv", "")
 
     candidates_races_normalized = jsonNormalize(
         candidates_content,
@@ -113,7 +107,6 @@ def candidate_dim(school_year) -> None:
         recordPrefix='candidates_races_',
         errors='ignore'
     )
-    toCsv(candidates_races_normalized, "C:/temp/edfi/parquet", "candidates_races_normalized.csv", "")
 
     students_normalized = jsonNormalize(
         students_content,
@@ -127,7 +120,6 @@ def candidate_dim(school_year) -> None:
         recordPrefix='students_',
         errors='ignore'
     )
-    toCsv(students_normalized, "C:/temp/edfi/parquet", "students_normalized.csv", "")
 
     people_normalized = jsonNormalize(
         people_content,
@@ -140,7 +132,6 @@ def candidate_dim(school_year) -> None:
         recordPrefix='people_',
         errors='ignore'
     )
-    toCsv(people_normalized, "C:/temp/edfi/parquet", "people_normalized.csv", "")
 
     credentials_normalized = jsonNormalize(
         credentials_content,
@@ -158,8 +149,6 @@ def candidate_dim(school_year) -> None:
     credentials_normalized["hasPersonId"] = credentials_normalized['_ext.tpdm.personReference.personId'].astype(bool)
     credentials_normalized = credentials_normalized[credentials_normalized['hasPersonId'].astype(bool)]   
 
-    toCsv(credentials_normalized, "C:/temp/edfi/parquet", "credentials_normalized.csv", "")
-
     candidate_educator_preparation_program_associations_normalized = jsonNormalize(
         candidate_educator_preparation_program_associations_content,
         recordPath=None,
@@ -172,7 +161,6 @@ def candidate_dim(school_year) -> None:
         recordPrefix='candidate_educator_preparation_program_',
         errors='ignore'
     )
-    toCsv(candidate_educator_preparation_program_associations_normalized, "C:/temp/edfi/parquet", "candidate_educator_preparation_program_associations_normalized.csv", "")
 
     candidate_educator_preparation_program_associations_cohortyears_normalized = jsonNormalize(
         candidate_educator_preparation_program_associations_content,
@@ -186,7 +174,6 @@ def candidate_dim(school_year) -> None:
         recordPrefix='candidate_educator_preparation_program_',
         errors='ignore'
     )
-    toCsv(candidate_educator_preparation_program_associations_cohortyears_normalized, "C:/temp/edfi/parquet", "candidate_educator_preparation_program_associations_cohortyears_normalized.csv", "")
 
     # Join student to person
     student_person_data_frame = pdMerge(
@@ -198,7 +185,6 @@ def candidate_dim(school_year) -> None:
         suffixLeft=None,
         suffixRight='_person'
     )
-    # toCsv(student_person_data_frame, "C:/temp/edfi/parquet", "student_person_data_frame.csv", "")
 
     candidates_normalized['candidate_prep_program'] = '|'
 
@@ -211,9 +197,6 @@ def candidate_dim(school_year) -> None:
         suffixLeft=None,
         suffixRight="_candidate_educator_preparation_program_associations"
     )
-    # toCsv(result_data_frame, "C:/temp/edfi/parquet", "result_data_frame.csv", "")
-
-    result_data_frame['candidate_prep_program_cohortyears'] = '|'
 
     result_data_frame = pdMerge(
         left=result_data_frame,
@@ -224,9 +207,6 @@ def candidate_dim(school_year) -> None:
         suffixLeft=None,
         suffixRight="_candidate_prep_program_cohortyears"
     )
-    # toCsv(result_data_frame, "C:/temp/edfi/parquet", "result_data_frame.csv", "")
-
-    result_data_frame['candidate_races'] = '|'
 
     result_data_frame = pdMerge(
         left=result_data_frame,
@@ -237,9 +217,6 @@ def candidate_dim(school_year) -> None:
         suffixLeft=None,
         suffixRight="_candidate_races"
     )
-    # toCsv(result_data_frame, "C:/temp/edfi/parquet", "result_data_frame.csv", "")
-
-    result_data_frame['student_people'] = '|'
 
     result_data_frame = pdMerge(
         left=result_data_frame,
@@ -250,9 +227,6 @@ def candidate_dim(school_year) -> None:
         suffixLeft=None,
         suffixRight='_student'
     )
-    # toCsv(result_data_frame, "C:/temp/edfi/parquet", "result_data_frame_before.csv", "")
-
-    result_data_frame['credentials'] = '|'
 
     result_data_frame = pdMerge(
         left=result_data_frame,
@@ -263,9 +237,6 @@ def candidate_dim(school_year) -> None:
         suffixLeft=None,
         suffixRight='_credentials'
     )
-    # toCsv(result_data_frame, "C:/temp/edfi/parquet", "result_data_frame.csv", "")
-
-    result_data_frame['races_descriptor'] = '|'
 
     result_data_frame = pdMerge(
         left=result_data_frame,
@@ -276,9 +247,6 @@ def candidate_dim(school_year) -> None:
         suffixLeft=None,
         suffixRight='_race'
     )
-    # toCsv(result_data_frame, "C:/temp/edfi/parquet", "result_data_frame.csv", "")
-
-    result_data_frame['sex_descriptor'] = '|'
 
     result_data_frame = pdMerge(
         left=result_data_frame,
@@ -289,7 +257,6 @@ def candidate_dim(school_year) -> None:
         suffixLeft=None,
         suffixRight='_sex'
     )
-    # toCsv(result_data_frame, "C:/temp/edfi/parquet", "result_data_frame.csv", "")
 
     result_data_frame = result_data_frame[
         [
@@ -312,7 +279,6 @@ def candidate_dim(school_year) -> None:
             'candidate_educator_preparation_program_termDescriptor',
             'issuanceDate'
         ]]
-    # toCsv(result_data_frame, "C:/temp/edfi/parquet", "result_data_frame_before.csv", "")
 
     get_descriptor_code_value_from_uri(result_data_frame, 'reasonExitedDescriptor')
     get_descriptor_code_value_from_uri(result_data_frame, 'candidate_educator_preparation_program_termDescriptor')
@@ -367,7 +333,5 @@ def candidate_dim(school_year) -> None:
     ], sort=False)['IssuanceDate'].min()
 
     result_data_frame = result_data_frame.to_frame()
-
-    toCsv(result_data_frame, "C:/temp/edfi/parquet", "result_data_frame.csv", "")
 
     saveParquetFile(result_data_frame, f"{config('PARQUET_FILES_LOCATION')}", "epp_CandidateDim.parquet", school_year)
