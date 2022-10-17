@@ -8,11 +8,11 @@ from decouple import config
 
 from edfi_amt_data_lake.parquet.Common.functions import getEndpointJson
 from edfi_amt_data_lake.parquet.Common.pandasWrapper import (
+    get_reference_from_href,
     jsonNormalize,
     renameColumns,
     saveParquetFile,
     subset,
-    get_reference_from_href,toCsv
 )
 
 ENDPOINT_SECTION_ASSOCIATION = 'studentSectionAssociations'
@@ -38,12 +38,11 @@ def rls_student_data_authorization_dataframe(school_year) -> pd.DataFrame:
         recordPrefix=None,
         errors='ignore'
     )
-    
     student_section_association_normalize = renameColumns(student_section_association_normalize, {
         'studentReference.studentUniqueId': 'studentKey',
         'sectionReference.schoolId': 'schoolKey',
     })
-    get_reference_from_href(student_section_association_normalize, 'id', 'sectionId')
+    get_reference_from_href(student_section_association_normalize, 'sectionReference.link.href', 'sectionId')
     # Select needed columns.
     result_data_frame = subset(student_section_association_normalize, [
         'studentKey',
