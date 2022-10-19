@@ -8,6 +8,7 @@ from decouple import config
 
 from edfi_amt_data_lake.parquet.Common.functions import getEndpointJson
 from edfi_amt_data_lake.parquet.Common.pandasWrapper import (
+    addColumnIfNotExists,
     get_descriptor_code_value_from_uri,
     jsonNormalize,
     pdMerge,
@@ -144,6 +145,7 @@ def candidate_dim(school_year) -> None:
     )
 
     credentials_normalized = credentials_normalized.fillna('')
+    addColumnIfNotExists(credentials_normalized, '_ext.tpdm.personReference.personId')
     credentials_normalized["hasPersonId"] = credentials_normalized['_ext.tpdm.personReference.personId'].astype(bool)
     credentials_normalized = credentials_normalized[credentials_normalized['hasPersonId'].astype(bool)]
 
