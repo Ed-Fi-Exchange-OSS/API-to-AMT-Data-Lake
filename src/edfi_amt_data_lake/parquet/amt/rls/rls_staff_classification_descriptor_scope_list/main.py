@@ -5,12 +5,14 @@
 
 import pandas as pd
 from decouple import config
+
 from edfi_amt_data_lake.helper.helper import get_descriptor_mapping_config
 from edfi_amt_data_lake.parquet.Common.pandasWrapper import (
     jsonNormalize,
     renameColumns,
     saveParquetFile,
 )
+
 
 def rls_staff_classification_descriptor_scope_list_dataframe(school_year) -> pd.DataFrame:
 
@@ -27,18 +29,18 @@ def rls_staff_classification_descriptor_scope_list_dataframe(school_year) -> pd.
 
     result_data_frame = (
         descriptor_mapping_normalized[
-            (descriptor_mapping_normalized['constantName'].str.contains('AuthorizationScope.District')) 
-            | (descriptor_mapping_normalized['constantName'].str.contains('AuthorizationScope.School')) 
+            (descriptor_mapping_normalized['constantName'].str.contains('AuthorizationScope.District'))
+            | (descriptor_mapping_normalized['constantName'].str.contains('AuthorizationScope.School'))
             | (descriptor_mapping_normalized['constantName'].str.contains('AuthorizationScope.Section'))
         ]
     )
 
-    result_data_frame = result_data_frame[['constantName','codeValue']]
+    result_data_frame = result_data_frame[['constantName', 'codeValue']]
 
     result_data_frame = renameColumns(result_data_frame, {
-            'constantName': "AuthorizationScopeName",
-            'codeValue': "CodeValue"
-        })
+        'constantName': "AuthorizationScopeName",
+        'codeValue': "CodeValue"
+    })
 
     return result_data_frame
 
