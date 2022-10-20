@@ -19,6 +19,10 @@ def pdMerge(left=pd.DataFrame, right=pd.DataFrame, how=str, leftOn=[str], rigthO
     )
 
 
+def pd_concat(objs=[pd.DataFrame], ignore_index=True):
+    return pd.concat(objs, ignore_index=ignore_index)
+
+
 # Use this method to review a dataframe content
 def toCsv(csvContent=pd.DataFrame, path=str, file_name=str, school_year=str) -> None:
     school_year_path = f"{school_year}/" if school_year else ""

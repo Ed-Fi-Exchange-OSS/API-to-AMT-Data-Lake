@@ -7,7 +7,11 @@
 from edfi_amt_data_lake.parquet.amt.rls.rls_student_data_authorization.main import (
     rls_student_data_authorization,
 )
+from edfi_amt_data_lake.parquet.amt.rls.rls_user_student_data_authorization.main import (
+    rls_user_student_data_authorization,
+)
 
 
 def rls_collection(school_year) -> None:
     rls_student_data_authorization(school_year)
+    rls_user_student_data_authorization(school_year)
