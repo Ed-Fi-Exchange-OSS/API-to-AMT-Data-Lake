@@ -3,7 +3,6 @@
 # The Ed-Fi Alliance licenses this file to you under the Apache License, Version 2.0.
 # See the LICENSE and NOTICES files in the project root for more information.
 
-from cmath import nan
 from datetime import date
 
 import pandas as pd
@@ -20,7 +19,6 @@ from edfi_amt_data_lake.parquet.Common.pandasWrapper import (
     saveParquetFile,
     subset,
     to_datetime_key,
-    toCsv,
 )
 
 ENDPOINT_STAFF_EDORG_ASSIGNMENT_ASSOCIATION = 'staffEducationOrganizationAssignmentAssociations'
@@ -138,8 +136,8 @@ def rls_user_authorization_dataframe(school_year) -> pd.DataFrame:
         suffixLeft=None,
         suffixRight=None
     )
-    result_section_data_frame['sectionReference.schoolKey'] = result_section_data_frame['sectionReference.schoolId'].astype('Int64').astype(str) 
-    result_section_data_frame['sectionReference.schoolYear'] = result_section_data_frame['sectionReference.schoolYear'].astype('Int64').astype(str) #.apply(lambda x: int(x) if x == x else "")
+    result_section_data_frame['sectionReference.schoolKey'] = result_section_data_frame['sectionReference.schoolId'].astype('Int64').astype(str)
+    result_section_data_frame['sectionReference.schoolYear'] = result_section_data_frame['sectionReference.schoolYear'].astype('Int64').astype(str)
     result_section_data_frame['sectionKey'] = (
         result_section_data_frame['sectionReference.schoolKey']
         + '-' + result_section_data_frame['sectionReference.localCourseCode']
@@ -158,37 +156,60 @@ def rls_user_authorization_dataframe(school_year) -> pd.DataFrame:
     )
     # Select needed columns.
     # Section permission
-    result_section_data_frame.loc[(
+    result_section_data_frame.loc[
+        (
             result_section_data_frame['staffClassificationDescriptor_constantName'].str.contains('AuthorizationScope.District')
             | result_section_data_frame['staffClassificationDescriptor_constantName'].str.contains('AuthorizationScope.School')
-        ), 'sectionPermission'] = 'ALL'
-    result_section_data_frame.loc[(
+        )
+        , 'sectionPermission'
+    ] = 'ALL'
+    result_section_data_frame.loc[
+        (
             result_section_data_frame['staffClassificationDescriptor_constantName'].str.contains('AuthorizationScope.Section')
-        ), 'sectionPermission'] = result_section_data_frame['sectionReferenceId']
+        )
+        , 'sectionPermission'
+    ] = result_section_data_frame['sectionReferenceId']
     # Section key permission
-    result_section_data_frame.loc[(
+    result_section_data_frame.loc[
+        (
             result_section_data_frame['staffClassificationDescriptor_constantName'].str.contains('AuthorizationScope.District')
             | result_section_data_frame['staffClassificationDescriptor_constantName'].str.contains('AuthorizationScope.School')
-        ), 'sectionKeyPermission'] = 'ALL'
-    result_section_data_frame.loc[(
+        )
+        , 'sectionKeyPermission'
+    ] = 'ALL'
+    result_section_data_frame.loc[
+        (
             result_section_data_frame['staffClassificationDescriptor_constantName'].str.contains('AuthorizationScope.Section')
-        ), 'sectionKeyPermission'] = result_section_data_frame['sectionKey']
+        )
+        , 'sectionKeyPermission'
+    ] = result_section_data_frame['sectionKey']
     # School
-    result_section_data_frame.loc[(
+    result_section_data_frame.loc[
+        (
             result_section_data_frame['staffClassificationDescriptor_constantName'].str.contains('AuthorizationScope.District')
-        ), 'schoolPermission'] = 'ALL'
-    result_section_data_frame.loc[(
+        )
+        , 'schoolPermission'
+    ] = 'ALL'
+    result_section_data_frame.loc[
+        (
             result_section_data_frame['staffClassificationDescriptor_constantName'].str.contains('AuthorizationScope.Section')
             | result_section_data_frame['staffClassificationDescriptor_constantName'].str.contains('AuthorizationScope.School')
-        ), 'schoolPermission'] = result_section_data_frame['educationOrganizationId'].astype(str)
+        )
+        , 'schoolPermission'
+    ] = result_section_data_frame['educationOrganizationId'].astype(str)
     # districtId
-    result_section_data_frame.loc[(
+    result_section_data_frame.loc[
+        (
             result_section_data_frame['staffClassificationDescriptor_constantName'].str.contains('AuthorizationScope.District')
-        ), 'districtId'] = result_section_data_frame['educationOrganizationId'].astype(str)
+        )
+        , 'districtId'
+    ] = result_section_data_frame['educationOrganizationId'].astype(str)
     result_section_data_frame['studentPermission'] = 'ALL'
-    result_section_data_frame = renameColumns(result_section_data_frame, {
-        'staffClassificationDescriptor_constantName': 'userScope'
-    })
+    result_section_data_frame = renameColumns(
+        result_section_data_frame, {
+            'staffClassificationDescriptor_constantName': 'userScope'
+        }
+    )
     result_data_frame = subset(result_section_data_frame, [
         'userKey',
         'userScope',
