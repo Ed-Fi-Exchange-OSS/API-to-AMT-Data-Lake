@@ -18,8 +18,8 @@ from edfi_amt_data_lake.parquet.Common.pandasWrapper import (
     subset,
 )
 
-ENDPOINT_LOCAL_EDUCATION_AGENCY= 'localEducationAgencies'
-ENDPOINT_STATE_EDUCATION_AGENCY= 'stateEducationAgencies'
+ENDPOINT_LOCAL_EDUCATION_AGENCY = 'localEducationAgencies'
+ENDPOINT_STATE_EDUCATION_AGENCY = 'stateEducationAgencies'
 ENDPOINT_EDUCATION_SERVICE_CENTER = 'educationServiceCenters'
 
 
