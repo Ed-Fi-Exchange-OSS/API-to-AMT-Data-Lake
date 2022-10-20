@@ -13,6 +13,7 @@ from edfi_amt_data_lake.parquet.Common.pandasWrapper import (
     jsonNormalize,
     pdMerge,
     renameColumns,
+    replace_null,
     saveParquetFile,
 )
 
@@ -164,6 +165,8 @@ def candidate_dim(school_year) -> None:
         errors='ignore'
     )
 
+    replace_null(candidate_educator_preparation_program_associations_normalized,'reasonExitedDescriptor', '')
+
     candidate_educator_preparation_program_associations_cohortyears_normalized = jsonNormalize(
         candidate_educator_preparation_program_associations_content,
         recordPath=[
@@ -259,6 +262,8 @@ def candidate_dim(school_year) -> None:
         suffixLeft=None,
         suffixRight='_sex'
     )
+
+    replace_null(result_data_frame,'candidate_educator_preparation_program_termDescriptor', '')
 
     result_data_frame = result_data_frame[
         [
