@@ -36,6 +36,8 @@ def toCsv(csvContent=pd.DataFrame, path=str, file_name=str, school_year=str) -> 
 
 
 def jsonNormalize(data, recordPath, meta, metaPrefix, recordPrefix, errors) -> pd.DataFrame:
+    if not data:
+        return pd.DataFrame(columns=meta)
     return pd.json_normalize(
         data=data,
         record_path=recordPath,
@@ -86,7 +88,7 @@ def to_datetime(data=pd.DataFrame, column=str):
 
 
 def replace_null(data=pd.DataFrame, column=str, replace_value: any = None):
-    if column not in data:
+    if not (column in data):
         data[column] = replace_value
     data.loc[data[column].isnull(), column] = replace_value
 
