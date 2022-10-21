@@ -21,7 +21,8 @@ API_LIMIT = config("API_LIMIT", cast=int)
 LIMIT = API_LIMIT if API_LIMIT else 500
 
 
-def _get_change_version_values(school_year) -> ChangeVersionValues:
+# Get the newest and oldest change version values
+def _get_change_version_values(school_year: any) -> ChangeVersionValues:
     school_year_path = f"{school_year}/" if school_year else ""
     path_filename = f"{config('CHANGE_VERSION_FILEPATH')}/API_TO_AMT/{school_year_path}{config('CHANGE_VERSION_FILENAME')}"
     with open(path_filename, "r") as outfile:
@@ -34,47 +35,47 @@ def _get_change_version_values(school_year) -> ChangeVersionValues:
 
 
 # Get a response from the Ed-Fi API
-def _call(url, token, changeVersionValues) -> list:
-    headers = get_headers(token)
+def _api_call(url: str, token: str, version: ChangeVersionValues) -> list:
     offset = 0
     result = []
+    loop = True
+    headers = get_headers(token)
     try:
-        continue_loop = True
-        while continue_loop:
-            endpoint = f"{url}?limit={LIMIT}&offset={offset}&minChangeVersion={changeVersionValues.oldestChangeVersion}&maxChangeVersion={changeVersionValues.newestChangeVersion}"
+        while loop:
+            endpoint = f"{url}?limit={LIMIT}&offset={offset}&minChangeVersion={version.oldestChangeVersion}\
+                &maxChangeVersion={version.newestChangeVersion}"
             response = requests.get(endpoint, headers=headers)
             if response.ok:
-                data = response.json()
-                result.extend(data)
+                response_data = response.json()
+                result.extend(response_data)
                 offset += LIMIT
-            if len(data) == 0:
-                continue_loop = False
-    except Exception as ex:
-        print(ex)
+            if len(response_data) == 0:
+                loop = False
+    except BaseException as err:
+        print(f"Unexpected {err=}, {type(err)=}")
     return result
 
 
 # Get JSON from API endpoint and save to file
-def get_all(school_year) -> None:
+def api_async(school_year: any = None) -> None:
     import os
     from multiprocessing import Pool
-    toke = get_token()
-    changeVersionValues = _get_change_version_values(school_year)
+    token = get_token()
+    version = _get_change_version_values(school_year)
     os_cpu = config("OS_CPU", cast=int) if config("OS_CPU") else os.cpu_count()
     with Pool(processes=os_cpu) as pool:
         for endpoint in get_endpoint():
             url = get_url(endpoint[PATH], school_year)
-            data = pool.apply_async(_call, args=(url, toke, changeVersionValues))
-            result = data.get()
-            endpoint_name = url.split("/")[-1]
-            save_file(JSONFile(endpoint_name), changeVersionValues.newestChangeVersion, result, school_year)
+            url_name = JSONFile(url.split("/")[-1])
+            data_async = pool.apply_async(_api_call, args=(url, token, version))
+            save_file(url_name, version.newestChangeVersion, data_async.get(), school_year)
 
             # Deletes endpoint
-            url_deletes = get_url(endpoint[PATH], school_year, True)
-            data_deletes = _call(url_deletes, toke, changeVersionValues)
-            save_file(JSONFile(endpoint_name), f"deletes_{changeVersionValues.newestChangeVersion}", data_deletes, school_year)
+            deletes_endpoint = get_url(endpoint[PATH], school_year, True)
+            data_deletes_response_async = pool.apply_async(_api_call, args=(deletes_endpoint, token, version))
+            save_file(url_name, f"deletes_{version.newestChangeVersion}", data_deletes_response_async.get(), school_year)
     return None
 
 
 if __name__ == "__main__":
-    get_all()
+    api_async()
