@@ -38,7 +38,7 @@ def local_education_agency_dataframe(school_year) -> pd.DataFrame:
             'nameOfInstitution',
             'educationServiceCenterReference.link.href',
             'localEducationAgencyCategoryDescriptor',
-            'parentLocalEducationAgencyReference.localEducationAgencyId'
+            'parentLocalEducationAgencyReference.localEducationAgencyId',
             'stateEducationAgencyReference.link.href',
             'charterStatusDescriptor'
         ],
