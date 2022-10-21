@@ -165,7 +165,7 @@ def candidate_dim(school_year) -> None:
         errors='ignore'
     )
 
-    replace_null(candidate_educator_preparation_program_associations_normalized,'reasonExitedDescriptor', '')
+    replace_null(candidate_educator_preparation_program_associations_normalized, 'reasonExitedDescriptor', '')
 
     candidate_educator_preparation_program_associations_cohortyears_normalized = jsonNormalize(
         candidate_educator_preparation_program_associations_content,
@@ -263,7 +263,7 @@ def candidate_dim(school_year) -> None:
         suffixRight='_sex'
     )
 
-    replace_null(result_data_frame,'candidate_educator_preparation_program_termDescriptor', '')
+    replace_null(result_data_frame, 'candidate_educator_preparation_program_termDescriptor', '')
 
     result_data_frame = result_data_frame[
         [
@@ -292,7 +292,12 @@ def candidate_dim(school_year) -> None:
 
     result_data_frame = result_data_frame.fillna('')
 
-    result_data_frame['ProgramComplete'] = [True if x == 'Completed' else False for x in result_data_frame['reasonExitedDescriptor']]
+    result_data_frame['ProgramComplete'] = [1 if x == 'Completed' else 0 for x in result_data_frame['reasonExitedDescriptor']]
+
+    result_data_frame.loc[result_data_frame['economicDisadvantaged'] == '', 'economicDisadvantaged'] = False
+    result_data_frame["economicDisadvantaged_Int"] = result_data_frame["economicDisadvantaged"].astype(int)
+
+    result_data_frame["hispanicLatinoEthnicity_Int"] = result_data_frame["hispanicLatinoEthnicity"].astype(int)
 
     result_data_frame = renameColumns(result_data_frame, {
         'candidateIdentifier': 'CandidateKey',
@@ -302,8 +307,8 @@ def candidate_dim(school_year) -> None:
         'codeValue_sex': 'SexDescriptor',
         'raceDescriptorId': 'RaceDescriptorKey',
         'codeValue': 'RaceDescriptor',
-        'hispanicLatinoEthnicity': 'HispanicLatinoEthnicity',
-        'economicDisadvantaged': 'EconomicDisadvantaged',
+        'hispanicLatinoEthnicity_Int': 'HispanicLatinoEthnicity',
+        'economicDisadvantaged_Int': 'EconomicDisadvantaged',
         'candidate_educator_preparation_program_schoolYearTypeReference.schoolYear': 'Cohort',
         'studentUniqueId': 'StudentKey',
         'educatorPreparationProgramReference.programName': 'ProgramName',
@@ -314,7 +319,7 @@ def candidate_dim(school_year) -> None:
         'issuanceDate': 'IssuanceDate'
     })
 
-    result_data_frame.loc[result_data_frame['EconomicDisadvantaged'] == '', 'EconomicDisadvantaged'] = False
+    print(result_data_frame.dtypes)
 
     result_data_frame['RaceDescriptorKey'] = result_data_frame['RaceDescriptorKey'].astype(str)
     result_data_frame['Cohort'] = result_data_frame['Cohort'].astype(str)
