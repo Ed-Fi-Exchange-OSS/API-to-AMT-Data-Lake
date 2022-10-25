@@ -61,7 +61,7 @@ def epp_financial_aid_fact_dataframe(school_year) -> pd.DataFrame:
         'endDate',
         ''
     )
-    financial_aids_normalize.loc[financial_aids_normalize['pellGrantRecipient'], 'pellGrantRecipient'] = '1'
+    financial_aids_normalize.loc[financial_aids_normalize['pellGrantRecipient'] is True, 'pellGrantRecipient'] = '1'
     financial_aids_normalize.loc[financial_aids_normalize['pellGrantRecipient'] is False, 'pellGrantRecipient'] = '0'
     get_descriptor_code_value_from_uri(financial_aids_normalize, 'aidTypeDescriptor')
     financial_aids_normalize['beginDateKey'] = to_datetime_key(financial_aids_normalize, 'beginDate')
