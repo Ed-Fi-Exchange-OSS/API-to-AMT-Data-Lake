@@ -7,6 +7,7 @@
 from edfi_amt_data_lake.parquet.amt.asmt.asmt_collection import asmt_collection
 from edfi_amt_data_lake.parquet.amt.base.base_collection import base_collection
 from edfi_amt_data_lake.parquet.amt.chrab.chrab_collection import chrab_collection
+from edfi_amt_data_lake.parquet.amt.core.core_collection import core_collection
 from edfi_amt_data_lake.parquet.amt.engage.engage_collection import engage_collection
 from edfi_amt_data_lake.parquet.amt.epp.epp_collection import epp_collection
 from edfi_amt_data_lake.parquet.amt.equity.equity_collection import equity_collection
@@ -25,3 +26,4 @@ def generate_amt_parquet(school_year) -> None:
     ews_collection(school_year)
     qews_collection(school_year)
     rls_collection(school_year)
+    core_collection(school_year)
