@@ -13,7 +13,6 @@ from edfi_amt_data_lake.parquet.Common.pandasWrapper import (
     pdMerge,
     renameColumns,
     saveParquetFile,
-    toCsv,
 )
 
 ENDPOINT_ACADEMIC_SUBJECT_DESCRIPTOR = 'academicSubjectDescriptors'
@@ -50,12 +49,10 @@ def section_dim_dataframe(school_year) -> pd.DataFrame:
         recordPrefix=None,
         errors='ignore'
     )
-    
+
     academic_subject_descriptor_normalized['namespaceWithCodeValue'] = (
         academic_subject_descriptor_normalized['namespace'] + '#' + academic_subject_descriptor_normalized['codeValue']
     )
-
-    toCsv(academic_subject_descriptor_normalized, f"{config('PARQUET_FILES_LOCATION')}", "academic_subject_descriptor_normalized.csv", school_year)
 
     term_descriptor_normalized = jsonNormalize(
         term_descriptor_content,
@@ -71,12 +68,10 @@ def section_dim_dataframe(school_year) -> pd.DataFrame:
         recordPrefix=None,
         errors='ignore'
     )
-    
+
     term_descriptor_normalized['namespaceWithCodeValue'] = (
         term_descriptor_normalized['namespace'] + '#' + term_descriptor_normalized['codeValue']
     )
-
-    toCsv(term_descriptor_normalized, f"{config('PARQUET_FILES_LOCATION')}", "term_descriptor_normalized.csv", school_year)
 
     educational_environment_descriptor_normalized = jsonNormalize(
         educational_environment_descriptor_content,
@@ -92,12 +87,10 @@ def section_dim_dataframe(school_year) -> pd.DataFrame:
         recordPrefix=None,
         errors='ignore'
     )
-    
+
     educational_environment_descriptor_normalized['namespaceWithCodeValue'] = (
         educational_environment_descriptor_normalized['namespace'] + '#' + educational_environment_descriptor_normalized['codeValue']
     )
-
-    toCsv(educational_environment_descriptor_normalized, f"{config('PARQUET_FILES_LOCATION')}", "educational_environment_descriptor_normalized.csv", school_year)
 
     sections_normalized = jsonNormalize(
         sections_content,
@@ -124,8 +117,6 @@ def section_dim_dataframe(school_year) -> pd.DataFrame:
         'courseOfferingReferenceId'
     )
 
-    toCsv(sections_normalized, f"{config('PARQUET_FILES_LOCATION')}", "sections_normalized.csv", school_year)
-
     sections_class_periods_normalized = jsonNormalize(
         sections_content,
         recordPath=['classPeriods'],
@@ -136,8 +127,6 @@ def section_dim_dataframe(school_year) -> pd.DataFrame:
         recordPrefix=None,
         errors='ignore'
     )
-
-    toCsv(sections_class_periods_normalized, f"{config('PARQUET_FILES_LOCATION')}", "sections_class_periods_normalized.csv", school_year)
 
     courses_offerings_normalized = jsonNormalize(
         courses_offerings_content,
@@ -169,8 +158,6 @@ def section_dim_dataframe(school_year) -> pd.DataFrame:
         'schoolReferenceId'
     )
 
-    toCsv(courses_offerings_normalized, f"{config('PARQUET_FILES_LOCATION')}", "courses_offerings_normalized.csv", school_year)
-
     courses_normalized = jsonNormalize(
         courses_content,
         recordPath=None,
@@ -185,8 +172,6 @@ def section_dim_dataframe(school_year) -> pd.DataFrame:
         errors='ignore'
     )
 
-    toCsv(courses_normalized, f"{config('PARQUET_FILES_LOCATION')}", "courses_normalized.csv", school_year)
-
     sessions_normalized = jsonNormalize(
         sessions_content,
         recordPath=None,
@@ -198,8 +183,6 @@ def section_dim_dataframe(school_year) -> pd.DataFrame:
         recordPrefix=None,
         errors='ignore'
     )
-
-    toCsv(sessions_normalized, f"{config('PARQUET_FILES_LOCATION')}", "sessions_normalized.csv", school_year)
 
     schools_normalized = jsonNormalize(
         schools_content,
@@ -214,10 +197,6 @@ def section_dim_dataframe(school_year) -> pd.DataFrame:
         errors='ignore'
     )
 
-    toCsv(schools_normalized, f"{config('PARQUET_FILES_LOCATION')}", "schools_normalized.csv", school_year)
-
-    sections_normalized['_courseOfferings'] = '|'
-
     result_data_frame = pdMerge(
         left=sections_normalized,
         right=courses_offerings_normalized,
@@ -227,8 +206,6 @@ def section_dim_dataframe(school_year) -> pd.DataFrame:
         suffixLeft=None,
         suffixRight='_courseOfferings'
     )
-
-    result_data_frame['_courses'] = '|'
 
     result_data_frame = pdMerge(
         left=result_data_frame,
@@ -240,8 +217,6 @@ def section_dim_dataframe(school_year) -> pd.DataFrame:
         suffixRight='_courses'
     )
 
-    result_data_frame['_classPeriods'] = '|'
-
     result_data_frame = pdMerge(
         left=result_data_frame,
         right=sections_class_periods_normalized,
@@ -251,8 +226,6 @@ def section_dim_dataframe(school_year) -> pd.DataFrame:
         suffixLeft=None,
         suffixRight='_classPeriods'
     )
-
-    result_data_frame['_sessions'] = '|'
 
     result_data_frame = pdMerge(
         left=result_data_frame,
@@ -264,8 +237,6 @@ def section_dim_dataframe(school_year) -> pd.DataFrame:
         suffixRight='_sessions'
     )
 
-    result_data_frame['_schools'] = '|'
-
     result_data_frame = pdMerge(
         left=result_data_frame,
         right=schools_normalized,
@@ -275,8 +246,6 @@ def section_dim_dataframe(school_year) -> pd.DataFrame:
         suffixLeft=None,
         suffixRight='_schools'
     )
-
-    result_data_frame['_academic_subj_desc'] = '|'
 
     result_data_frame = pdMerge(
         left=result_data_frame,
@@ -288,8 +257,6 @@ def section_dim_dataframe(school_year) -> pd.DataFrame:
         suffixRight='_academic_subj_desc'
     )
 
-    result_data_frame['_term_desc'] = '|'
-
     result_data_frame = pdMerge(
         left=result_data_frame,
         right=term_descriptor_normalized,
@@ -299,8 +266,6 @@ def section_dim_dataframe(school_year) -> pd.DataFrame:
         suffixLeft=None,
         suffixRight='_term_desc'
     )
-
-    result_data_frame['_educational_environment_desc'] = '|'
 
     result_data_frame = pdMerge(
         left=result_data_frame,
@@ -333,30 +298,41 @@ def section_dim_dataframe(school_year) -> pd.DataFrame:
     result_data_frame['courseOfferingReference.schoolYear'] = result_data_frame['courseOfferingReference.schoolYear'].astype(str)
 
     result_data_frame['SectionKey'] = (
-        result_data_frame['courseOfferingReference.schoolId'] + '-' +
-        result_data_frame['courseOfferingReference.localCourseCode'] + '-' +
-        result_data_frame['courseOfferingReference.schoolYear'] + '-' +
-        result_data_frame['sectionIdentifier'] + '-' +
-        result_data_frame['courseOfferingReference.sessionName']
+        result_data_frame['courseOfferingReference.schoolId']
+        + '-'
+        + result_data_frame['courseOfferingReference.localCourseCode']
+        + '-'
+        + result_data_frame['courseOfferingReference.schoolYear']
+        + '-'
+        + result_data_frame['sectionIdentifier']
+        + '-'
+        + result_data_frame['courseOfferingReference.sessionName']
     )
 
     result_data_frame['Description'] = (
-        result_data_frame['description'] + '-(' +
-        result_data_frame['courseOfferingReference.localCourseCode'] + ')-' +
-        result_data_frame['courseTitle'] + '-(' +
-        result_data_frame['classPeriodReference.classPeriodName'] + ')-' +
-        result_data_frame['description_term_desc']
+        result_data_frame['description']
+        + '-('
+        + result_data_frame['courseOfferingReference.localCourseCode']
+        + ')-'
+        + result_data_frame['courseTitle']
+        + '-('
+        + result_data_frame['classPeriodReference.classPeriodName']
+        + ')-'
+        + result_data_frame['description_term_desc']
     )
 
     result_data_frame['SectionName'] = (
-        result_data_frame['courseOfferingReference.localCourseCode'] + '-' +
-        result_data_frame['courseOfferingReference.sessionName']
+        result_data_frame['courseOfferingReference.localCourseCode']
+        + '-'
+        + result_data_frame['courseOfferingReference.sessionName']
     )
 
     result_data_frame['SessionKey'] = (
-        result_data_frame['courseOfferingReference.schoolId'] + '-' +
-        result_data_frame['courseOfferingReference.schoolYear'] + '-' +
-        result_data_frame['courseOfferingReference.sessionName']
+        result_data_frame['courseOfferingReference.schoolId']
+        + '-'
+        + result_data_frame['courseOfferingReference.schoolYear']
+        + '-'
+        + result_data_frame['courseOfferingReference.sessionName']
     )
 
     result_data_frame = renameColumns(result_data_frame, {
@@ -385,7 +361,7 @@ def section_dim_dataframe(school_year) -> pd.DataFrame:
 
     return result_data_frame
 
+
 def section_dim(school_year) -> None:
     result_data_frame = section_dim_dataframe(school_year)
-    # saveParquetFile(result_data_frame, f"{config('PARQUET_FILES_LOCATION')}", "sectionDim.parquet", school_year)
-    toCsv(result_data_frame, f"{config('PARQUET_FILES_LOCATION')}", "sectionDim.csv", school_year)
+    saveParquetFile(result_data_frame, f"{config('PARQUET_FILES_LOCATION')}", "sectionDim.parquet", school_year)
