@@ -9,6 +9,7 @@ from edfi_amt_data_lake.parquet.amt.epp.candidate_survey_dim.main import (
 from edfi_amt_data_lake.parquet.amt.epp.epp_dim.main import epp_dim
 from edfi_amt_data_lake.parquet.amt.epp.epp_financial_aid_fact.main import (
     epp_financial_aid_fact,
+)
 from edfi_amt_data_lake.parquet.amt.epp.evaluation_element_rating_dim.main import (
     evaluation_element_rating_dim,
 )

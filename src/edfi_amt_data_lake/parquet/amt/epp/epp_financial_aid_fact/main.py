@@ -3,13 +3,11 @@
 # The Ed-Fi Alliance licenses this file to you under the Apache License, Version 2.0.
 # See the LICENSE and NOTICES files in the project root for more information.
 
-from dataclasses import replace
 import pandas as pd
 from decouple import config
 
 from edfi_amt_data_lake.parquet.Common.functions import getEndpointJson
 from edfi_amt_data_lake.parquet.Common.pandasWrapper import (
-    addColumnIfNotExists,
     get_descriptor_code_value_from_uri,
     get_reference_from_href,
     jsonNormalize,
@@ -20,6 +18,7 @@ from edfi_amt_data_lake.parquet.Common.pandasWrapper import (
     subset,
     to_datetime_key,
 )
+
 ENDPOINT_AID_TYPE_DESCRIPTOR = 'aidTypeDescriptors'
 ENDPOINT_CANDIDATE = 'candidates'
 ENDPOINT_FINANCIAL_AIDS = 'financialAids'
@@ -31,7 +30,6 @@ def epp_financial_aid_fact_dataframe(school_year) -> pd.DataFrame:
     candidate_content = getEndpointJson(ENDPOINT_CANDIDATE, config('SILVER_DATA_LOCATION'), school_year)
     financial_aids_content = getEndpointJson(ENDPOINT_FINANCIAL_AIDS, config('SILVER_DATA_LOCATION'), school_year)
     student_content = getEndpointJson(ENDPOINT_STUDENT, config('SILVER_DATA_LOCATION'), school_year)
-   
 
     ############################
     # financialAids
@@ -63,14 +61,14 @@ def epp_financial_aid_fact_dataframe(school_year) -> pd.DataFrame:
         'endDate',
         ''
     )
-    financial_aids_normalize.loc[financial_aids_normalize['pellGrantRecipient'] == True, 'pellGrantRecipient'] = '1'
-    financial_aids_normalize.loc[financial_aids_normalize['pellGrantRecipient'] == False, 'pellGrantRecipient'] = '0'
+    financial_aids_normalize.loc[financial_aids_normalize['pellGrantRecipient'], 'pellGrantRecipient'] = '1'
+    financial_aids_normalize.loc[financial_aids_normalize['pellGrantRecipient'] is False, 'pellGrantRecipient'] = '0'
     get_descriptor_code_value_from_uri(financial_aids_normalize, 'aidTypeDescriptor')
-    financial_aids_normalize['beginDateKey'] = to_datetime_key(financial_aids_normalize,'beginDate')
+    financial_aids_normalize['beginDateKey'] = to_datetime_key(financial_aids_normalize, 'beginDate')
     financial_aids_normalize['beginDateKey'] = financial_aids_normalize['beginDateKey'].astype(str)
     financial_aids_normalize = renameColumns(financial_aids_normalize, {
         'aidTypeDescriptor': 'aidTypeDescriptorCodeValue'
-    })    
+    })
     # Select needed columns.
     financial_aids_normalize = subset(financial_aids_normalize, [
         'beginDateKey',
@@ -206,18 +204,18 @@ def epp_financial_aid_fact_dataframe(school_year) -> pd.DataFrame:
         suffixRight=None
     )
     result_data_frame.fillna('')
-    replace_null(result_data_frame,'candidateIdentifier','')
-    replace_null(result_data_frame,'aidTypeDescriptorId','')
-    replace_null(result_data_frame,'beginDateKey','')
-    replace_null(result_data_frame,'aidConditionDescription','')
-    replace_null(result_data_frame,'aidAmount','0')
-    replace_null(result_data_frame,'pellGrantRecipient','0')
+    replace_null(result_data_frame, 'candidateIdentifier', '')
+    replace_null(result_data_frame, 'aidTypeDescriptorId', '')
+    replace_null(result_data_frame, 'beginDateKey', '')
+    replace_null(result_data_frame, 'aidConditionDescription', '')
+    replace_null(result_data_frame, 'aidAmount', '0')
+    replace_null(result_data_frame, 'pellGrantRecipient', '0')
     result_data_frame['aidTypeDescriptorId'] = result_data_frame['aidTypeDescriptorId'].astype(str)
-    result_data_frame['candidateAidKey'] = ( 
+    result_data_frame['candidateAidKey'] = (
         result_data_frame['candidateIdentifier']
         + '-' + result_data_frame['aidTypeDescriptorId']
         + '-' + result_data_frame['beginDateKey']
-    )    
+    )
     result_data_frame['candidateKey'] = result_data_frame['candidateIdentifier'].astype(str)
     result_data_frame['aidType'] = result_data_frame['aidTypeDescriptorCodeValue'].astype(str)
     result_data_frame = subset(result_data_frame, [
@@ -235,4 +233,4 @@ def epp_financial_aid_fact_dataframe(school_year) -> pd.DataFrame:
 
 def epp_financial_aid_fact(school_year) -> None:
     result_data_frame = epp_financial_aid_fact_dataframe(school_year)
-    saveParquetFile(result_data_frame, f"{config('PARQUET_FILES_LOCATION')}", "epp_FinancialAidFact.parquet", school_year)    
+    saveParquetFile(result_data_frame, f"{config('PARQUET_FILES_LOCATION')}", "epp_FinancialAidFact.parquet", school_year)
