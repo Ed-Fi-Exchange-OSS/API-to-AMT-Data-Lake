@@ -26,6 +26,7 @@
     {"endpoint": "/ed-fi/localEducationAgencies", "table_name": "base_edfi_local_education_agencies"},
     {"endpoint": "/ed-fi/objectiveAssessments", "table_name": "base_edfi_objective_assessments" },
     {"endpoint": "/ed-fi/parents", "table_name": "base_edfi_parents" },
+    {"endpoint": "/ed-fi/people", "table_name": "base_edfi_people" },
     {"endpoint": "/ed-fi/programs", "table_name": "base_edfi_programs" },
     {"endpoint": "/ed-fi/programTypeDescriptors", "table_name": "edfi_descriptors_programType"},
     {"endpoint": "/ed-fi/raceDescriptors", "table_name": "base_edfi_descriptors"},
@@ -67,7 +68,10 @@
     {"endpoint": "/tpdm/candidates", "table_name": "base_tpdm_candidates" },
     {"endpoint": "/tpdm/candidateEducatorPreparationProgramAssociations", "table_name": "base_tpdm_candidate_educator_preparation_program_associations" },
     {"endpoint": "/tpdm/evaluationElements", "table_name": "base_tpdm_evaluation_elements" },
+    {"endpoint": "/tpdm/evaluationElementRatings", "table_name": "base_tpdm_evaluation_element_ratings" },
+    {"endpoint": "/tpdm/evaluationObjectives", "table_name": "base_tpdm_evaluation_objectives" },
     {"endpoint": "/tpdm/evaluationRatings", "table_name": "base_tpdm_evaluation_ratings" },
     {"endpoint": "/tpdm/financialAids", "table_name": "base_tpdm_financial_aids" },
     {"endpoint": "/tpdm/surveyResponsePersonTargetAssociations", "table_name": "base_tpdm_survey_response_person_target_associations" }
+
 ]
