@@ -77,10 +77,6 @@ def student_program_cohort_dim(school_year) -> None:
             'cohortDescription',
             'cohortTypeDescriptor',
             ['educationOrganizationReference', 'educationOrganizationId'],
-            'cohort_programReference.educationOrganizationId',
-            'cohort_programReference.programName',
-            'cohort_programReference.programTypeDescriptor'
-            'cohort_programReference.link.href'
         ],
         metaPrefix=None,
         recordPrefix='cohort_',

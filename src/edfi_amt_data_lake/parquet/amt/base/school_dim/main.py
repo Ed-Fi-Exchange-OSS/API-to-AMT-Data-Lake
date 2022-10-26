@@ -28,7 +28,6 @@ def school_dim(school_year) -> None:
     localEducationAgenciesContent = getEndpointJson(ENDPOINT_LOCALEDUCATIONAGENCIES, config('SILVER_DATA_LOCATION'), school_year)
     stateEducationAgenciesContent = getEndpointJson(ENDPOINT_STATEEDUCATIONAGENCIES, config('SILVER_DATA_LOCATION'), school_year)
     educationServiceCentersContent = getEndpointJson(ENDPOINT_EDUCATIONSERVICECENTERS, config('SILVER_DATA_LOCATION'), school_year)
-    print('school')
     schoolsContentNormalized = jsonNormalize(
         schoolsContent,
         ['addresses'],
@@ -42,7 +41,6 @@ def school_dim(school_year) -> None:
         'address',
         'ignore'
     )
-    print('schoolNorm')
     # Local Education Agency Join
     localEducationAgenciesContentNormalized = jsonNormalize(
         localEducationAgenciesContent,
@@ -153,7 +151,6 @@ def school_dim(school_year) -> None:
         'nameOfInstitution': 'EducationServiceCenterName',
         'educationServiceCenterId': 'EducationServiceCenterKey'
     })
-    print(restultDataFrame)
     # Reorder columns to match AMT
     restultDataFrame = restultDataFrame[[
         'SchoolKey',
