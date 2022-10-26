@@ -4,6 +4,7 @@
 # See the LICENSE and NOTICES files in the project root for more information.
 
 from edfi_amt_data_lake.parquet.amt.base.date_dim.main import date_dim
+from edfi_amt_data_lake.parquet.amt.base.demographics_dim.main import demographics_dim
 from edfi_amt_data_lake.parquet.amt.base.grading_period_dim.main import (
     grading_period_dim,
 )
@@ -18,6 +19,7 @@ from edfi_amt_data_lake.parquet.amt.base.school_dim.main import school_dim
 
 def base_collection(school_year) -> None:
     date_dim(school_year)
+    demographics_dim(school_year)
     grading_period_dim(school_year)
     local_education_agency_dim(school_year)
     most_recent_grading_period(school_year)
