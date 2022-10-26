@@ -28,21 +28,31 @@ def school_dim(school_year) -> None:
     localEducationAgenciesContent = getEndpointJson(ENDPOINT_LOCALEDUCATIONAGENCIES, config('SILVER_DATA_LOCATION'), school_year)
     stateEducationAgenciesContent = getEndpointJson(ENDPOINT_STATEEDUCATIONAGENCIES, config('SILVER_DATA_LOCATION'), school_year)
     educationServiceCentersContent = getEndpointJson(ENDPOINT_EDUCATIONSERVICECENTERS, config('SILVER_DATA_LOCATION'), school_year)
-
+    print('school')
     schoolsContentNormalized = jsonNormalize(
         schoolsContent,
         ['addresses'],
-        ['schoolId', 'nameOfInstitution', 'schoolTypeDescriptor', ['localEducationAgencyReference', 'localEducationAgencyId']],
+        [
+            'schoolId',
+            'nameOfInstitution',
+            'schoolTypeDescriptor',
+            ['localEducationAgencyReference', 'localEducationAgencyId'],
+        ],
         None,
         'address',
         'ignore'
     )
-
+    print('schoolNorm')
     # Local Education Agency Join
     localEducationAgenciesContentNormalized = jsonNormalize(
         localEducationAgenciesContent,
         recordPath=None,
-        meta=None,
+        meta=[
+            'localEducationAgencyId',
+            'nameOfInstitution',
+            'educationServiceCenterReference.educationServiceCenterId',
+            'stateEducationAgencyReference.stateEducationAgencyId'
+        ],
         metaPrefix=None,
         recordPrefix=None,
         errors='ignore'
@@ -66,7 +76,7 @@ def school_dim(school_year) -> None:
     educationServiceCentersContentNormalized = jsonNormalize(
         educationServiceCentersContent,
         recordPath=None,
-        meta=None,
+        meta=['educationServiceCenterId', 'nameOfInstitution'],
         metaPrefix=None,
         recordPrefix=None,
         errors='ignore'
@@ -90,7 +100,7 @@ def school_dim(school_year) -> None:
         stateEducationAgenciesContentNormalized = jsonNormalize(
             stateEducationAgenciesContent,
             recordPath=None,
-            meta=None,
+            meta=['stateEducationAgencyId', 'nameOfInstitution'],
             metaPrefix=None,
             recordPrefix=None,
             errors='ignore'
@@ -143,7 +153,7 @@ def school_dim(school_year) -> None:
         'nameOfInstitution': 'EducationServiceCenterName',
         'educationServiceCenterId': 'EducationServiceCenterKey'
     })
-
+    print(restultDataFrame)
     # Reorder columns to match AMT
     restultDataFrame = restultDataFrame[[
         'SchoolKey',

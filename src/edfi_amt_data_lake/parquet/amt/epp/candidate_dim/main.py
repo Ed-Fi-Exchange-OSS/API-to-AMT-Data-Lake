@@ -318,9 +318,6 @@ def candidate_dim(school_year) -> None:
         'candidate_educator_preparation_program_termDescriptor': 'CohortYearTermDescription',
         'issuanceDate': 'IssuanceDate'
     })
-
-    print(result_data_frame.dtypes)
-
     result_data_frame['RaceDescriptorKey'] = result_data_frame['RaceDescriptorKey'].astype(str)
     result_data_frame['Cohort'] = result_data_frame['Cohort'].astype(str)
 

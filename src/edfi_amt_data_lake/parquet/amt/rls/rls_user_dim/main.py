@@ -58,7 +58,7 @@ def rls_user_dim_dataframe(school_year) -> pd.DataFrame:
     )
 
     result_data_frame = get_descriptor_constant(result_data_frame, 'electronicMailTypeDescriptor')
-    result_data_frame = result_data_frame[result_data_frame["electronicMailTypeDescriptor_constantName"].str.contains('Email.Work', na = False)]
+    result_data_frame = result_data_frame[result_data_frame["electronicMailTypeDescriptor_constantName"].str.contains('Email.Work', na=False)]
 
     result_data_frame = renameColumns(result_data_frame, {
         'staffUniqueId': 'UserKey',
