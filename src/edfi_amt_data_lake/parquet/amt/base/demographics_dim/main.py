@@ -10,10 +10,11 @@ from edfi_amt_data_lake.parquet.Common.functions import getEndpointJson
 from edfi_amt_data_lake.parquet.Common.pandasWrapper import (
     jsonNormalize,
     pd_concat,
-    pdMerge,    
+    pdMerge,
     saveParquetFile,
     subset,
 )
+
 ENDPOINT_SCHOOL_YEAR_TYPE = 'schoolYearTypes'
 ENDPOINT_COHORT_YEAR_TYPE_DESCRIPTOR = 'cohortYearTypeDescriptors'
 ENDPOINT_DISABILITY_DESCRIPTOR = 'disabilityDescriptors'
@@ -326,7 +327,7 @@ def demographics_dim_dataframe(school_year) -> pd.DataFrame:
     student_characteristic_descriptor_normalize['demographicKey'] = (
         student_characteristic_descriptor_normalize['demographicParentKey']
         + ':' + student_characteristic_descriptor_normalize['demographicLabel']
-    ) 
+    )
     student_characteristic_descriptor_normalize['shortDescription'] = student_characteristic_descriptor_normalize['shortDescription']
     # Select needed columns.
     student_characteristic_descriptor_normalize = subset(student_characteristic_descriptor_normalize, [
