@@ -7,6 +7,9 @@ from edfi_amt_data_lake.parquet.amt.epp.candidate_survey_dim.main import (
     candidate_survey_dim,
 )
 from edfi_amt_data_lake.parquet.amt.epp.epp_dim.main import epp_dim
+from edfi_amt_data_lake.parquet.amt.epp.epp_financial_aid_fact.main import (
+    epp_financial_aid_fact,
+)
 from edfi_amt_data_lake.parquet.amt.epp.evaluation_element_rating_dim.main import (
     evaluation_element_rating_dim,
 )
@@ -27,5 +30,6 @@ def epp_collection(school_year) -> None:
     term_descriptor_dim(school_year)
     race_descriptor_dim(school_year)
     sex_descriptor_dim(school_year)
+    epp_financial_aid_fact(school_year)
     epp_dim(school_year)
     candidate_dim(school_year)

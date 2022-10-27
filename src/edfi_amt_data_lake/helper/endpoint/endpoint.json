@@ -1,5 +1,7 @@
 [
+    {"endpoint": "/ed-fi/academicSubjectDescriptors", "table_name": "base_edfi_descriptors"},
     {"endpoint": "/ed-fi/addressTypeDescriptors", "table_name": "base_edfi_descriptors"},
+    {"endpoint": "/tpdm/aidTypeDescriptors", "table_name": "base_edfi_descriptors"},
     {"endpoint": "/ed-fi/assessments", "table_name": "base_edfi_assessments"},
     {"endpoint": "/ed-fi/calendarDates", "table_name": "base_edfi_calendar_dates" },
     {"endpoint": "/ed-fi/calendars", "table_name": "base_edfi_calendars" },

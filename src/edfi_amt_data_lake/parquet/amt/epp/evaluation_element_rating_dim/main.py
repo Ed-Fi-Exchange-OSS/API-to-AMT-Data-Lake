@@ -11,7 +11,7 @@ from edfi_amt_data_lake.parquet.Common.pandasWrapper import (
     jsonNormalize,
     pdMerge,
     renameColumns,
-    saveParquetFile
+    saveParquetFile,
 )
 
 ENDPOINT_CANDIDATES = 'candidates'
