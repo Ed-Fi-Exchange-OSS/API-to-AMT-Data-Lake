@@ -49,13 +49,13 @@ def student_program_dim(school_year: str) -> None:
     programs = jsonNormalize(
         programs_json,
         recordPath=None,
-        meta=[],
+        meta=["ProgramTypeDescriptor", "ProgramTypeDescriptorId", "EducationOrganizationId", "ProgramName"],
         metaPrefix=None,
         recordPrefix=None,
         errors="ignore",
     )
 
-    data_frame = pdMerge(
+    prev_data_frame = pdMerge(
         left=student_program_dim,
         right=student_school_association,
         how='left',
@@ -66,38 +66,34 @@ def student_program_dim(school_year: str) -> None:
     )
 
     data_frame = pdMerge(
-        left=programs,
-        right=data_frame,
-        how='right',
-        leftOn=['programTypeDescriptor'],
-        rigthOn=['programReference.programTypeDescriptor'],
-        suffixLeft="_dt_left",
-        suffixRight="_dt_right",
+        left=prev_data_frame,
+        right=programs,
+        how='left',
+        leftOn=['graduationPlanReference.educationOrganizationId'],
+        rigthOn=['educationOrganizationReference.educationOrganizationId'],
+        suffixLeft="_prev_left",
+        suffixRight=None,
     )
 
     get_descriptor_code_value_from_uri(data_frame, 'programReference.programTypeDescriptor')
 
     data_frame = subset(data_frame, [
+        'beginDate',
+        'educationOrganizationReference.educationOrganizationId_prev_left',
+        'programReference.educationOrganizationId',
+        'programReference.programTypeDescriptor',
         'studentReference.studentUniqueId',
         'schoolReference.schoolId',
-        'programReference.programName',
-        'programReference.programTypeDescriptor',
-        'programReference.educationOrganizationId',
-        'beginDate',
-        'programId',
         'graduationPlanReference.educationOrganizationId',
     ])
-
-    data_frame['LastModifiedDate'] = ''
 
     data_frame['beginDate'] = to_datetime_key(data_frame, 'beginDate')
 
     data_frame['StudentSchoolProgramKey'] = (
         data_frame['studentReference.studentUniqueId'].astype(str) + '-'
         + data_frame['schoolReference.schoolId'].astype(str) + '-'
-        + data_frame['programReference.programName'].astype(str) + '-'
-        + data_frame['programId'].astype(str) + '-'
-        + data_frame['programReference.educationOrganizationId'].astype(str) + '-'
+        + data_frame['programReference.programTypeDescriptor'].astype(str) + '-'
+        + data_frame['educationOrganizationReference.educationOrganizationId_prev_left'].astype(str) + '-'
         + data_frame['programReference.educationOrganizationId'].astype(str) + '-'
         + data_frame['beginDate']
     )
@@ -111,7 +107,7 @@ def student_program_dim(school_year: str) -> None:
         'beginDate': 'BeginDateKey',
         'programReference.educationOrganizationId': 'EducationOrganizationId',
         'schoolReference.schoolId': 'SchoolKey',
-        'programReference.programName': 'ProgramName',
+        'programReference.programTypeDescriptor': 'ProgramName',
         'studentReference.studentUniqueId': 'StudentKey',
     })
 
@@ -122,8 +118,7 @@ def student_program_dim(school_year: str) -> None:
         'ProgramName',
         'StudentKey',
         'SchoolKey',
-        'StudentSchoolKey',
-        'LastModifiedDate'
+        'StudentSchoolKey'
     ]]
 
-    saveParquetFile(data_frame, f"{config('PARQUET_FILES_LOCATION')}", "equity_StudentProgramFact.parquet", school_year)
+    saveParquetFile(data_frame, f"{config('PARQUET_FILES_LOCATION')}", "studentProgramDim.parquet", school_year)

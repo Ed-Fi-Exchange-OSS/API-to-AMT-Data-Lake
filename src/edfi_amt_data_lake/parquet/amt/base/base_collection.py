@@ -26,5 +26,5 @@ def base_collection(school_year) -> None:
     local_education_agency_dim(school_year)
     most_recent_grading_period(school_year)
     school_dim(school_year)
-    student_program_dim(school_dim)
+    student_program_dim(school_year)
     section_dim(school_year)
