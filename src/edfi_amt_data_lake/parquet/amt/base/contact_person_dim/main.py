@@ -3,6 +3,7 @@
 # The Ed-Fi Alliance licenses this file to you under the Apache License, Version 2.0.
 # See the LICENSE and NOTICES files in the project root for more information.
 
+from datetime import date
 import pandas as pd
 from decouple import config
 from edfi_amt_data_lake.parquet.Common.descriptor_mapping import get_descriptor_constant
@@ -18,6 +19,7 @@ from edfi_amt_data_lake.parquet.Common.pandasWrapper import (
     replace_null,
     saveParquetFile,
     subset,
+    to_datetime_key,
     toCsv,
     toDateTime,
 )
@@ -163,8 +165,11 @@ def contact_person_dim_dataframe(school_year) -> pd.DataFrame:
         errors='ignore'
     )
 
-    addColumnIfNotExists(parents_address_periods_normalize, 'endDate')
-    # parents_address_periods_normalize['endDate.datetime'] = toDateTime(parents_address_periods_normalize['endDate'])
+    if 'endDate' in parents_address_periods_normalize:
+        parents_address_periods_normalize['endDate'] = to_datetime_key(parents_address_periods_normalize, 'endDate')
+        parents_address_periods_normalize['date_now'] = date.today()
+        parents_address_periods_normalize['date_now'] = to_datetime_key(parents_address_periods_normalize, 'date_now')
+        parents_address_periods_normalize = parents_address_periods_normalize[parents_address_periods_normalize['endDate'] >= parents_address_periods_normalize['date_now']]
 
     parents_address_normalize = pdMerge(
         left=parents_address_normalize,
@@ -175,12 +180,6 @@ def contact_person_dim_dataframe(school_year) -> pd.DataFrame:
         suffixLeft=None,
         suffixRight='_parents_address_periods'
     )
-
-    # ToDo: Apply filter
-        # WHERE
-        #     ParentAddressPeriod.EndDate IS NULL
-        # OR
-        #     ParentAddressPeriod.EndDate > GETDATE()
 
     toCsv(parents_address_periods_normalize, f"{config('PARQUET_FILES_LOCATION')}", "parents_address_periods_normalize.csv", school_year)
 
@@ -266,19 +265,18 @@ def contact_person_dim_dataframe(school_year) -> pd.DataFrame:
     parents_electronicMails_normalize.loc[mask, "Email.Personal_Email"] = parents_electronicMails_normalize.loc[mask, "electronicMailAddress"]
 
     # Primary Email Address
-    parents_electronicMails_normalize['PrimaryEmailAddress_email'] = 'Not specified'
+    parents_electronicMails_normalize['PrimaryEmailAddress_email'] = ''
     parents_electronicMails_normalize['primaryEmailAddressIndicator'] = parents_electronicMails_normalize['primaryEmailAddressIndicator'].astype(str)
+    
     # Parent Email - Work Email - Primary Email Address - Work
-    # parents_electronicMails_normalize.loc[
-    #     parents_electronicMails_normalize['primaryEmailAddressIndicator'] == 'true'
-    #     & parents_electronicMails_normalize['electronicMailTypeDescriptor_constantName'] == 'Email.Work', 'PrimaryEmailAddress_email'
-    # ] = 'Work'
+    parents_electronicMails_normalize['PrimaryEmailAddress_email'].loc[
+        parents_electronicMails_normalize['electronicMailTypeDescriptor_constantName'] == 'Email.Work'
+    ] = 'Work'
 
     # Parent Email - Work Email - Primary Email Address - Personal
-    # parents_electronicMails_normalize.loc[
-    #     parents_electronicMails_normalize['primaryEmailAddressIndicator'].str.lower() == 'true' 
-    #     & parents_electronicMails_normalize['electronicMailTypeDescriptor_constantName'] == 'Email.Personal', 'PrimaryEmailAddress_email'
-    # ] = 'Personal'
+    parents_electronicMails_normalize['PrimaryEmailAddress_email'].loc[
+        parents_electronicMails_normalize['electronicMailTypeDescriptor_constantName'] == 'Email.Personal'
+    ] = 'Personal'
 
     toCsv(parents_electronicMails_normalize, f"{config('PARQUET_FILES_LOCATION')}", "parents_electronicMails_normalize.csv", school_year)
 
@@ -345,6 +343,7 @@ def contact_person_dim_dataframe(school_year) -> pd.DataFrame:
         'Telephone.Mobile_Telephone',
         'Telephone.Work_Telephone',
         'PrimaryEmailAddress_email',
+        'primaryEmailAddressIndicator',
         'Email.Work_Email',
         'Email.Personal_Email',
         'primaryContactStatus',
@@ -357,6 +356,10 @@ def contact_person_dim_dataframe(school_year) -> pd.DataFrame:
 
     result_data_frame['UniqueKey'] = result_data_frame['parentUniqueId'] + result_data_frame['studentReference.studentUniqueId']
     
+    result_data_frame['PrimaryEmailAddress_email'].loc[
+        result_data_frame['primaryEmailAddressIndicator'].str.lower() != 'true'
+    ] = 'Not specified'
+
     result_data_frame = renameColumns(result_data_frame, {
         'parentUniqueId': 'ContactPersonKey',
         'studentReference.studentUniqueId': 'StudentKey',
@@ -371,6 +374,7 @@ def contact_person_dim_dataframe(school_year) -> pd.DataFrame:
         'Telephone.Home_Telephone': 'HomePhoneNumber',
         'Telephone.Mobile_Telephone': 'MobilePhoneNumber',
         'Telephone.Work_Telephone': 'WorkPhoneNumber',
+        'PrimaryEmailAddress_email': 'PrimaryEmailAddress',
         'Email.Work_Email': 'WorkEmailAddress',
         'Email.Personal_Email': 'PersonalEmailAddress',
         'primaryContactStatus': 'IsPrimaryContact',
@@ -380,6 +384,32 @@ def contact_person_dim_dataframe(school_year) -> pd.DataFrame:
         'contactRestrictions': 'ContactRestrictions',
         'Address.Home_Address_PostalCode': 'PostalCode'
     })
+
+    result_data_frame = result_data_frame[[
+        'UniqueKey',
+        'ContactPersonKey',
+        'StudentKey',
+        'ContactFirstName',
+        'ContactLastName',
+        'RelationshipToStudent',
+        'ContactHomeAddress',
+        'ContactPhysicalAddress',
+        'ContactMailingAddress',
+        'ContactWorkAddress',
+        'ContactTemporaryAddress',
+        'HomePhoneNumber',
+        'MobilePhoneNumber',
+        'WorkPhoneNumber',
+        'PrimaryEmailAddress',
+        'PersonalEmailAddress',
+        'WorkEmailAddress',
+        'IsPrimaryContact',
+        'StudentLivesWith',
+        'IsEmergencyContact',
+        'ContactPriority',
+        'ContactRestrictions',
+        'PostalCode'
+    ]]
 
     return result_data_frame
 

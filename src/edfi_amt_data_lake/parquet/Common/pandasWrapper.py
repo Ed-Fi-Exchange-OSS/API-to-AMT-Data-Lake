@@ -84,7 +84,7 @@ def to_datetime_key(data=pd.DataFrame, column=str):
 
 
 def to_datetime(data=pd.DataFrame, column=str):
-    return pd.to_datetime(data[column])
+    return pd.to_datetime(data[column], errors='ignore')
 
 
 def replace_null(data=pd.DataFrame, column=str, replace_value: any = None):
@@ -94,7 +94,7 @@ def replace_null(data=pd.DataFrame, column=str, replace_value: any = None):
 
 
 def toDateTime(series=pd.Series) -> pd.Series:
-    return pd.to_datetime(series)
+    return pd.to_datetime(series, errors='ignore')
 
 
 def createDataFrame(data, columns) -> pd.DataFrame:
