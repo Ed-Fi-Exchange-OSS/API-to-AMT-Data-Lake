@@ -85,6 +85,7 @@ def student_program_dim(school_year: str) -> None:
         'studentReference.studentUniqueId',
         'schoolReference.schoolId',
         'graduationPlanReference.educationOrganizationId',
+        'programReference.programName'
     ])
 
     data_frame['beginDate'] = to_datetime_key(data_frame, 'beginDate')
@@ -92,6 +93,7 @@ def student_program_dim(school_year: str) -> None:
     data_frame['StudentSchoolProgramKey'] = (
         data_frame['studentReference.studentUniqueId'].astype(str) + '-'
         + data_frame['schoolReference.schoolId'].astype(str) + '-'
+        + data_frame['programReference.programName'].astype(str) + '-'
         + data_frame['programReference.programTypeDescriptor'].astype(str) + '-'
         + data_frame['educationOrganizationReference.educationOrganizationId_prev_left'].astype(str) + '-'
         + data_frame['programReference.educationOrganizationId'].astype(str) + '-'
@@ -107,7 +109,7 @@ def student_program_dim(school_year: str) -> None:
         'beginDate': 'BeginDateKey',
         'programReference.educationOrganizationId': 'EducationOrganizationId',
         'schoolReference.schoolId': 'SchoolKey',
-        'programReference.programTypeDescriptor': 'ProgramName',
+        'programReference.programName': 'ProgramName',
         'studentReference.studentUniqueId': 'StudentKey',
     })
 
