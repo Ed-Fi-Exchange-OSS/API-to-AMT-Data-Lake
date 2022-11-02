@@ -12,16 +12,13 @@ from edfi_amt_data_lake.parquet.Common.functions import getEndpointJson
 from edfi_amt_data_lake.parquet.Common.pandasWrapper import (
     addColumnIfNotExists,
     get_descriptor_code_value_from_uri,
-    get_reference_from_href,
     jsonNormalize,
     pdMerge,
     renameColumns,
-    replace_null,
     saveParquetFile,
     subset,
     to_datetime_key,
-    toCsv,
-    toDateTime,
+    toCsv
 )
 
 ENDPOINT_STUDENT_PARENT_ASSOCIATIONS = 'studentParentAssociations'
@@ -58,8 +55,6 @@ def contact_person_dim_dataframe(school_year) -> pd.DataFrame:
     addColumnIfNotExists(student_parent_associations_normalize, 'relationDescriptor', '')
     get_descriptor_code_value_from_uri(student_parent_associations_normalize, 'relationDescriptor')
 
-    toCsv(student_parent_associations_normalize, f"{config('PARQUET_FILES_LOCATION')}", "student_parent_associations_normalize.csv", school_year)
-
     parents_normalize = jsonNormalize(
         parents_content,
         recordPath=None,
@@ -73,8 +68,6 @@ def contact_person_dim_dataframe(school_year) -> pd.DataFrame:
         recordPrefix=None,
         errors='ignore'
     )
-
-    toCsv(parents_normalize, f"{config('PARQUET_FILES_LOCATION')}", "parents_normalize.csv", school_year)
 
     parents_address_normalize = jsonNormalize(
         parents_content,
@@ -91,66 +84,13 @@ def contact_person_dim_dataframe(school_year) -> pd.DataFrame:
 
     parents_address_normalize = get_descriptor_constant(parents_address_normalize, 'addressTypeDescriptor')
 
-    # Parent Address
-
-    parents_address_normalize = (
-        parents_address_normalize[
-            (parents_address_normalize['addressTypeDescriptor_constantName'].str.contains('Address.Home'))
-            | (parents_address_normalize['addressTypeDescriptor_constantName'].str.contains('Address.Physical'))
-            | (parents_address_normalize['addressTypeDescriptor_constantName'].str.contains('Address.Mailing'))
-            | (parents_address_normalize['addressTypeDescriptor_constantName'].str.contains('Address.Work'))
-            | (parents_address_normalize['addressTypeDescriptor_constantName'].str.contains('Address.Temporary'))
-        ]
-    )
-
     addColumnIfNotExists(parents_address_normalize, 'apartmentRoomSuiteNumber')
 
+    parents_address_normalize = parents_address_normalize.fillna('')
+
     get_descriptor_code_value_from_uri(parents_address_normalize, 'stateAbbreviationDescriptor')
-
-    parents_address_normalize['Address'] = (
-        parents_address_normalize['streetNumberName']
-        + ', '
-        + parents_address_normalize['apartmentRoomSuiteNumber']
-        + ', '
-        + parents_address_normalize['city']
-        + ' '
-        + parents_address_normalize['stateAbbreviationDescriptor']
-        + ' '
-        + parents_address_normalize['postalCode']
-    )
-
-    # Parent Address - Home Address
-    parents_address_normalize['Address.Home_Address'] = ''
-    mask = parents_address_normalize["addressTypeDescriptor_constantName"] == 'Address.Home'
-    parents_address_normalize.loc[mask, "Address.Home_Address"] = parents_address_normalize.loc[mask, "Address"]
-
-    # Parent Address - Home Address - Posttal Code
-    parents_address_normalize['Address.Home_Address_Postalode'] = ''
-    mask = parents_address_normalize["addressTypeDescriptor_constantName"] == 'Address.Home'
-    parents_address_normalize.loc[mask, "Address.Home_Address_PostalCode"] = parents_address_normalize.loc[mask, "postalCode"]
-
-    # Parent Address - Physical Address
-    parents_address_normalize['Address.Physical_Address'] = ''
-    mask = parents_address_normalize["addressTypeDescriptor_constantName"] == 'Address.Physical'
-    parents_address_normalize.loc[mask, "Address.Physical_Address"] = parents_address_normalize.loc[mask, "Address"]
-
-    # Parent Address - Mailing Address
-    parents_address_normalize['Address.Mailing_Address'] = ''
-    mask = parents_address_normalize["addressTypeDescriptor_constantName"] == 'Address.Mailing'
-    parents_address_normalize.loc[mask, "Address.Mailing_Address"] = parents_address_normalize.loc[mask, "Address"]
-
-    # Parent Address - Temporary Address
-    parents_address_normalize['Address.Temporary_Address'] = ''
-    mask = parents_address_normalize["addressTypeDescriptor_constantName"] == 'Address.Temporary'
-    parents_address_normalize.loc[mask, "Address.Temporary_Address"] = parents_address_normalize.loc[mask, "Address"]
-
-    # Parent Address - Work Address
-    parents_address_normalize['Address.Work_Address'] = ''
-    mask = parents_address_normalize["addressTypeDescriptor_constantName"] == 'Address.Work'
-    parents_address_normalize.loc[mask, "Address.Work_Address"] = parents_address_normalize.loc[mask, "Address"]
-
-    ## Address periods
     
+    # Address periods
     parents_address_periods_normalize = jsonNormalize(
         parents_content,
         recordPath=[
@@ -165,11 +105,7 @@ def contact_person_dim_dataframe(school_year) -> pd.DataFrame:
         errors='ignore'
     )
 
-    if 'endDate' in parents_address_periods_normalize:
-        parents_address_periods_normalize['endDate'] = to_datetime_key(parents_address_periods_normalize, 'endDate')
-        parents_address_periods_normalize['date_now'] = date.today()
-        parents_address_periods_normalize['date_now'] = to_datetime_key(parents_address_periods_normalize, 'date_now')
-        parents_address_periods_normalize = parents_address_periods_normalize[parents_address_periods_normalize['endDate'] >= parents_address_periods_normalize['date_now']]
+    parents_address_normalize['_parents_address_periods'] = '|'
 
     parents_address_normalize = pdMerge(
         left=parents_address_normalize,
@@ -181,12 +117,153 @@ def contact_person_dim_dataframe(school_year) -> pd.DataFrame:
         suffixRight='_parents_address_periods'
     )
 
-    toCsv(parents_address_periods_normalize, f"{config('PARQUET_FILES_LOCATION')}", "parents_address_periods_normalize.csv", school_year)
+    if 'endDate' in parents_address_normalize:
+        parents_address_normalize['endDate'] = to_datetime_key(parents_address_normalize, 'endDate')
+        parents_address_normalize['date_now'] = date.today()
+        parents_address_normalize['date_now'] = to_datetime_key(parents_address_normalize, 'date_now')
+        parents_address_normalize = parents_address_normalize[parents_address_normalize['endDate'] >= parents_address_normalize['date_now']]
 
-    toCsv(parents_address_normalize, f"{config('PARQUET_FILES_LOCATION')}", "parents_address_normalize.csv", school_year)
+    parents_address_normalize['Address'] = (
+        parents_address_normalize['streetNumberName']
+        + ', '
+        + parents_address_normalize['apartmentRoomSuiteNumber']
+        + ', '
+        + parents_address_normalize['city']
+        + ' '
+        + parents_address_normalize['stateAbbreviationDescriptor']
+        + ' '
+        + parents_address_normalize['postalCode']
+    )
+
+    # Parent Address - Home
+    parents_address_normalize_home = (
+        parents_address_normalize[
+            (parents_address_normalize['addressTypeDescriptor_constantName'].str.contains('Address.Home'))
+        ]
+    )
+
+    # Parent Address - Physical
+    parents_address_normalize_physical = (
+        parents_address_normalize[
+            (parents_address_normalize['addressTypeDescriptor_constantName'].str.contains('Address.Physical'))
+        ]
+    )
+
+    # Parent Address - Mailing
+    parents_address_normalize_mailing = (
+        parents_address_normalize[
+            (parents_address_normalize['addressTypeDescriptor_constantName'].str.contains('Address.Mailing'))
+        ]
+    )
+
+    # Parent Address - Work
+    parents_address_normalize_work = (
+        parents_address_normalize[
+            (parents_address_normalize['addressTypeDescriptor_constantName'].str.contains('Address.Work'))
+        ]
+    )
+
+    # Parent Address - Temporary
+    parents_address_normalize_temporary = (
+        parents_address_normalize[
+            (parents_address_normalize['addressTypeDescriptor_constantName'].str.contains('Address.Temporary'))
+        ]
+    )
+
+    student_parent_associations_normalize['_parents'] = '|'
+
+    result_data_frame = pdMerge(
+        left=student_parent_associations_normalize,
+        right=parents_normalize,
+        how='inner',
+        leftOn=['parentReference.parentUniqueId'],
+        rigthOn=['parentUniqueId'],
+        suffixLeft=None,
+        suffixRight='_parents'
+    )
+
+    result_data_frame['address_home'] = '|'
+    
+    result_data_frame = pdMerge(
+        left=result_data_frame,
+        right=parents_address_normalize_home,
+        how='left',
+        leftOn=['id_parents'],
+        rigthOn=['id'],
+        suffixLeft=None,
+        suffixRight='_address_home'
+    )
+
+    result_data_frame['address_physical'] = '|'
+    
+    result_data_frame = pdMerge(
+        left=result_data_frame,
+        right=parents_address_normalize_physical,
+        how='left',
+        leftOn=['id_parents'],
+        rigthOn=['id'],
+        suffixLeft=None,
+        suffixRight='_address_physical'
+    )
+
+    result_data_frame['address_mailing'] = '|'
+    
+    result_data_frame = pdMerge(
+        left=result_data_frame,
+        right=parents_address_normalize_mailing,
+        how='left',
+        leftOn=['id_parents'],
+        rigthOn=['id'],
+        suffixLeft=None,
+        suffixRight='_address_mailing'
+    )
+
+    result_data_frame['address_work'] = '|'
+    
+    result_data_frame = pdMerge(
+        left=result_data_frame,
+        right=parents_address_normalize_work,
+        how='left',
+        leftOn=['id_parents'],
+        rigthOn=['id'],
+        suffixLeft=None,
+        suffixRight='_address_work'
+    )
+
+    result_data_frame['address_temporary'] = '|'
+    
+    result_data_frame = pdMerge(
+        left=result_data_frame,
+        right=parents_address_normalize_temporary,
+        how='left',
+        leftOn=['id_parents'],
+        rigthOn=['id'],
+        suffixLeft=None,
+        suffixRight='_address_temporary'
+    )
+
+    result_data_frame = subset(result_data_frame, [
+        'id',
+        'emergencyContactStatus',
+        'livesWith',
+        'primaryContactStatus',
+        'relationDescriptor',
+        'studentReference.studentUniqueId',
+        'contactPriority',
+        'contactRestrictions',
+        'id_parents',
+        'parentUniqueId',
+        'firstName',
+        'lastSurname',
+        'Address',
+        'postalCode',
+        'Address_address_physical',
+        'Address_address_mailing',
+        'Address_address_work',
+        'Address_address_temporary',
+    ])
 
     # Parent Telephones
-
     parents_telephones_normalize = jsonNormalize(
         parents_content,
         recordPath=[
@@ -202,34 +279,87 @@ def contact_person_dim_dataframe(school_year) -> pd.DataFrame:
 
     parents_telephones_normalize = get_descriptor_constant(parents_telephones_normalize, 'telephoneNumberTypeDescriptor')
 
-    parents_telephones_normalize = (
+    parents_telephones_normalize = parents_telephones_normalize.fillna('')
+
+    parents_telephones_normalize_home = (
         parents_telephones_normalize[
             (parents_telephones_normalize['telephoneNumberTypeDescriptor_constantName'].str.contains('Telephone.Home'))
-            | (parents_telephones_normalize['telephoneNumberTypeDescriptor_constantName'].str.contains('Telephone.Mobile'))
-            | (parents_telephones_normalize['telephoneNumberTypeDescriptor_constantName'].str.contains('Telephone.Work'))
         ]
     )
 
-    # Parent Telephone - Home
-    parents_telephones_normalize['Telephone.Home_Telephone'] = ''
-    mask = parents_telephones_normalize["telephoneNumberTypeDescriptor_constantName"] == 'Telephone.Home'
-    parents_telephones_normalize.loc[mask, "Telephone.Home_Telephone"] = parents_telephones_normalize.loc[mask, "telephoneNumber"]
+    parents_telephones_normalize_mobile = (
+        parents_telephones_normalize[
+            (parents_telephones_normalize['telephoneNumberTypeDescriptor_constantName'].str.contains('Telephone.Mobile'))
+        ]
+    )
 
-    # Parent Telephone - Mobile
-    parents_telephones_normalize['Telephone.Mobile_Telephone'] = ''
-    mask = parents_telephones_normalize["telephoneNumberTypeDescriptor_constantName"] == 'Telephone.Mobile'
-    parents_telephones_normalize.loc[mask, "Telephone.Mobile_Telephone"] = parents_telephones_normalize.loc[mask, "telephoneNumber"]
+    parents_telephones_normalize_work = (
+        parents_telephones_normalize[
+            (parents_telephones_normalize['telephoneNumberTypeDescriptor_constantName'].str.contains('Telephone.Work'))
+        ]
+    )
 
-    # Parent Telephone - Work
-    parents_telephones_normalize['Telephone.Work_Telephone'] = ''
-    mask = parents_telephones_normalize["telephoneNumberTypeDescriptor_constantName"] == 'Telephone.Work'
-    parents_telephones_normalize.loc[mask, "Telephone.Work_Telephone"] = parents_telephones_normalize.loc[mask, "telephoneNumber"]
+    result_data_frame['phones_home'] = '|'
+    
+    result_data_frame = pdMerge(
+        left=result_data_frame,
+        right=parents_telephones_normalize_home,
+        how='left',
+        leftOn=['id_parents'],
+        rigthOn=['id'],
+        suffixLeft=None,
+        suffixRight='_phones_home'
+    )
 
-    toCsv(parents_telephones_normalize, f"{config('PARQUET_FILES_LOCATION')}", "parents_telephones_normalize.csv", school_year)
+    result_data_frame['phones_mobile'] = '|'
+    
+    result_data_frame = pdMerge(
+        left=result_data_frame,
+        right=parents_telephones_normalize_mobile,
+        how='left',
+        leftOn=['id_parents'],
+        rigthOn=['id'],
+        suffixLeft=None,
+        suffixRight='_phones_mobile'
+    )
 
+    result_data_frame['phones_work'] = '|'
+    
+    result_data_frame = pdMerge(
+        left=result_data_frame,
+        right=parents_telephones_normalize_work,
+        how='left',
+        leftOn=['id_parents'],
+        rigthOn=['id'],
+        suffixLeft=None,
+        suffixRight='_phones_work'
+    )
+
+    result_data_frame = subset(result_data_frame, [
+        'id',
+        'emergencyContactStatus',
+        'livesWith',
+        'primaryContactStatus',
+        'relationDescriptor',
+        'studentReference.studentUniqueId',
+        'contactPriority',
+        'contactRestrictions',
+        'id_parents',
+        'parentUniqueId',
+        'firstName',
+        'lastSurname',
+        'Address',
+        'postalCode',
+        'Address_address_physical',
+        'Address_address_mailing',
+        'Address_address_work',
+        'Address_address_temporary',
+        'telephoneNumber',
+        'telephoneNumber_phones_mobile',
+        'telephoneNumber_phones_work'
+    ])
 
     # Parent Emails
-
     parents_electronicMails_normalize = jsonNormalize(
         parents_content,
         recordPath=[
@@ -247,142 +377,108 @@ def contact_person_dim_dataframe(school_year) -> pd.DataFrame:
 
     parents_electronicMails_normalize = get_descriptor_constant(parents_electronicMails_normalize, 'electronicMailTypeDescriptor')
 
-    parents_electronicMails_normalize = (
+    parents_electronicMails_normalize = parents_electronicMails_normalize.fillna('')
+
+    parents_electronicMails_normalize_personal = (
         parents_electronicMails_normalize[
             (parents_electronicMails_normalize['electronicMailTypeDescriptor_constantName'].str.contains('Email.Personal'))
-            | (parents_electronicMails_normalize['electronicMailTypeDescriptor_constantName'].str.contains('Email.Work'))
+        ]
+    )
+    
+    parents_electronicMails_normalize_work = (
+        parents_electronicMails_normalize[
+            (parents_electronicMails_normalize['electronicMailTypeDescriptor_constantName'].str.contains('Email.Work'))
         ]
     )
 
-    # Parent Email - Work Email
-    parents_electronicMails_normalize['Email.Work_Email'] = ''
-    mask = parents_electronicMails_normalize["electronicMailTypeDescriptor_constantName"] == 'Email.Work'
-    parents_electronicMails_normalize.loc[mask, "Email.Work_Email"] = parents_electronicMails_normalize.loc[mask, "electronicMailAddress"]
+    result_data_frame['_parents_mails_work'] = '|'
 
-    # Parent Email - Personal Email
-    parents_electronicMails_normalize['Email.Personal_Email'] = ''
-    mask = parents_electronicMails_normalize["electronicMailTypeDescriptor_constantName"] == 'Email.Personal'
-    parents_electronicMails_normalize.loc[mask, "Email.Personal_Email"] = parents_electronicMails_normalize.loc[mask, "electronicMailAddress"]
+    result_data_frame = pdMerge(
+        left=result_data_frame,
+        right=parents_electronicMails_normalize_work,
+        how='left',
+        leftOn=['id_parents'],
+        rigthOn=['id'],
+        suffixLeft=None,
+        suffixRight='_parents_mails_work'
+    )
 
+    result_data_frame['_parents_mails_personal'] = '|'
+
+    result_data_frame = pdMerge(
+        left=result_data_frame,
+        right=parents_electronicMails_normalize_personal,
+        how='left',
+        leftOn=['id_parents'],
+        rigthOn=['id'],
+        suffixLeft=None,
+        suffixRight='_parents_mails_personal'
+    )
+    
     # Primary Email Address
-    parents_electronicMails_normalize['PrimaryEmailAddress_email'] = ''
-    parents_electronicMails_normalize['primaryEmailAddressIndicator'] = parents_electronicMails_normalize['primaryEmailAddressIndicator'].astype(str)
+    result_data_frame['PrimaryEmailAddress'] = 'Not specified'
     
     # Parent Email - Work Email - Primary Email Address - Work
-    parents_electronicMails_normalize['PrimaryEmailAddress_email'].loc[
-        parents_electronicMails_normalize['electronicMailTypeDescriptor_constantName'] == 'Email.Work'
+    result_data_frame['PrimaryEmailAddress'].loc[
+        result_data_frame['primaryEmailAddressIndicator'] == True
     ] = 'Work'
 
     # Parent Email - Work Email - Primary Email Address - Personal
-    parents_electronicMails_normalize['PrimaryEmailAddress_email'].loc[
-        parents_electronicMails_normalize['electronicMailTypeDescriptor_constantName'] == 'Email.Personal'
+    result_data_frame['PrimaryEmailAddress'].loc[
+        result_data_frame['primaryEmailAddressIndicator_parents_mails_personal'] == True
     ] = 'Personal'
 
-    toCsv(parents_electronicMails_normalize, f"{config('PARQUET_FILES_LOCATION')}", "parents_electronicMails_normalize.csv", school_year)
-
-    student_parent_associations_normalize['_parents'] = '|'
-
-    result_data_frame = pdMerge(
-        left=student_parent_associations_normalize,
-        right=parents_normalize,
-        how='inner',
-        leftOn=['parentReference.parentUniqueId'],
-        rigthOn=['parentUniqueId'],
-        suffixLeft=None,
-        suffixRight='_parents'
-    )
-
-    result_data_frame['_parents_address'] = '|'
-
-    result_data_frame = pdMerge(
-        left=result_data_frame,
-        right=parents_address_normalize,
-        how='left',
-        leftOn=['id_parents'],
-        rigthOn=['id'],
-        suffixLeft=None,
-        suffixRight='_parents_address'
-    )
-
-    result_data_frame['_parents_phones'] = '|'
-
-    result_data_frame = pdMerge(
-        left=result_data_frame,
-        right=parents_telephones_normalize,
-        how='left',
-        leftOn=['id_parents'],
-        rigthOn=['id'],
-        suffixLeft=None,
-        suffixRight='_parents_phones'
-    )
-
-    result_data_frame['_parents_mails'] = '|'
-
-    result_data_frame = pdMerge(
-        left=result_data_frame,
-        right=parents_electronicMails_normalize,
-        how='left',
-        leftOn=['id_parents'],
-        rigthOn=['id'],
-        suffixLeft=None,
-        suffixRight='_parents_mails'
-    )
-
     result_data_frame = subset(result_data_frame, [
-        'parentUniqueId',
-        'studentReference.studentUniqueId',
-        'firstName',
-        'lastSurname',
-        'relationDescriptor',
-        'Address.Home_Address',
-        'Address.Physical_Address',
-        'Address.Mailing_Address',
-        'Address.Work_Address',
-        'Address.Temporary_Address',
-        'Telephone.Home_Telephone',
-        'Telephone.Mobile_Telephone',
-        'Telephone.Work_Telephone',
-        'PrimaryEmailAddress_email',
-        'primaryEmailAddressIndicator',
-        'Email.Work_Email',
-        'Email.Personal_Email',
-        'primaryContactStatus',
-        'livesWith',
+        'id',
         'emergencyContactStatus',
+        'livesWith',
+        'primaryContactStatus',
+        'relationDescriptor',
+        'studentReference.studentUniqueId',
         'contactPriority',
         'contactRestrictions',
-        'Address.Home_Address_PostalCode'
+        'id_parents',
+        'parentUniqueId',
+        'firstName',
+        'lastSurname',
+        'Address',
+        'postalCode',
+        'Address_address_physical',
+        'Address_address_mailing',
+        'Address_address_work',
+        'Address_address_temporary',
+        'telephoneNumber',
+        'telephoneNumber_phones_mobile',
+        'telephoneNumber_phones_work',
+        'electronicMailAddress',
+        'electronicMailAddress_parents_mails_personal',
+        'PrimaryEmailAddress'
     ])
 
     result_data_frame['UniqueKey'] = result_data_frame['parentUniqueId'] + result_data_frame['studentReference.studentUniqueId']
     
-    result_data_frame['PrimaryEmailAddress_email'].loc[
-        result_data_frame['primaryEmailAddressIndicator'].str.lower() != 'true'
-    ] = 'Not specified'
-
     result_data_frame = renameColumns(result_data_frame, {
         'parentUniqueId': 'ContactPersonKey',
         'studentReference.studentUniqueId': 'StudentKey',
         'firstName': 'ContactFirstName',
         'lastSurname': 'ContactLastName',
         'relationDescriptor': 'RelationshipToStudent',
-        'Address.Home_Address': 'ContactHomeAddress',
-        'Address.Physical_Address': 'ContactPhysicalAddress',
-        'Address.Mailing_Address': 'ContactMailingAddress',
-        'Address.Work_Address': 'ContactWorkAddress',
-        'Address.Temporary_Address': 'ContactTemporaryAddress',
-        'Telephone.Home_Telephone': 'HomePhoneNumber',
-        'Telephone.Mobile_Telephone': 'MobilePhoneNumber',
-        'Telephone.Work_Telephone': 'WorkPhoneNumber',
-        'PrimaryEmailAddress_email': 'PrimaryEmailAddress',
-        'Email.Work_Email': 'WorkEmailAddress',
-        'Email.Personal_Email': 'PersonalEmailAddress',
+        'Address': 'ContactHomeAddress',
+        'Address_address_physical': 'ContactPhysicalAddress',
+        'Address_address_mailing': 'ContactMailingAddress',
+        'Address_address_work': 'ContactWorkAddress',
+        'Address_address_temporary': 'ContactTemporaryAddress',
+        'telephoneNumber': 'HomePhoneNumber',
+        'telephoneNumber_phones_mobile': 'MobilePhoneNumber',
+        'telephoneNumber_phones_work': 'WorkPhoneNumber',
+        'electronicMailAddress': 'WorkEmailAddress',
+        'electronicMailAddress_parents_mails_personal': 'PersonalEmailAddress',
         'primaryContactStatus': 'IsPrimaryContact',
         'livesWith': 'StudentLivesWith',
         'emergencyContactStatus': 'IsEmergencyContact',
         'contactPriority': 'ContactPriority',
         'contactRestrictions': 'ContactRestrictions',
-        'Address.Home_Address_PostalCode': 'PostalCode'
+        'postalCode': 'PostalCode'
     })
 
     result_data_frame = result_data_frame[[
