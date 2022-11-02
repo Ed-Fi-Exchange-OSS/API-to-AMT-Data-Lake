@@ -36,9 +36,11 @@ def toCsv(csvContent=pd.DataFrame, path=str, file_name=str, school_year=str) -> 
 
 
 def jsonNormalize(data, recordPath, meta, metaPrefix, recordPrefix, errors) -> pd.DataFrame:
+    # Create an empty database with columns.
+    empty_data_frame = create_empty_dataframe(meta)
     if not data:
-        return pd.DataFrame(columns=meta)
-    return pd.json_normalize(
+        return empty_data_frame
+    df_result = pd.json_normalize(
         data=data,
         record_path=recordPath,
         meta=meta,
@@ -46,6 +48,26 @@ def jsonNormalize(data, recordPath, meta, metaPrefix, recordPrefix, errors) -> p
         record_prefix=recordPrefix,
         errors=errors
     )
+    return pd.concat([
+        empty_data_frame,
+        df_result
+    ])
+
+
+def create_empty_dataframe(columns=[]):
+    dataframe_columns = []
+    if columns:
+        for column in columns:
+            if not isinstance(column, list):
+                dataframe_columns.append(
+                    column
+                )
+            if isinstance(column, list) and len(column) == 2:
+                dataframe_columns.append(
+                    column[0]
+                    + '.' + column[1]
+                )
+    return pd.DataFrame(columns=dataframe_columns)
 
 
 def crossTab(index, columns) -> pd.DataFrame:
@@ -104,9 +126,13 @@ def createDataFrame(data, columns) -> pd.DataFrame:
 
 
 def get_descriptor_code_value_from_uri(data=pd.DataFrame, column=str):
+    if not (column in data):
+        data[column] = ''
     if not data[column].empty:
         if len(data[column].str.split('#')) > 0:
             data[column] = data[column].str.split("#").str.get(-1)
+    else:
+        data[column] = ''
 
 
 def get_reference_from_href(data=pd.DataFrame, column=str, destination_column=str):
