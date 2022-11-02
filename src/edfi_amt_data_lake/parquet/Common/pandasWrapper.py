@@ -143,3 +143,14 @@ def get_reference_from_href(data=pd.DataFrame, column=str, destination_column=st
     # add the column if it was not added.
     if not (destination_column in data):
         data[destination_column] = ""
+
+
+def add_dataframe_column(data=pd.DataFrame, columns=[str]):
+    empty_dataframe = pd.DataFrame(columns=columns)
+    if (data is None) or (data.empty):
+        data = pd.DataFrame(columns=[columns])
+    else:
+        data = pd.concat([
+            empty_dataframe,
+            data
+        ])

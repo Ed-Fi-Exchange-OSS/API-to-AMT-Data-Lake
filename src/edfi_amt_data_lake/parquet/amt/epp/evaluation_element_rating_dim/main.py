@@ -162,7 +162,9 @@ def evaluation_element_rating_dim_dataframe(school_year) -> pd.DataFrame:
         'evaluationElementReference.schoolYear',
         'rating'
     ])
-
+    result_data_frame['evaluationObjectiveRatingReference.evaluationDate'] = (
+        result_data_frame['evaluationObjectiveRatingReference.evaluationDate'].str[:10]
+    )
     result_data_frame = renameColumns(result_data_frame, {
         'candidateIdentifier': 'CandidateKey',
         'evaluationObjectiveRatingReference.evaluationDate': 'EvaluationDate',
