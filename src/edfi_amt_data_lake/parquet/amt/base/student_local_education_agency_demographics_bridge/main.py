@@ -4,6 +4,7 @@
 # See the LICENSE and NOTICES files in the project root for more information.
 
 from datetime import date
+
 import pandas as pd
 from decouple import config
 
@@ -22,7 +23,6 @@ from edfi_amt_data_lake.parquet.Common.pandasWrapper import (
     to_datetime_key,
 )
 
-
 EDUCATION_ORGANIZATION_FILTER = 'LocalEducationAgency'
 ENDPOINT_STUDENT_EDUCATION_ORGANIZATION_ASSOCIATION = 'studentEducationOrganizationAssociations'
 ENDPOINT_SCHOOL = 'schools'
@@ -33,7 +33,7 @@ def student_local_education_agency_demographics_bridge_dataframe(school_year) ->
     school_content = getEndpointJson(ENDPOINT_SCHOOL, config('SILVER_DATA_LOCATION'), school_year)
     student_school_association_content = getEndpointJson(ENDPOINT_STUDENT_SCHOOL_ASSOCIATION, config('SILVER_DATA_LOCATION'), school_year)
     student_education_organization_association_content = getEndpointJson(ENDPOINT_STUDENT_EDUCATION_ORGANIZATION_ASSOCIATION, config('SILVER_DATA_LOCATION'), school_year)
-    demographics_dictionary_list =	[
+    demographics_dictionary_list = [
         {
             'prefix': 'Language',
             'path': 'languages',
@@ -49,7 +49,7 @@ def student_local_education_agency_demographics_bridge_dataframe(school_year) ->
             'derived_prefix': 'DisabilityDesignation',
             'derived_path': 'designations',
             'derived_descriptor': 'disabilityDesignationDescriptor'
-        },        
+        },
         {
             'prefix': 'Race',
             'path': 'races',
@@ -96,7 +96,7 @@ def student_local_education_agency_demographics_bridge_dataframe(school_year) ->
         {
             'descriptor_cohortYearTypeDescriptor': 'descriptorCodeValue',
             'descriptor_schoolYearTypeReference.schoolYear': 'schoolYear'
-        }        
+        }
     )
     student_cohort_year_normalize_descriptor['schoolYear'] = (
         student_cohort_year_normalize_descriptor['schoolYear'].astype(str)
@@ -146,18 +146,17 @@ def student_local_education_agency_demographics_bridge_dataframe(school_year) ->
             'studentReference.studentUniqueId': 'StudentKey',
             'educationOrganizationReference.educationOrganizationId': 'LocalEducationAgencyId',
             'educationOrganizationReferenceId': 'localEducationAgencyReferenceId'
-        }        
+        }
     )
     # Filter by LEA
     student_cohort_year_normalize = (
         student_cohort_year_normalize[
-            student_cohort_year_normalize['educationOrganizationReference.link.rel'] 
-                == EDUCATION_ORGANIZATION_FILTER
+            student_cohort_year_normalize['educationOrganizationReference.link.rel'] == EDUCATION_ORGANIZATION_FILTER
         ]
-    )    
+    )
     student_cohort_year_normalize['StudentKey'] = student_cohort_year_normalize['StudentKey'].astype(str)
     student_cohort_year_normalize['LocalEducationAgencyId'] = student_cohort_year_normalize['LocalEducationAgencyId'].astype(str)
-    
+
     student_cohort_year_normalize['DemographicKey'] = (
         'CohortYear:'
         + student_cohort_year_normalize['schoolYear']
@@ -181,7 +180,7 @@ def student_local_education_agency_demographics_bridge_dataframe(school_year) ->
         'StudentLocalEducationAgencyKey',
         'DemographicKey',
     ])
-    
+
     ############################
     # Schools
     ############################
@@ -191,7 +190,7 @@ def student_local_education_agency_demographics_bridge_dataframe(school_year) ->
         meta=[
             'id',
             'localEducationAgencyReference.localEducationAgencyId',
-            'localEducationAgencyReference.link.href',            
+            'localEducationAgencyReference.link.href',
         ],
         metaPrefix=None,
         recordPrefix=None,
@@ -207,7 +206,7 @@ def student_local_education_agency_demographics_bridge_dataframe(school_year) ->
         {
             'id': 'schoolReferenceId',
             'localEducationAgencyReference.localEducationAgencyId': 'LocalEducationAgencyId'
-        }        
+        }
     )
     # Select needed columns.
     school_normalize = subset(school_normalize, [
@@ -252,7 +251,7 @@ def student_local_education_agency_demographics_bridge_dataframe(school_year) ->
         student_school_association_normalize,
         {
             'studentReference.studentUniqueId': 'StudentKey',
-        }        
+        }
     )
     student_school_association_normalize = pdMerge(
         left=student_school_association_normalize,
@@ -270,7 +269,8 @@ def student_local_education_agency_demographics_bridge_dataframe(school_year) ->
     # Select needed columns.
     student_school_association_normalize = subset(student_school_association_normalize, [
         'localEducationAgencyReferenceId',
-        'studentReferenceId','exitWithdrawDateKey'
+        'studentReferenceId',
+        'exitWithdrawDateKey'
     ])
     demographics_data_frame = (
         student_cohort_year_normalize
@@ -291,11 +291,11 @@ def student_local_education_agency_demographics_bridge_dataframe(school_year) ->
             how='inner',
             leftOn=[
                 'localEducationAgencyReferenceId',
-                'studentReferenceId'            
+                'studentReferenceId'
             ],
             rigthOn=[
                 'localEducationAgencyReferenceId',
-                'studentReferenceId'            
+                'studentReferenceId'
             ],
             suffixLeft=None,
             suffixRight=None
@@ -313,14 +313,12 @@ def student_local_education_agency_demographics_bridge_dataframe(school_year) ->
                     )
                 )
     result_data_frame = demographics_data_frame
- 
+
     # Select needed columns.
     result_data_frame = subset(result_data_frame, [
-        'LocalEducationAgencyId',
-        'StudentKey',
         'StudentSchoolDemographicBridgeKey',
         'StudentLocalEducationAgencyKey',
-        'DemographicKey','exitWithdrawDateKey'
+        'DemographicKey'
     ])
     return result_data_frame
 
@@ -330,7 +328,7 @@ def get_student_demographic(content, item) -> pd.DataFrame:
     path = item['path']
     derived_path = item['derived_path'] if 'derived_path' in item else ''
     ############################
-    # Demographic 
+    # Demographic
     ############################
     student_demographic_normalize = jsonNormalize(
         student_education_organization_association_content,
@@ -362,7 +360,7 @@ def get_student_demographic(content, item) -> pd.DataFrame:
             'studentReference.studentUniqueId': 'StudentKey',
             'educationOrganizationReference.educationOrganizationId': 'LocalEducationAgencyId',
             'educationOrganizationReferenceId': 'localEducationAgencyReferenceId'
-        }        
+        }
     )
     ############################
     # Demographic nested
@@ -386,7 +384,7 @@ def get_student_demographic(content, item) -> pd.DataFrame:
         student_demographic_descriptor_normalize,
         {
             f'descriptor_{item["descriptor"]}': 'descriptorCodeValue',
-        }        
+        }
     )
     addColumnIfNotExists(
         student_demographic_descriptor_normalize,
@@ -394,21 +392,21 @@ def get_student_demographic(content, item) -> pd.DataFrame:
         item['prefix']
     )
     student_demographic_descriptor_normalize = (
-            student_demographic_descriptor_normalize[
-                'descriptorCodeValue' in student_demographic_descriptor_normalize
-                and student_demographic_descriptor_normalize['descriptorCodeValue'] != ''
-            ]
-        )
+        student_demographic_descriptor_normalize[
+            'descriptorCodeValue' in student_demographic_descriptor_normalize
+            and student_demographic_descriptor_normalize['descriptorCodeValue'] != ''
+        ]
+    )
     # Periods
     if 'descriptor_periods' in student_demographic_descriptor_normalize:
-        student_demographic_descriptor_normalize_periods = student_demographic_descriptor_normalize[f'descriptor_periods'].explode().apply(pd.Series)
-        student_demographic_descriptor_normalize = pd.merge(
-                left=student_demographic_descriptor_normalize,
-                right=student_demographic_descriptor_normalize_periods,
-                how='left',
-                left_on=student_demographic_descriptor_normalize.index.get_level_values(0),
-                right_on=student_demographic_descriptor_normalize_periods.index.get_level_values(0)
-            )
+        student_demographic_descriptor_normalize_periods = student_demographic_descriptor_normalize['descriptor_periods'].explode().apply(pd.Series)
+        student_demographic_descriptor_normalize = pdMerge(
+            left=student_demographic_descriptor_normalize,
+            right=student_demographic_descriptor_normalize_periods,
+            how='left',
+            leftOn=student_demographic_descriptor_normalize.index.get_level_values(0),
+            rightOn=student_demographic_descriptor_normalize_periods.index.get_level_values(0)
+        )
         addColumnIfNotExists(
             student_demographic_descriptor_normalize,
             'endDate',
@@ -425,7 +423,7 @@ def get_student_demographic(content, item) -> pd.DataFrame:
             student_demographic_descriptor_normalize[
                 student_demographic_descriptor_normalize['endDateKey'] >= student_demographic_descriptor_normalize['dateKey']
             ]
-        )            
+        )
     if not student_demographic_descriptor_normalize.empty:
         if derived_path != '':
             student_demographic_descriptor_normalize_derived = student_demographic_descriptor_normalize[f'descriptor_{derived_path}'].explode().apply(pd.Series)
@@ -447,7 +445,7 @@ def get_student_demographic(content, item) -> pd.DataFrame:
                     'descriptorCodeValue': 'oldDescriptorCodeValue',
                     'prefix': 'oldPrefix',
                     item['derived_descriptor']: 'descriptorCodeValue',
-                }        
+                }
             )
             addColumnIfNotExists(
                 student_demographic_descriptor_normalize_derived,
@@ -476,8 +474,7 @@ def get_student_demographic(content, item) -> pd.DataFrame:
     # Filter by LEA
     student_demographic_normalize = (
         student_demographic_normalize[
-            student_demographic_normalize['educationOrganizationReference.link.rel'] 
-                == EDUCATION_ORGANIZATION_FILTER
+            student_demographic_normalize['educationOrganizationReference.link.rel'] == EDUCATION_ORGANIZATION_FILTER
         ]
     )
     student_demographic_normalize['StudentKey'] = student_demographic_normalize['StudentKey'].astype(str)
@@ -506,7 +503,7 @@ def get_student_demographic(content, item) -> pd.DataFrame:
     ])
     return student_demographic_normalize
 
+
 def student_local_education_agency_demographics_bridge(school_year) -> None:
     result_data_frame = student_local_education_agency_demographics_bridge_dataframe(school_year)
     saveParquetFile(result_data_frame, f"{config('PARQUET_FILES_LOCATION')}", "StudentLocalEducationAgencyDemographicsBridge.parquet", school_year)
-    
