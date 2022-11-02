@@ -16,11 +16,11 @@ from edfi_amt_data_lake.parquet.amt.base.most_recent_grading_period.main import 
 )
 from edfi_amt_data_lake.parquet.amt.base.school_dim.main import school_dim
 from edfi_amt_data_lake.parquet.amt.base.section_dim.main import section_dim
-from edfi_amt_data_lake.parquet.amt.base.student_program_dim.main import (
-    student_program_dim,
-)
 from edfi_amt_data_lake.parquet.amt.base.student_local_education_agency_demographics_bridge.main import (
     student_local_education_agency_demographics_bridge,
+)
+from edfi_amt_data_lake.parquet.amt.base.student_program_dim.main import (
+    student_program_dim,
 )
 
 
