@@ -32,7 +32,7 @@ def get_descriptor_constant(data=pd.DataFrame, column=str):
             'constantName': f"{column}_constantName",
             'descriptor': f"{column}_descriptor"
         })
-        
+
         if not data[column].empty:
             if len(data[f"{column}"].str.split('#')) > 0:
                 data[f"{column}_descriptor"] = column
