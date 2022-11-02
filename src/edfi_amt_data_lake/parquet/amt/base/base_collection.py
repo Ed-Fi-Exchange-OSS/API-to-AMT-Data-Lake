@@ -15,6 +15,9 @@ from edfi_amt_data_lake.parquet.amt.base.most_recent_grading_period.main import 
 )
 from edfi_amt_data_lake.parquet.amt.base.school_dim.main import school_dim
 from edfi_amt_data_lake.parquet.amt.base.section_dim.main import section_dim
+from edfi_amt_data_lake.parquet.amt.base.student_program_dim.main import (
+    student_program_dim,
+)
 
 
 def base_collection(school_year) -> None:
@@ -23,4 +26,5 @@ def base_collection(school_year) -> None:
     local_education_agency_dim(school_year)
     most_recent_grading_period(school_year)
     school_dim(school_year)
+    student_program_dim(school_year)
     section_dim(school_year)
