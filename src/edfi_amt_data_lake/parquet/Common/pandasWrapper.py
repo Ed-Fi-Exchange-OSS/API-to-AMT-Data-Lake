@@ -153,3 +153,4 @@ def add_dataframe_column(data=pd.DataFrame, columns=[str]):
         data,
         empty_dataframe,
     ])
+    return data
