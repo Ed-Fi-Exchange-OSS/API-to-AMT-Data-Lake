@@ -404,8 +404,8 @@ def get_student_demographic(content, item) -> pd.DataFrame:
             left=student_demographic_descriptor_normalize,
             right=student_demographic_descriptor_normalize_periods,
             how='left',
-            leftOn=student_demographic_descriptor_normalize.index.get_level_values(0),
-            rightOn=student_demographic_descriptor_normalize_periods.index.get_level_values(0)
+            leftOn=[student_demographic_descriptor_normalize.index.get_level_values(0)],
+            rigthOn=[student_demographic_descriptor_normalize_periods.index.get_level_values(0)]
         )
         addColumnIfNotExists(
             student_demographic_descriptor_normalize,
@@ -427,12 +427,12 @@ def get_student_demographic(content, item) -> pd.DataFrame:
     if not student_demographic_descriptor_normalize.empty:
         if derived_path != '':
             student_demographic_descriptor_normalize_derived = student_demographic_descriptor_normalize[f'descriptor_{derived_path}'].explode().apply(pd.Series)
-            student_demographic_descriptor_normalize_derived = pd.merge(
+            student_demographic_descriptor_normalize_derived = pdMerge(
                 left=student_demographic_descriptor_normalize_derived,
                 right=student_demographic_descriptor_normalize,
                 how='inner',
-                left_on=student_demographic_descriptor_normalize_derived.index.get_level_values(0),
-                right_on=student_demographic_descriptor_normalize.index.get_level_values(0)
+                leftOn=[student_demographic_descriptor_normalize_derived.index.get_level_values(0)],
+                rigthOn=[student_demographic_descriptor_normalize.index.get_level_values(0)]
             )
             # Get Descriptor
             get_descriptor_code_value_from_uri(
