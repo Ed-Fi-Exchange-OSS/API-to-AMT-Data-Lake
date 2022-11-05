@@ -36,7 +36,9 @@ def toCsv(csvContent=pd.DataFrame, path=str, file_name=str, school_year=str) -> 
 
 
 def jsonNormalize(data, recordPath, meta, recordMeta=[], metaPrefix=None, recordPrefix=None, errors='ignore') -> pd.DataFrame:
-    if len(recordMeta) > 0 and metaPrefix:
+    if not recordMeta:
+        recordMeta = []
+    elif recordMeta and len(recordMeta) > 0 and metaPrefix:
         recordMeta = [metaPrefix + column for column in recordMeta]
     # Create an empty database with columns.
     default_columns = get_meta_columns(meta + recordMeta)

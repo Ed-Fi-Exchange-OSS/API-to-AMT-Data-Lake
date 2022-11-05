@@ -60,4 +60,5 @@ def get_descriptor_constant(data=pd.DataFrame, column=str):
     else:
         data[f"{column}_descriptor"] = ""
         data[f"{column}_codeValue"] = ""
+        data[f"{column}_constantName"] = ""
     return data

@@ -9,7 +9,6 @@ from decouple import config
 
 from edfi_amt_data_lake.parquet.Common.functions import getEndpointJson
 from edfi_amt_data_lake.parquet.Common.pandasWrapper import (
-    add_dataframe_column,
     get_descriptor_code_value_from_uri,
     jsonNormalize,
     pdMerge,
@@ -44,13 +43,6 @@ def student_assessment_fact_dataframe(school_year) -> None:
         recordPrefix=None,
         errors="ignore",
     )
-    student_school_association_content = subset(student_school_association_content, [
-        'id',
-        'entryDate',
-        'schoolReference.schoolId',
-        'studentReference.studentUniqueId',
-        'exitWithdrawDate'
-    ])
     ############################
     # student assessment
     ############################
@@ -64,14 +56,14 @@ def student_assessment_fact_dataframe(school_year) -> None:
             'assessmentReference.assessmentIdentifier',
             'assessmentReference.namespace',
             'studentReference.studentUniqueId',
-            'objectiveAssessmentReference.identificationCode'
+            'whenAssessedGradeLevelDescriptor'
         ],
         metaPrefix=None,
         recordPrefix=None,
         errors="ignore",
     )
     ############################
-    # studentObjectiveAssessments
+    # Student Objective Assessment
     ############################
     student_objective_assessment = jsonNormalize(
         student_assessment_json,
@@ -86,6 +78,9 @@ def student_assessment_fact_dataframe(school_year) -> None:
         recordPrefix=None,
         errors='ignore'
     )
+    ############################
+    # Student Assessments Score Result
+    ############################
     student_assessment_score_results = jsonNormalize(
         student_assessment_json,
         recordPath=['scoreResults'],
@@ -99,6 +94,9 @@ def student_assessment_fact_dataframe(school_year) -> None:
         recordPrefix=None,
         errors='ignore'
     )
+    ############################
+    # Student Assessments Performance Level
+    ############################
     student_assessment_performance_levels = jsonNormalize(
         student_assessment_json,
         recordPath=['performanceLevels'],
@@ -106,12 +104,15 @@ def student_assessment_fact_dataframe(school_year) -> None:
         metaPrefix=None,
         recordMeta=[
             'assessmentReportingMethodDescriptor',
-            'performanceLevelDescriptor'
+            'performanceLevelDescriptor',
             'performanceLevelMet'
         ],
         recordPrefix=None,
         errors='ignore'
     )
+    ############################
+    # Student Objective Assessments Score Results
+    ############################
     student_objective_assessment_scoreResults = jsonNormalize(
         student_assessment_json,
         recordPath=['studentObjectiveAssessments', 'scoreResults'],
@@ -127,12 +128,9 @@ def student_assessment_fact_dataframe(school_year) -> None:
         recordPrefix=None,
         errors='ignore'
     )
-    student_objective_assessment_scoreResults = add_dataframe_column(
-        student_objective_assessment_scoreResults,
-        [
-            'studentObjectiveAssessments.objectiveAssessmentReference.identificationCode'
-        ]
-    )
+    ############################
+    # Student Objective Assessments Performance Level
+    ############################
     student_objective_assessment_performanceLevels = jsonNormalize(
         student_assessment_json,
         recordPath=['studentObjectiveAssessments', 'performanceLevels'],
@@ -149,12 +147,9 @@ def student_assessment_fact_dataframe(school_year) -> None:
         recordPrefix=None,
         errors='ignore'
     )
-    student_objective_assessment_performanceLevels = add_dataframe_column(
-        student_objective_assessment_performanceLevels,
-        [
-            'studentObjectiveAssessments.objectiveAssessmentReference.identificationCode'
-        ]
-    )
+    ############################
+    # Merge: Student Assessments - Score Results
+    ############################
     data_frame = pdMerge(
         left=student_assessment_content,
         right=student_assessment_score_results,
@@ -164,6 +159,9 @@ def student_assessment_fact_dataframe(school_year) -> None:
         suffixLeft=None,
         suffixRight=None
     )
+    ############################
+    # Merge: Performance Levels
+    ############################
     data_frame = pdMerge(
         left=data_frame,
         right=student_assessment_performance_levels,
@@ -173,6 +171,9 @@ def student_assessment_fact_dataframe(school_year) -> None:
         suffixLeft=None,
         suffixRight='_performance_levels'
     )
+    ############################
+    # Merge: Objective Assessments
+    ############################
     data_frame = pdMerge(
         left=data_frame,
         right=student_objective_assessment,
@@ -182,12 +183,9 @@ def student_assessment_fact_dataframe(school_year) -> None:
         suffixLeft=None,
         suffixRight='_student_objective'
     )
-    student_objective_assessment_performanceLevels = add_dataframe_column(
-        student_objective_assessment_performanceLevels,
-        [
-            'objectiveAssessmentReference.identificationCode'
-        ]
-    )
+    ############################
+    # Merge: Objective Assessments Performance Levels
+    ############################
     data_frame = pdMerge(
         left=data_frame,
         right=student_objective_assessment_performanceLevels,
@@ -203,6 +201,9 @@ def student_assessment_fact_dataframe(school_year) -> None:
         suffixLeft=None,
         suffixRight='_student_objective_performanceLevels'
     )
+    ############################
+    # Merge: Objective Assessments Score Results
+    ############################
     data_frame = pdMerge(
         left=data_frame,
         right=student_objective_assessment_scoreResults,
@@ -218,7 +219,9 @@ def student_assessment_fact_dataframe(school_year) -> None:
         suffixLeft=None,
         suffixRight='_student_objective_scoreResults'
     )
-    data_frame['s_student_school_association_content'] = '|'
+    ############################
+    # Merge: Student School Association
+    ############################
     data_frame = pdMerge(
         left=data_frame,
         right=student_school_association_content,

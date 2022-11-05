@@ -148,6 +148,7 @@ def demographics_dim_dataframe(school_year) -> pd.DataFrame:
         recordPath=None,
         meta=[
             'codeValue',
+            'shortDescription'
         ],
         metaPrefix=None,
         recordPrefix=None,
