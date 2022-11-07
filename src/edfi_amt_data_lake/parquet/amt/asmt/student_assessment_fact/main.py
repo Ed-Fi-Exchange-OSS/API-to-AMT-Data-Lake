@@ -20,12 +20,60 @@ from edfi_amt_data_lake.parquet.Common.pandasWrapper import (
 
 ENDPOINT_STUDENT_ASSESSSMENTS = "studentAssessments"
 ENDPOINT_STUDENT_SCHOOL_ASSOCIATION = "studentSchoolAssociations"
+ENDPOINT_ASSESSMENT_REPORTING_METHOD_DESCRIPTOR = "assessmentReportingMethodDescriptors"
+ENDPOINT_PERFORMANCE_LEVEL_DESCRIPTOR = "performanceLevelDescriptors"
 
 
 def student_assessment_fact_dataframe(school_year) -> None:
     silverDataLocation = config("SILVER_DATA_LOCATION")
     student_assessment_json = getEndpointJson(ENDPOINT_STUDENT_ASSESSSMENTS, silverDataLocation, school_year)
     student_school_association_json = getEndpointJson(ENDPOINT_STUDENT_SCHOOL_ASSOCIATION, silverDataLocation, school_year)
+    assessment_reporting_method_descriptor_json = getEndpointJson(ENDPOINT_ASSESSMENT_REPORTING_METHOD_DESCRIPTOR, silverDataLocation, school_year)
+    performance_level_descriptor_json = getEndpointJson(ENDPOINT_PERFORMANCE_LEVEL_DESCRIPTOR, silverDataLocation, school_year)
+    ############################
+    # assessmentReportingMethodDescriptor
+    ############################
+    assessment_reporting_method_descriptor_content = jsonNormalize(
+        assessment_reporting_method_descriptor_json,
+        recordPath=None,
+        meta=[
+            'assessmentReportingMethodDescriptorId',
+            'codeValue',
+            'description',
+        ],
+        metaPrefix=None,
+        recordPrefix=None,
+        errors="ignore",
+    )
+    assessment_reporting_method_descriptor_content = renameColumns(
+        assessment_reporting_method_descriptor_content,
+        {
+            'codeValue': 'assessmentReportingMethodDescriptorCodeValue',
+            'description': 'assessmentReportingMethodDescriptorDescription',
+        }
+    )
+    ############################
+    # performanceLevelDescriptor
+    ############################
+    performance_level_descriptor_content = jsonNormalize(
+        performance_level_descriptor_json,
+        recordPath=None,
+        meta=[
+            'performanceLevelDescriptorId',
+            'codeValue',
+            'description',
+        ],
+        metaPrefix=None,
+        recordPrefix=None,
+        errors="ignore",
+    )
+    performance_level_descriptor_content = renameColumns(
+        performance_level_descriptor_content,
+        {
+            'codeValue': 'performanceLevelDescriptorCodeValue',
+            'description': 'performanceLevelDescriptorDescription',
+        }
+    )
     ############################
     # studentSchoolAssociation
     ############################
@@ -94,6 +142,16 @@ def student_assessment_fact_dataframe(school_year) -> None:
         recordPrefix=None,
         errors='ignore'
     )
+    get_descriptor_code_value_from_uri(student_assessment_score_results, 'assessmentReportingMethodDescriptor')
+    student_assessment_score_results = pdMerge(
+        left=student_assessment_score_results,
+        right=assessment_reporting_method_descriptor_content,
+        how='left',
+        leftOn=['assessmentReportingMethodDescriptor'],
+        rightOn=['assessmentReportingMethodDescriptorCodeValue'],
+        suffixLeft=None,
+        suffixRight=None
+    )
     ############################
     # Student Assessments Performance Level
     ############################
@@ -109,6 +167,26 @@ def student_assessment_fact_dataframe(school_year) -> None:
         ],
         recordPrefix=None,
         errors='ignore'
+    )
+    get_descriptor_code_value_from_uri(student_assessment_performance_levels, 'assessmentReportingMethodDescriptor')
+    get_descriptor_code_value_from_uri(student_assessment_performance_levels, 'performanceLevelDescriptor')
+    student_assessment_performance_levels = pdMerge(
+        left=student_assessment_performance_levels,
+        right=assessment_reporting_method_descriptor_content,
+        how='left',
+        leftOn=['assessmentReportingMethodDescriptor'],
+        rightOn=['assessmentReportingMethodDescriptorCodeValue'],
+        suffixLeft=None,
+        suffixRight=None
+    )
+    student_assessment_performance_levels = pdMerge(
+        left=student_assessment_performance_levels,
+        right=performance_level_descriptor_content,
+        how='left',
+        leftOn=['performanceLevelDescriptor'],
+        rightOn=['performanceLevelDescriptorCodeValue'],
+        suffixLeft=None,
+        suffixRight=None
     )
     ############################
     # Student Objective Assessments Score Results
@@ -128,6 +206,16 @@ def student_assessment_fact_dataframe(school_year) -> None:
         recordPrefix=None,
         errors='ignore'
     )
+    get_descriptor_code_value_from_uri(student_objective_assessment_scoreResults, 'assessmentReportingMethodDescriptor')
+    student_objective_assessment_scoreResults = pdMerge(
+        left=student_objective_assessment_scoreResults,
+        right=assessment_reporting_method_descriptor_content,
+        how='left',
+        leftOn=['assessmentReportingMethodDescriptor'],
+        rightOn=['assessmentReportingMethodDescriptorCodeValue'],
+        suffixLeft=None,
+        suffixRight=None
+    )
     ############################
     # Student Objective Assessments Performance Level
     ############################
@@ -146,6 +234,26 @@ def student_assessment_fact_dataframe(school_year) -> None:
         ],
         recordPrefix=None,
         errors='ignore'
+    )
+    get_descriptor_code_value_from_uri(student_objective_assessment_performanceLevels, 'performanceLevelDescriptor')
+    get_descriptor_code_value_from_uri(student_objective_assessment_performanceLevels, 'assessmentReportingMethodDescriptor')
+    student_objective_assessment_performanceLevels = pdMerge(
+        left=student_objective_assessment_performanceLevels,
+        right=performance_level_descriptor_content,
+        how='left',
+        leftOn=['performanceLevelDescriptor'],
+        rightOn=['performanceLevelDescriptorCodeValue'],
+        suffixLeft=None,
+        suffixRight=None
+    )
+    student_objective_assessment_performanceLevels = pdMerge(
+        left=student_objective_assessment_performanceLevels,
+        right=assessment_reporting_method_descriptor_content,
+        how='left',
+        leftOn=['assessmentReportingMethodDescriptor'],
+        rightOn=['assessmentReportingMethodDescriptorCodeValue'],
+        suffixLeft=None,
+        suffixRight=None
     )
     ############################
     # Merge: Student Assessments - Score Results
@@ -255,13 +363,19 @@ def student_assessment_fact_dataframe(school_year) -> None:
         'studentReference.studentUniqueId',
         'objectiveAssessmentReference.identificationCode',
         'assessmentReportingMethodDescriptor',
+        'assessmentReportingMethodDescriptorId',
         'result',
         'resultDatatypeTypeDescriptor',
         'assessmentReportingMethodDescriptor_performance_levels',
+        'assessmentReportingMethodDescriptorId_performance_levels',
         'performanceLevelDescriptor',
+        'performanceLevelDescriptorId',
         'assessmentReportingMethodDescriptor_student_objective_performanceLevels',
+        'assessmentReportingMethodDescriptorId_student_objective_performanceLevels',
         'performanceLevelDescriptor_student_objective_performanceLevels',
+        'performanceLevelDescriptorId_student_objective_performanceLevels',
         'assessmentReportingMethodDescriptor_student_objective_scoreResults',
+        'assessmentReportingMethodDescriptorId_student_objective_scoreResults',
         'result_student_objective_scoreResults',
         'resultDatatypeTypeDescriptor_student_objective_scoreResults',
         'entryDate',
@@ -273,11 +387,11 @@ def student_assessment_fact_dataframe(school_year) -> None:
         data_frame['assessmentReference.assessmentIdentifier'] + '-'
         + data_frame['assessmentReference.namespace'] + '-'
         + data_frame['studentAssessmentIdentifier'] + '-'
-        + data_frame['assessmentReportingMethodDescriptor'].astype(str) + '-'
-        + data_frame['performanceLevelDescriptor'].astype(str) + '-'
+        + data_frame['assessmentReportingMethodDescriptorId'].astype(str) + '-'
+        + data_frame['performanceLevelDescriptorId'].astype(str) + '-'
         + data_frame['objectiveAssessmentReference.identificationCode'].astype(str) + '-'
-        + data_frame['assessmentReportingMethodDescriptor_student_objective_scoreResults'].astype(str) + '-'
-        + data_frame['performanceLevelDescriptor_student_objective_performanceLevels'].astype(str) + '-'
+        + data_frame['assessmentReportingMethodDescriptorId_student_objective_scoreResults'].astype(str) + '-'
+        + data_frame['performanceLevelDescriptorId_student_objective_performanceLevels'].astype(str) + '-'
         + data_frame['studentReference.studentUniqueId'] + '-'
         + data_frame['schoolReference.schoolId'].astype(str) + '-'
         + data_frame['entryDate'].astype(str)
