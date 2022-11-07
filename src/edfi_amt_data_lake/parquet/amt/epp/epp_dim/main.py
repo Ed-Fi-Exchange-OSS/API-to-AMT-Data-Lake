@@ -46,7 +46,7 @@ def epp_dim_dataframe(school_year) -> pd.DataFrame:
         right=epp_categories_normalize,
         how='left',
         leftOn=['schoolId'],
-        rigthOn=['schoolId'],
+        rightOn=['schoolId'],
         suffixLeft=None,
         suffixRight='_categories'
     )

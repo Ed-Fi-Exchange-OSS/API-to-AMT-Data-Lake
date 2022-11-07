@@ -50,7 +50,7 @@ def rls_user_dim_dataframe(school_year) -> pd.DataFrame:
         leftOn=[
             'staffUniqueId'
         ],
-        rigthOn=[
+        rightOn=[
             'staffUniqueId'
         ],
         suffixLeft=None,

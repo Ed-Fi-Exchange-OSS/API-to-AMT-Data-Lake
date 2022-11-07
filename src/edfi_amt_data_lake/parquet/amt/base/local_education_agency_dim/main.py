@@ -143,7 +143,7 @@ def local_education_agency_dataframe(school_year) -> pd.DataFrame:
         right=state_education_agency_normalize,
         how='left',
         leftOn=['stateEducationAgencyReferenceId'],
-        rigthOn=['stateEducationAgencyReferenceId'],
+        rightOn=['stateEducationAgencyReferenceId'],
         suffixLeft='_localEducationAgencies',
         suffixRight='_stateEducationAgencies'
     )
@@ -152,7 +152,7 @@ def local_education_agency_dataframe(school_year) -> pd.DataFrame:
         right=education_service_center_normalize,
         how='left',
         leftOn=['educationServiceCenterReferenceId'],
-        rigthOn=['educationServiceCenterReferenceId'],
+        rightOn=['educationServiceCenterReferenceId'],
         suffixLeft='_localEducationAgencies',
         suffixRight='_educationServiceCenter'
     )

@@ -155,7 +155,7 @@ def student_assessment_fact_dataframe(school_year) -> None:
         right=student_assessment_score_results,
         how='left',
         leftOn=['id'],
-        rigthOn=['id'],
+        rightOn=['id'],
         suffixLeft=None,
         suffixRight=None
     )
@@ -167,7 +167,7 @@ def student_assessment_fact_dataframe(school_year) -> None:
         right=student_assessment_performance_levels,
         how='left',
         leftOn=['id'],
-        rigthOn=['id'],
+        rightOn=['id'],
         suffixLeft=None,
         suffixRight='_performance_levels'
     )
@@ -179,7 +179,7 @@ def student_assessment_fact_dataframe(school_year) -> None:
         right=student_objective_assessment,
         how='left',
         leftOn=['id'],
-        rigthOn=['id'],
+        rightOn=['id'],
         suffixLeft=None,
         suffixRight='_student_objective'
     )
@@ -194,7 +194,7 @@ def student_assessment_fact_dataframe(school_year) -> None:
             'id',
             'objectiveAssessmentReference.identificationCode'
         ],
-        rigthOn=[
+        rightOn=[
             'id',
             'studentObjectiveAssessments.objectiveAssessmentReference.identificationCode'
         ],
@@ -212,7 +212,7 @@ def student_assessment_fact_dataframe(school_year) -> None:
             'id',
             'objectiveAssessmentReference.identificationCode'
         ],
-        rigthOn=[
+        rightOn=[
             'id',
             'studentObjectiveAssessments.objectiveAssessmentReference.identificationCode'
         ],
@@ -227,7 +227,7 @@ def student_assessment_fact_dataframe(school_year) -> None:
         right=student_school_association_content,
         how='left',
         leftOn=['studentReference.studentUniqueId'],
-        rigthOn=['studentReference.studentUniqueId'],
+        rightOn=['studentReference.studentUniqueId'],
         suffixLeft=None,
         suffixRight='_student_school_association'
     )
@@ -244,6 +244,7 @@ def student_assessment_fact_dataframe(school_year) -> None:
     get_descriptor_code_value_from_uri(data_frame, 'performanceLevelDescriptor_student_objective_performanceLevels')
     get_descriptor_code_value_from_uri(data_frame, 'assessmentReportingMethodDescriptor_student_objective_scoreResults')
     get_descriptor_code_value_from_uri(data_frame, 'resultDatatypeTypeDescriptor_student_objective_scoreResults')
+    data_frame = data_frame.fillna('')
     data_frame = subset(data_frame, [
         'id',
         'studentAssessmentIdentifier',
@@ -267,6 +268,7 @@ def student_assessment_fact_dataframe(school_year) -> None:
         'schoolReference.schoolId',
         'exitWithdrawDate'
     ])
+    # Add concatenated columns
     data_frame['StudentAssessmentFactKey'] = (
         data_frame['assessmentReference.assessmentIdentifier'] + '-'
         + data_frame['assessmentReference.namespace'] + '-'
@@ -306,6 +308,7 @@ def student_assessment_fact_dataframe(school_year) -> None:
         + data_frame['objectiveAssessmentReference.identificationCode'] + '-'
         + data_frame['assessmentReference.namespace']
     )
+    # Rename result columns to AMT View column name.
     data_frame = renameColumns(data_frame, {
         'assessmentReference.assessmentIdentifier': 'AssessmentIdentifier',
         'assessmentReference.namespace': 'Namespace',
@@ -319,7 +322,6 @@ def student_assessment_fact_dataframe(school_year) -> None:
         'assessmentReportingMethodDescriptor_student_objective_scoreResults': 'ReportingMethod',
         'performanceLevelDescriptor_student_objective_performanceLevels': 'PerformanceResult'
     })
-    data_frame = data_frame.fillna('')
     # Result columns
     data_frame.loc[data_frame['StudentScore'] == '', 'StudentScore'] = data_frame['result']
     data_frame.loc[data_frame['ResultDataType'] == '', 'ResultDataType'] = data_frame['resultDatatypeTypeDescriptor']

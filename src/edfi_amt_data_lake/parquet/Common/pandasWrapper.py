@@ -8,13 +8,13 @@ import os
 import pandas as pd
 
 
-def pdMerge(left=pd.DataFrame, right=pd.DataFrame, how=str, leftOn=[str], rigthOn=[str], suffixLeft='_x', suffixRight='_y') -> pd.DataFrame:
+def pdMerge(left=pd.DataFrame, right=pd.DataFrame, how=str, leftOn=[str], rightOn=[str], suffixLeft='_x', suffixRight='_y') -> pd.DataFrame:
     return pd.merge(
         left,
         right,
         how=how,
         left_on=leftOn,
-        right_on=rigthOn,
+        right_on=rightOn,
         suffixes=(suffixLeft, suffixRight)
     )
 

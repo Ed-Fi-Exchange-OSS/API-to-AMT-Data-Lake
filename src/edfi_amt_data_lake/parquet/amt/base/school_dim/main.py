@@ -65,7 +65,7 @@ def school_dim(school_year) -> None:
         right=localEducationAgenciesContentNormalized,
         how='left',
         leftOn=['localEducationAgencyReference.localEducationAgencyId'],
-        rigthOn=['localEducationAgencyId'],
+        rightOn=['localEducationAgencyId'],
         suffixLeft='_schools',
         suffixRight='_localEducationAgencies'
     )
@@ -88,7 +88,7 @@ def school_dim(school_year) -> None:
             right=educationServiceCentersContentNormalized,
             how='left',
             leftOn=['educationServiceCenterReference.educationServiceCenterId'],
-            rigthOn=['educationServiceCenterId'],
+            rightOn=['educationServiceCenterId'],
             suffixLeft=None,
             suffixRight='_educationServiceCenters'
         )
@@ -112,7 +112,7 @@ def school_dim(school_year) -> None:
                 right=stateEducationAgenciesContentNormalized,
                 how='left',
                 leftOn=['stateEducationAgencyReference.stateEducationAgencyId'],
-                rigthOn=['stateEducationAgencyId'],
+                rightOn=['stateEducationAgencyId'],
                 suffixLeft=None,
                 suffixRight='_stateEducationAgencies'
             )

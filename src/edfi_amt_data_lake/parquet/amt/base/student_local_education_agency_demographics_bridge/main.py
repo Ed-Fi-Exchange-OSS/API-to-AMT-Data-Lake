@@ -130,7 +130,7 @@ def student_local_education_agency_demographics_bridge_dataframe(school_year) ->
         right=student_cohort_year_normalize_descriptor,
         how='inner',
         leftOn=['id'],
-        rigthOn=['id'],
+        rightOn=['id'],
         suffixLeft=None,
         suffixRight=None
     )
@@ -258,7 +258,7 @@ def student_local_education_agency_demographics_bridge_dataframe(school_year) ->
         right=school_normalize,
         how='inner',
         leftOn=['schoolReferenceId'],
-        rigthOn=['schoolReferenceId'],
+        rightOn=['schoolReferenceId'],
         suffixLeft=None,
         suffixRight=None
     )
@@ -293,7 +293,7 @@ def student_local_education_agency_demographics_bridge_dataframe(school_year) ->
                 'localEducationAgencyReferenceId',
                 'studentReferenceId'
             ],
-            rigthOn=[
+            rightOn=[
                 'localEducationAgencyReferenceId',
                 'studentReferenceId'
             ],
@@ -405,7 +405,7 @@ def get_student_demographic(content, item) -> pd.DataFrame:
             right=student_demographic_descriptor_normalize_periods,
             how='left',
             leftOn=[student_demographic_descriptor_normalize.index.get_level_values(0)],
-            rigthOn=[student_demographic_descriptor_normalize_periods.index.get_level_values(0)]
+            rightOn=[student_demographic_descriptor_normalize_periods.index.get_level_values(0)]
         )
         addColumnIfNotExists(
             student_demographic_descriptor_normalize,
@@ -432,7 +432,7 @@ def get_student_demographic(content, item) -> pd.DataFrame:
                 right=student_demographic_descriptor_normalize,
                 how='inner',
                 leftOn=[student_demographic_descriptor_normalize_derived.index.get_level_values(0)],
-                rigthOn=[student_demographic_descriptor_normalize.index.get_level_values(0)]
+                rightOn=[student_demographic_descriptor_normalize.index.get_level_values(0)]
             )
             # Get Descriptor
             get_descriptor_code_value_from_uri(
@@ -467,7 +467,7 @@ def get_student_demographic(content, item) -> pd.DataFrame:
         right=student_demographic_descriptor_normalize,
         how='inner',
         leftOn=['id'],
-        rigthOn=['id'],
+        rightOn=['id'],
         suffixLeft=None,
         suffixRight=None
     )

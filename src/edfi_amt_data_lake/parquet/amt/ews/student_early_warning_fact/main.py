@@ -103,7 +103,7 @@ def student_early_warning_fact(school_year) -> None:
         right=calendarDatesNormalized,
         how='inner',
         leftOn=['schoolId'],
-        rigthOn=['schoolId'],
+        rightOn=['schoolId'],
         suffixLeft='_studentSchoolAssociation',
         suffixRight='_calendarDates'
     )
@@ -166,7 +166,7 @@ def student_early_warning_fact(school_year) -> None:
         right=studentSchoolAttendanceEventsNormalized,
         how='left',
         leftOn=['schoolId', 'studentUniqueId', 'date'],
-        rigthOn=['schoolId', 'studentUniqueId', 'eventDate'],
+        rightOn=['schoolId', 'studentUniqueId', 'eventDate'],
         suffixLeft='_studentSchoolAssociation',
         suffixRight='_studentSchoolAttendanceEvents'
     )
@@ -320,7 +320,7 @@ def student_early_warning_fact(school_year) -> None:
             'sessionName',
             'studentUniqueId'
         ],
-        rigthOn=[
+        rightOn=[
             'localCourseCode',
             'schoolId',
             'schoolYear',
@@ -361,7 +361,7 @@ def student_early_warning_fact(school_year) -> None:
             'eventDate',
             'endDate',
             'homeroomIndicator'],
-        rigthOn=[
+        rightOn=[
             'localCourseCode',
             'schoolId',
             'schoolYear',
@@ -411,7 +411,7 @@ def student_early_warning_fact(school_year) -> None:
             'date',
             'schoolYear'
         ],
-        rigthOn=[
+        rightOn=[
             'schoolId',
             'studentUniqueId',
             'eventDate',
@@ -487,7 +487,7 @@ def student_early_warning_fact(school_year) -> None:
             'schoolId',
             'incidentIdentifier'
         ],
-        rigthOn=[
+        rightOn=[
             'schoolId',
             'incidentIdentifier'
         ],
@@ -518,7 +518,7 @@ def student_early_warning_fact(school_year) -> None:
             'schoolId',
             'studentUniqueId',
             'date'],
-        rigthOn=[
+        rightOn=[
             'schoolId',
             'studentUniqueId',
             'incidentDate'],

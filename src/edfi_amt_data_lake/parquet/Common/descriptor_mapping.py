@@ -50,7 +50,7 @@ def get_descriptor_constant(data=pd.DataFrame, column=str):
                 descriptor_mapping_normalized[f"{column}_descriptor"].str.lower(),
                 descriptor_mapping_normalized[f"{column}_codeValue"].str.lower()
             ],
-            rigthOn=[
+            rightOn=[
                 data[f"{column}_descriptor"].str.lower(),
                 data[f"{column}_codeValue"].str.lower()
             ],

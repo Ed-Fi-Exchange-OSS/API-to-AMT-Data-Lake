@@ -80,7 +80,7 @@ def assessment_fact(school_year) -> None:
         right=assessmentsAssessedGradeLevelsContentNormalized,
         how='left',
         leftOn=['assessmentIdentifier', 'namespace'],
-        rigthOn=['assessmentIdentifier', 'namespace'],
+        rightOn=['assessmentIdentifier', 'namespace'],
         suffixLeft=None,
         suffixRight=None
     )
@@ -91,7 +91,7 @@ def assessment_fact(school_year) -> None:
         right=assessmentsScoresContentNormalized,
         how='left',
         leftOn=['assessmentIdentifier', 'namespace'],
-        rigthOn=['assessmentIdentifier', 'namespace'],
+        rightOn=['assessmentIdentifier', 'namespace'],
         suffixLeft=None,
         suffixRight=None
     )
@@ -102,7 +102,7 @@ def assessment_fact(school_year) -> None:
         right=assessmentsAcademicSubjectsContentNormalized,
         how='left',
         leftOn=['assessmentIdentifier', 'namespace'],
-        rigthOn=['assessmentIdentifier', 'namespace'],
+        rightOn=['assessmentIdentifier', 'namespace'],
         suffixLeft=None,
         suffixRight=None
     )
@@ -168,7 +168,7 @@ def assessment_fact(school_year) -> None:
         right=objectiveAssessmentsScoresContentNormalized,
         how='left',
         leftOn=['assessmentReference.assessmentIdentifier', 'assessmentReference.namespace', 'identificationCode'],
-        rigthOn=['assessmentReference.assessmentIdentifier', 'assessmentReference.namespace', 'identificationCode'],
+        rightOn=['assessmentReference.assessmentIdentifier', 'assessmentReference.namespace', 'identificationCode'],
         suffixLeft=None,
         suffixRight=None
     )
@@ -179,7 +179,7 @@ def assessment_fact(school_year) -> None:
         right=objectiveAssessmentsLearningStandardsContentNormalized,
         how='left',
         leftOn=['assessmentReference.assessmentIdentifier', 'assessmentReference.namespace', 'identificationCode'],
-        rigthOn=['assessmentReference.assessmentIdentifier', 'assessmentReference.namespace', 'identificationCode'],
+        rightOn=['assessmentReference.assessmentIdentifier', 'assessmentReference.namespace', 'identificationCode'],
         suffixLeft=None,
         suffixRight=None
     )
@@ -190,7 +190,7 @@ def assessment_fact(school_year) -> None:
         right=restultObjectiveDataFrame,
         how='left',
         leftOn=['assessmentIdentifier', 'namespace'],
-        rigthOn=['assessmentReference.assessmentIdentifier', 'assessmentReference.namespace'],
+        rightOn=['assessmentReference.assessmentIdentifier', 'assessmentReference.namespace'],
         suffixLeft=None,
         suffixRight='_objective'
     )
