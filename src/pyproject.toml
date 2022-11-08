@@ -7,6 +7,7 @@ license = "Apache License 2.0"
 
 [tool.poetry.dependencies]
 python = "^3.8"
+psutil = "5.9.3"
 dagit = "0.15.0"
 dagster = "0.15.0"
 dagster-graphql = "0.15.0"
