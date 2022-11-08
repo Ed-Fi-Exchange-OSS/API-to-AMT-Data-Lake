@@ -82,7 +82,7 @@ def feeder_school_dim(school_year) -> None:
         right=school_normalized,
         how='inner',
         leftOn=['feederSchoolKey'],
-        rigthOn=['schoolId'],
+        rightOn=['schoolId'],
         suffixLeft='_feeder_school',
         suffixRight='_school'
     )

@@ -100,7 +100,7 @@ def evaluation_element_rating_dim_dataframe(school_year) -> pd.DataFrame:
         right=evaluation_elements_ratings_results_normalized,
         how='left',
         leftOn=['id'],
-        rigthOn=['id'],
+        rightOn=['id'],
         suffixLeft=None,
         suffixRight='_evaluation_elements_results'
     )
@@ -110,7 +110,7 @@ def evaluation_element_rating_dim_dataframe(school_year) -> pd.DataFrame:
         right=candidates_normalized,
         how='inner',
         leftOn=['evaluationObjectiveRatingReference.personId'],
-        rigthOn=['personReference.personId'],
+        rightOn=['personReference.personId'],
         suffixLeft=None,
         suffixRight='_candidates'
     )
@@ -120,7 +120,7 @@ def evaluation_element_rating_dim_dataframe(school_year) -> pd.DataFrame:
         right=evaluation_objetives_normalized,
         how='inner',
         leftOn=['evaluationObjectiveRatingReference.evaluationObjectiveTitle'],
-        rigthOn=['evaluationObjectiveTitle'],
+        rightOn=['evaluationObjectiveTitle'],
         suffixLeft=None,
         suffixRight='_evaluation_objectives'
     )
@@ -130,7 +130,7 @@ def evaluation_element_rating_dim_dataframe(school_year) -> pd.DataFrame:
         right=term_descriptor_normalize,
         how='left',
         leftOn=['evaluationElementReference.termDescriptor'],
-        rigthOn=['namespace_with_codevalue'],
+        rightOn=['namespace_with_codevalue'],
         suffixLeft=None,
         suffixRight='_term_descriptor'
     )

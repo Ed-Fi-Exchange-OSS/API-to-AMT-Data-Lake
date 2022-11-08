@@ -86,7 +86,7 @@ def demographics_dim_dataframe(school_year) -> pd.DataFrame:
         right=school_year_type_normalize,
         how='outer',
         leftOn=['fakeKey'],
-        rigthOn=['fakeKey'],
+        rightOn=['fakeKey'],
         suffixLeft=None,
         suffixRight=None
     )
@@ -148,6 +148,7 @@ def demographics_dim_dataframe(school_year) -> pd.DataFrame:
         recordPath=None,
         meta=[
             'codeValue',
+            'shortDescription'
         ],
         metaPrefix=None,
         recordPrefix=None,

@@ -65,7 +65,7 @@ def student_section_grade_fact(school_year) -> None:
             'gradingPeriodReference.schoolId',
             'gradingPeriodReference.schoolYear'
         ],
-        rigthOn=[
+        rightOn=[
             'gradingPeriodDescriptor',
             'periodSequence',
             'schoolReference.schoolId',
@@ -82,7 +82,7 @@ def student_section_grade_fact(school_year) -> None:
         right=letterGradeTranslation,
         how='left',
         leftOn=['letterGradeEarned'],
-        rigthOn=['LetterGradeEarned'],
+        rightOn=['LetterGradeEarned'],
         suffixLeft=None,
         suffixRight=None
     )

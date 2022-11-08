@@ -104,7 +104,7 @@ def student_school_food_service_program_dim(school_year) -> None:
         right=programTypeDescriptorNormalized,
         how='left',
         leftOn=['programTypeDescriptor'],
-        rigthOn=['programTypeDescriptor'],
+        rightOn=['programTypeDescriptor'],
         suffixLeft='_studentSchoolAssociation',
         suffixRight='_studentFoodServiceProgramAssociation'
     )
@@ -137,7 +137,7 @@ def student_school_food_service_program_dim(school_year) -> None:
         right=schoolFoodServiceProgramServiceDescriptorNormalized,
         how='left',
         leftOn=['schoolFoodServiceProgramServiceDescriptor'],
-        rigthOn=['schoolFoodServiceProgramServiceDescriptor'],
+        rightOn=['schoolFoodServiceProgramServiceDescriptor'],
         suffixLeft='_studentSchoolAssociation',
         suffixRight='_studentFoodServiceProgramAssociation'
     )
@@ -176,7 +176,7 @@ def student_school_food_service_program_dim(school_year) -> None:
         right=studentFoodServiceProgramAssociationNormalized,
         how='inner',
         leftOn=['studentUniqueId'],
-        rigthOn=['studentUniqueId'],
+        rightOn=['studentUniqueId'],
         suffixLeft='_studentSchoolAssociation',
         suffixRight='_studentFoodServiceProgramAssociation'
     )

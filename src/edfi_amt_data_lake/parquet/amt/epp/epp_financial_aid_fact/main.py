@@ -165,7 +165,7 @@ def epp_financial_aid_fact_dataframe(school_year) -> pd.DataFrame:
         leftOn=[
             'personReferenceId'
         ],
-        rigthOn=[
+        rightOn=[
             'personReferenceId'
         ],
         suffixLeft=None,
@@ -181,7 +181,7 @@ def epp_financial_aid_fact_dataframe(school_year) -> pd.DataFrame:
         leftOn=[
             'studentReferenceId'
         ],
-        rigthOn=[
+        rightOn=[
             'studentReferenceId'
         ],
         suffixLeft=None,
@@ -197,7 +197,7 @@ def epp_financial_aid_fact_dataframe(school_year) -> pd.DataFrame:
         leftOn=[
             'aidTypeDescriptorCodeValue'
         ],
-        rigthOn=[
+        rightOn=[
             'aidTypeDescriptorCodeValue'
         ],
         suffixLeft=None,

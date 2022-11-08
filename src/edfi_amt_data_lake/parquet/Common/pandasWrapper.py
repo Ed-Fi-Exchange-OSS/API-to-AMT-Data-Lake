@@ -8,13 +8,13 @@ import os
 import pandas as pd
 
 
-def pdMerge(left=pd.DataFrame, right=pd.DataFrame, how=str, leftOn=[str], rigthOn=[str], suffixLeft='_x', suffixRight='_y') -> pd.DataFrame:
+def pdMerge(left=pd.DataFrame, right=pd.DataFrame, how=str, leftOn=[str], rightOn=[str], suffixLeft='_x', suffixRight='_y') -> pd.DataFrame:
     return pd.merge(
         left,
         right,
         how=how,
         left_on=leftOn,
-        right_on=rigthOn,
+        right_on=rightOn,
         suffixes=(suffixLeft, suffixRight)
     )
 
@@ -35,26 +35,40 @@ def toCsv(csvContent=pd.DataFrame, path=str, file_name=str, school_year=str) -> 
     csvContent.to_csv(destination_path)
 
 
-def jsonNormalize(data, recordPath, meta, metaPrefix, recordPrefix, errors) -> pd.DataFrame:
+def jsonNormalize(data, recordPath, meta, recordMeta=[], metaPrefix=None, recordPrefix=None, errors='ignore') -> pd.DataFrame:
+    if not recordMeta:
+        recordMeta = []
+    elif recordMeta and len(recordMeta) > 0 and metaPrefix:
+        recordMeta = [metaPrefix + column for column in recordMeta]
     # Create an empty database with columns.
-    empty_data_frame = create_empty_dataframe(meta)
+    default_columns = get_meta_columns(meta + recordMeta)
+    empty_data_frame = create_empty_dataframe(default_columns)
     if not data:
         return empty_data_frame
-    df_result = pd.json_normalize(
-        data=data,
-        record_path=recordPath,
-        meta=meta,
-        meta_prefix=metaPrefix,
-        record_prefix=recordPrefix,
-        errors=errors
-    )
-    return pd.concat([
-        empty_data_frame,
-        df_result
-    ])
+    try:
+        df_result = pd.json_normalize(
+            data=data,
+            record_path=recordPath,
+            meta=meta,
+            record_prefix=recordPrefix,
+            errors=errors
+        )
+        # Concat normalize result and empty dataframe
+        result_dataframe = pd.concat([
+            empty_data_frame,
+            df_result
+        ])
+        # TODO Select columns from meta
+        result_dataframe = subset(
+            result_dataframe,
+            default_columns
+        )
+        return result_dataframe
+    except KeyError:
+        return empty_data_frame
 
 
-def create_empty_dataframe(columns=[]):
+def get_meta_columns(columns=[]):
     dataframe_columns = []
     if columns:
         for column in columns:
@@ -62,12 +76,16 @@ def create_empty_dataframe(columns=[]):
                 dataframe_columns.append(
                     column
                 )
-            if isinstance(column, list) and len(column) == 2:
+            if isinstance(column, list):
+                composed_column = '.'.join(column)
                 dataframe_columns.append(
-                    column[0]
-                    + '.' + column[1]
+                    composed_column
                 )
-    return pd.DataFrame(columns=dataframe_columns)
+    return dataframe_columns
+
+
+def create_empty_dataframe(columns=[]):
+    return pd.DataFrame(columns=columns)
 
 
 def crossTab(index, columns) -> pd.DataFrame:
@@ -149,8 +167,7 @@ def add_dataframe_column(data=pd.DataFrame, columns=[str]):
     empty_dataframe = create_empty_dataframe(columns=columns)
     if (data is None):
         data = empty_dataframe
-    data = pd.concat([
+    return pd.concat([
         data,
         empty_dataframe,
     ])
-    return data

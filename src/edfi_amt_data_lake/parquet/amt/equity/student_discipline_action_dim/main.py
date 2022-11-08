@@ -70,7 +70,7 @@ def student_discipline_action_dim(school_year) -> None:
             'disciplineActionIdentifier',
             'disciplineDate',
             'studentReference.studentUniqueId'],
-        rigthOn=[
+        rightOn=[
             'disciplineActionIdentifier',
             'disciplineDate',
             'studentReference.studentUniqueId'],
@@ -118,7 +118,7 @@ def student_discipline_action_dim(school_year) -> None:
         right=discipline_descriptor_normalized,
         how='left',
         leftOn=['disciplineDescriptorCodeValue'],
-        rigthOn=['disciplineDescriptorCodeValue'],
+        rightOn=['disciplineDescriptorCodeValue'],
         suffixLeft='_discipline_action',
         suffixRight='_discipline_descriptor'
     )
@@ -160,7 +160,7 @@ def student_discipline_action_dim(school_year) -> None:
         right=student_school_association_normalized,
         how='inner',
         leftOn=['studentUniqueId'],
-        rigthOn=['studentUniqueId'],
+        rightOn=['studentUniqueId'],
         suffixLeft='_discipline_action',
         suffixRight='_student_school_association'
     )

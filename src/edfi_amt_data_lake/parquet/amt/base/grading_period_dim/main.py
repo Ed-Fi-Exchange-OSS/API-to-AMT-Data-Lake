@@ -91,7 +91,7 @@ def grading_period_dim_dataframe(school_year) -> pd.DataFrame:
         right=grading_period_descriptor_normalize,
         how='inner',
         leftOn=['gradingPeriodDescriptorCodeValue'],
-        rigthOn=['gradingPeriodDescriptorCodeValue'],
+        rightOn=['gradingPeriodDescriptorCodeValue'],
         suffixLeft='_grading_period',
         suffixRight='_grading_period_descriptor'
     )

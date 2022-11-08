@@ -101,7 +101,7 @@ def student_program_cohort_dim(school_year) -> None:
         right=cohort_normalized,
         how='inner',
         leftOn=['cohort_id'],
-        rigthOn=['cohort_id'],
+        rightOn=['cohort_id'],
         suffixLeft='_student_cohort_association',
         suffixRight='_cohort'
     )
@@ -151,7 +151,7 @@ def student_program_cohort_dim(school_year) -> None:
         right=cohort_type_descriptor_association_normalized,
         how='inner',
         leftOn=['cohortTypeDescriptorCodeValue'],
-        rigthOn=['cohortTypeDescriptorCodeValue'],
+        rightOn=['cohortTypeDescriptorCodeValue'],
         suffixLeft='_student_cohort_association',
         suffixRight='_cohort'
     )
@@ -186,7 +186,7 @@ def student_program_cohort_dim(school_year) -> None:
         right=program_type_descriptor_association_normalized,
         how='inner',
         leftOn=['programTypeDescriptorCodeValue'],
-        rigthOn=['programTypeDescriptorCodeValue'],
+        rightOn=['programTypeDescriptorCodeValue'],
         suffixLeft='_student_cohort_association',
         suffixRight='_program_type'
     )
@@ -259,7 +259,7 @@ def student_program_cohort_dim(school_year) -> None:
         right=grade_level_descriptor_normalized,
         how='inner',
         leftOn=['gradeLevelDescriptorCodeValue'],
-        rigthOn=['gradeLevelDescriptorCodeValue'],
+        rightOn=['gradeLevelDescriptorCodeValue'],
         suffixLeft='_student_cohort_association',
         suffixRight='_grade_level'
     )
@@ -271,7 +271,7 @@ def student_program_cohort_dim(school_year) -> None:
         right=student_school_association_normalized,
         how='inner',
         leftOn=['studentUniqueId'],
-        rigthOn=['studentUniqueId'],
+        rightOn=['studentUniqueId'],
         suffixLeft='_discipline_action',
         suffixRight='_student_school_association'
     )

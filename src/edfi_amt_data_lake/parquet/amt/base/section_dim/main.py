@@ -202,7 +202,7 @@ def section_dim_dataframe(school_year) -> pd.DataFrame:
         right=courses_offerings_normalized,
         how='inner',
         leftOn=['courseOfferingReferenceId'],
-        rigthOn=['id'],
+        rightOn=['id'],
         suffixLeft=None,
         suffixRight='_courseOfferings'
     )
@@ -212,7 +212,7 @@ def section_dim_dataframe(school_year) -> pd.DataFrame:
         right=courses_normalized,
         how='inner',
         leftOn=['courseReferenceId'],
-        rigthOn=['id'],
+        rightOn=['id'],
         suffixLeft=None,
         suffixRight='_courses'
     )
@@ -222,7 +222,7 @@ def section_dim_dataframe(school_year) -> pd.DataFrame:
         right=sections_class_periods_normalized,
         how='left',
         leftOn=['id'],
-        rigthOn=['id'],
+        rightOn=['id'],
         suffixLeft=None,
         suffixRight='_classPeriods'
     )
@@ -232,7 +232,7 @@ def section_dim_dataframe(school_year) -> pd.DataFrame:
         right=sessions_normalized,
         how='left',
         leftOn=['sessionReferenceId'],
-        rigthOn=['id'],
+        rightOn=['id'],
         suffixLeft=None,
         suffixRight='_sessions'
     )
@@ -242,7 +242,7 @@ def section_dim_dataframe(school_year) -> pd.DataFrame:
         right=schools_normalized,
         how='left',
         leftOn=['courseOfferingReference.schoolId'],
-        rigthOn=['schoolId'],
+        rightOn=['schoolId'],
         suffixLeft=None,
         suffixRight='_schools'
     )
@@ -252,7 +252,7 @@ def section_dim_dataframe(school_year) -> pd.DataFrame:
         right=academic_subject_descriptor_normalized,
         how='inner',
         leftOn=['academicSubjectDescriptor'],
-        rigthOn=['namespaceWithCodeValue'],
+        rightOn=['namespaceWithCodeValue'],
         suffixLeft=None,
         suffixRight='_academic_subj_desc'
     )
@@ -262,7 +262,7 @@ def section_dim_dataframe(school_year) -> pd.DataFrame:
         right=term_descriptor_normalized,
         how='inner',
         leftOn=['termDescriptor'],
-        rigthOn=['namespaceWithCodeValue'],
+        rightOn=['namespaceWithCodeValue'],
         suffixLeft=None,
         suffixRight='_term_desc'
     )
@@ -272,7 +272,7 @@ def section_dim_dataframe(school_year) -> pd.DataFrame:
         right=educational_environment_descriptor_normalized,
         how='inner',
         leftOn=['educationalEnvironmentDescriptor'],
-        rigthOn=['namespaceWithCodeValue'],
+        rightOn=['namespaceWithCodeValue'],
         suffixLeft=None,
         suffixRight='_educational_environment_desc'
     )

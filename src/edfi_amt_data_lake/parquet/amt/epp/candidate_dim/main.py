@@ -186,7 +186,7 @@ def candidate_dim(school_year) -> None:
         right=people_normalized,
         how='inner',
         leftOn=['personReference.personId'],
-        rigthOn=['personId'],
+        rightOn=['personId'],
         suffixLeft=None,
         suffixRight='_person'
     )
@@ -198,7 +198,7 @@ def candidate_dim(school_year) -> None:
         right=candidate_educator_preparation_program_associations_normalized,
         how='inner',
         leftOn=['candidateIdentifier'],
-        rigthOn=['candidateReference.candidateIdentifier'],
+        rightOn=['candidateReference.candidateIdentifier'],
         suffixLeft=None,
         suffixRight="_candidate_educator_preparation_program_associations"
     )
@@ -208,7 +208,7 @@ def candidate_dim(school_year) -> None:
         right=candidate_educator_preparation_program_associations_cohortyears_normalized,
         how='left',
         leftOn=['candidateIdentifier', 'educatorPreparationProgramReference.programName'],
-        rigthOn=['candidateReference.candidateIdentifier', 'educatorPreparationProgramReference.programName'],
+        rightOn=['candidateReference.candidateIdentifier', 'educatorPreparationProgramReference.programName'],
         suffixLeft=None,
         suffixRight="_candidate_prep_program_cohortyears"
     )
@@ -218,7 +218,7 @@ def candidate_dim(school_year) -> None:
         right=candidates_races_normalized,
         how='left',
         leftOn=['candidateIdentifier'],
-        rigthOn=['candidateIdentifier'],
+        rightOn=['candidateIdentifier'],
         suffixLeft=None,
         suffixRight="_candidate_races"
     )
@@ -228,7 +228,7 @@ def candidate_dim(school_year) -> None:
         right=student_person_data_frame,
         how='left',
         leftOn=['personReference.personId'],
-        rigthOn=['personReference.personId'],
+        rightOn=['personReference.personId'],
         suffixLeft=None,
         suffixRight='_student'
     )
@@ -238,7 +238,7 @@ def candidate_dim(school_year) -> None:
         right=credentials_normalized,
         how='left',
         leftOn=['personReference.personId'],
-        rigthOn=['_ext.tpdm.personReference.personId'],
+        rightOn=['_ext.tpdm.personReference.personId'],
         suffixLeft=None,
         suffixRight='_credentials'
     )
@@ -248,7 +248,7 @@ def candidate_dim(school_year) -> None:
         right=races_descriptor_normalized,
         how='left',
         leftOn=['candidates_races_raceDescriptor'],
-        rigthOn=['namespace_codevalue'],
+        rightOn=['namespace_codevalue'],
         suffixLeft=None,
         suffixRight='_race'
     )
@@ -258,7 +258,7 @@ def candidate_dim(school_year) -> None:
         right=sex_descriptor_normalized,
         how='left',
         leftOn=['sexDescriptor'],
-        rigthOn=['namespace_codevalue'],
+        rightOn=['namespace_codevalue'],
         suffixLeft=None,
         suffixRight='_sex'
     )

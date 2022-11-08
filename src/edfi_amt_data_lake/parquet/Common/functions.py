@@ -18,6 +18,6 @@ def getEndpointJson(endpoint: str, rawDataLocation: str, school_year: str) -> st
                 jsonContent = json.loads(jsonFile.read())
             return jsonContent
         else:
-            raise Exception("Not file found for this endpoint")
+            return ''
     else:
         return ''

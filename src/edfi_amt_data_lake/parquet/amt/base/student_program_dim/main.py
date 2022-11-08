@@ -60,7 +60,7 @@ def student_program_dim(school_year: str) -> None:
         right=student_school_association,
         how='left',
         leftOn=['studentReference.studentUniqueId'],
-        rigthOn=['studentReference.studentUniqueId'],
+        rightOn=['studentReference.studentUniqueId'],
         suffixLeft="_left",
         suffixRight=None,
     )
@@ -70,7 +70,7 @@ def student_program_dim(school_year: str) -> None:
         right=programs,
         how='left',
         leftOn=['graduationPlanReference.educationOrganizationId'],
-        rigthOn=['educationOrganizationReference.educationOrganizationId'],
+        rightOn=['educationOrganizationReference.educationOrganizationId'],
         suffixLeft="_prev_left",
         suffixRight=None,
     )

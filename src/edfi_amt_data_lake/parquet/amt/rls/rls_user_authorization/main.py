@@ -132,7 +132,7 @@ def rls_user_authorization_dataframe(school_year) -> pd.DataFrame:
         right=staff_section_association_normalize,
         how='left',
         leftOn=['staffReferenceId'],
-        rigthOn=['staffReferenceId'],
+        rightOn=['staffReferenceId'],
         suffixLeft=None,
         suffixRight=None
     )

@@ -251,7 +251,7 @@ def rls_user_student_data_authorization_dataframe(school_year) -> pd.DataFrame:
         right=school_normalize,
         how='inner',
         leftOn=['localEducationAgencyReferenceId'],
-        rigthOn=['localEducationAgencyReferenceId'],
+        rightOn=['localEducationAgencyReferenceId'],
         suffixLeft=None,
         suffixRight=None
     )
@@ -260,7 +260,7 @@ def rls_user_student_data_authorization_dataframe(school_year) -> pd.DataFrame:
         right=student_school_association_normalize,
         how='inner',
         leftOn=['schoolReferenceId'],
-        rigthOn=['schoolReferenceId'],
+        rightOn=['schoolReferenceId'],
         suffixLeft='district_',
         suffixRight="school_"
     )
@@ -288,7 +288,7 @@ def rls_user_student_data_authorization_dataframe(school_year) -> pd.DataFrame:
         right=school_normalize,
         how='inner',
         leftOn=['edOrgReferenceId'],
-        rigthOn=['schoolReferenceId'],
+        rightOn=['schoolReferenceId'],
         suffixLeft=None,
         suffixRight=None
     )
@@ -297,7 +297,7 @@ def rls_user_student_data_authorization_dataframe(school_year) -> pd.DataFrame:
         right=student_school_association_normalize,
         how='inner',
         leftOn=['schoolReferenceId', 'schoolKey'],
-        rigthOn=['schoolReferenceId', 'schoolKey'],
+        rightOn=['schoolReferenceId', 'schoolKey'],
         suffixLeft=None,
         suffixRight=None
     )
@@ -325,7 +325,7 @@ def rls_user_student_data_authorization_dataframe(school_year) -> pd.DataFrame:
         right=staff_section_association_normalize,
         how='inner',
         leftOn=['staffReferenceId'],
-        rigthOn=['staffReferenceId'],
+        rightOn=['staffReferenceId'],
         suffixLeft=None,
         suffixRight=None
     )
@@ -337,7 +337,7 @@ def rls_user_student_data_authorization_dataframe(school_year) -> pd.DataFrame:
             'educationOrganizationId',
             'sectionReferenceId'
         ],
-        rigthOn=[
+        rightOn=[
             'schoolKey',
             'sectionReferenceId'
         ],
@@ -352,7 +352,7 @@ def rls_user_student_data_authorization_dataframe(school_year) -> pd.DataFrame:
             'schoolKey',
             'studentKey'
         ],
-        rigthOn=[
+        rightOn=[
             'schoolKey',
             'studentKey'
         ],
