@@ -7,6 +7,10 @@ import os
 
 import pandas as pd
 
+from edfi_amt_data_lake.helper.data_frame_generation_result import (
+    data_frame_generation_result,
+)
+
 
 def pdMerge(left=pd.DataFrame, right=pd.DataFrame, how=str, leftOn=[str], rightOn=[str], suffixLeft='_x', suffixRight='_y') -> pd.DataFrame:
     return pd.merge(
@@ -36,13 +40,17 @@ def toCsv(csvContent=pd.DataFrame, path=str, file_name=str, school_year=str) -> 
 
 
 def jsonNormalize(data, recordPath, meta, recordMeta=[], metaPrefix=None, recordPrefix=None, errors='ignore') -> pd.DataFrame:
+    # Add meta prefix
+    if metaPrefix:
+        meta = [metaPrefix + column for column in meta]
+    # Add record prefix
     if not recordMeta:
         recordMeta = []
-    elif recordMeta and len(recordMeta) > 0 and metaPrefix:
-        recordMeta = [metaPrefix + column for column in recordMeta]
+    elif recordMeta and len(recordMeta) > 0 and recordPrefix:
+        recordMeta = [recordPrefix + column for column in recordMeta]
     # Create an empty database with columns.
     default_columns = get_meta_columns(meta + recordMeta)
-    empty_data_frame = create_empty_dataframe(default_columns)
+    empty_data_frame = create_empty_data_frame(default_columns)
     if not data:
         return empty_data_frame
     try:
@@ -54,7 +62,7 @@ def jsonNormalize(data, recordPath, meta, recordMeta=[], metaPrefix=None, record
             errors=errors
         )
         # Concat normalize result and empty dataframe
-        result_dataframe = pd.concat([
+        result_dataframe = pd_concat([
             empty_data_frame,
             df_result
         ])
@@ -84,7 +92,7 @@ def get_meta_columns(columns=[]):
     return dataframe_columns
 
 
-def create_empty_dataframe(columns=[]):
+def create_empty_data_frame(columns=[]):
     return pd.DataFrame(columns=columns)
 
 
@@ -112,6 +120,16 @@ def saveParquetFile(data=pd.DataFrame, path=str, file_name=str, school_year=str)
     if not os.path.exists(destination_folder):
         os.makedirs(destination_folder, exist_ok=True)
     data.to_parquet(f"{destination_path}", engine='fastparquet')
+
+
+def save_parquet_file(result=data_frame_generation_result, path=str, file_name=str, school_year=str) -> None:
+    if result.successful:
+        saveParquetFile(
+            data=result.data_frame,
+            path=path,
+            file_name=file_name,
+            school_year=school_year
+        )
 
 
 def addColumnIfNotExists(data=pd.DataFrame, column=str, default_value='') -> pd.DataFrame:
@@ -164,7 +182,7 @@ def get_reference_from_href(data=pd.DataFrame, column=str, destination_column=st
 
 
 def add_dataframe_column(data=pd.DataFrame, columns=[str]):
-    empty_dataframe = create_empty_dataframe(columns=columns)
+    empty_dataframe = create_empty_data_frame(columns=columns)
     if (data is None):
         data = empty_dataframe
     return pd.concat([
