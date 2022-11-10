@@ -6,6 +6,7 @@
 import os
 
 import pandas as pd
+from decouple import config
 
 from edfi_amt_data_lake.helper.data_frame_generation_result import (
     data_frame_generation_result,
@@ -122,16 +123,6 @@ def saveParquetFile(data=pd.DataFrame, path=str, file_name=str, school_year=str)
     data.to_parquet(f"{destination_path}", engine='fastparquet')
 
 
-def save_parquet_file(result=data_frame_generation_result, path=str, file_name=str, school_year=str) -> None:
-    if result.successful:
-        saveParquetFile(
-            data=result.data_frame,
-            path=path,
-            file_name=file_name,
-            school_year=school_year
-        )
-
-
 def addColumnIfNotExists(data=pd.DataFrame, column=str, default_value='') -> pd.DataFrame:
     if column not in data:
         data[column] = default_value
@@ -189,3 +180,26 @@ def add_dataframe_column(data=pd.DataFrame, columns=[str]):
         data,
         empty_dataframe,
     ])
+
+
+def create_parquet_file(func) -> data_frame_generation_result:
+    def inner(file_name, columns, school_year):
+        try:
+            result = data_frame_generation_result(
+                data_frame=func(file_name, columns, school_year),
+                columns=columns
+            )
+            if result.successful:
+                saveParquetFile(
+                    data=result.data_frame,
+                    path=f"{config('PARQUET_FILES_LOCATION')}",
+                    file_name=file_name,
+                    school_year=school_year
+                )
+            return result
+        except Exception as data_frame_exception:
+            return data_frame_generation_result(
+                successful=False,
+                exception=data_frame_exception
+            )
+    return inner

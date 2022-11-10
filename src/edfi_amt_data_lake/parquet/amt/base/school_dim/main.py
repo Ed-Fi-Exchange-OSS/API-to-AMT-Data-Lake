@@ -13,11 +13,11 @@ from edfi_amt_data_lake.parquet.Common.descriptor_mapping import get_descriptor_
 from edfi_amt_data_lake.parquet.Common.functions import getEndpointJson
 from edfi_amt_data_lake.parquet.Common.pandasWrapper import (
     addColumnIfNotExists,
+    create_parquet_file,
     get_descriptor_code_value_from_uri,
     jsonNormalize,
     pdMerge,
     renameColumns,
-    save_parquet_file,
     subset,
 )
 
@@ -42,7 +42,13 @@ RESULT_COLUMNS = [
 ]
 
 
-def school_dim_data_frame(school_year) -> pd.DataFrame:
+@create_parquet_file
+def school_dim_data_frame(
+    file_name: str,
+    columns: list[str],
+    school_year: int
+) -> pd.DataFrame:
+    file_name = file_name
     schoolsContent = getEndpointJson(ENDPOINT_SCHOOLS, config('SILVER_DATA_LOCATION'), school_year)
     localEducationAgenciesContent = getEndpointJson(ENDPOINT_LOCALEDUCATIONAGENCIES, config('SILVER_DATA_LOCATION'), school_year)
     stateEducationAgenciesContent = getEndpointJson(ENDPOINT_STATEEDUCATIONAGENCIES, config('SILVER_DATA_LOCATION'), school_year)
@@ -178,20 +184,13 @@ def school_dim_data_frame(school_year) -> pd.DataFrame:
     })
     # Reorder columns to match AMT
     return result_data_frame[
-        RESULT_COLUMNS
+        columns
     ]
 
 
 def school_dim(school_year) -> data_frame_generation_result:
-    try:
-        result = data_frame_generation_result(
-            data_frame=school_dim_data_frame(school_year),
-            columns=RESULT_COLUMNS
-        )
-        save_parquet_file(result, f"{config('PARQUET_FILES_LOCATION')}", "schoolDim.parquet", school_year)
-        return result
-    except Exception as data_frame_exception:
-        return data_frame_generation_result(
-            successful=False,
-            exception=data_frame_exception
-        )
+    return school_dim_data_frame(
+        file_name="schoolDim.parquet",
+        columns=RESULT_COLUMNS,
+        school_year=school_year
+    )
