@@ -115,7 +115,7 @@ def student_school_dim_data_frame(
     )
     toCsv(schools_normalized, 'C:/temp/edfi/parquet/', 'schools_normalized.csv', '')
     
-    # Student indicators logic begins
+    # Student Education Organization
     student_school_education_organization_associations_normalized = jsonNormalize(
         data=student_school_education_organization_associations_content,
         recordPath=None,
@@ -131,6 +131,9 @@ def student_school_dim_data_frame(
         recordPrefix=None,
         errors='ignore'
     )
+
+    get_descriptor_code_value_from_uri(student_school_education_organization_associations_normalized, 'limitedEnglishProficiencyDescriptor')
+    get_descriptor_code_value_from_uri(student_school_education_organization_associations_normalized, 'sexDescriptor')
 
     student_school_education_organization_associations_indicators_normalized = jsonNormalize(
         data=student_school_education_organization_associations_content,
@@ -160,7 +163,30 @@ def student_school_dim_data_frame(
     )
     toCsv(student_school_education_organization_associations_normalized, 'C:/temp/edfi/parquet/', 'student_school_education_organization_associations_normalized.csv', '')
 
-    # Student indicators logic ends
+    # Student Education Organization ends
+
+    # District Education Organization 
+    
+    student_school_education_organization_associations_district_normalized = jsonNormalize(
+        data=student_school_education_organization_associations_content,
+        recordPath=None,
+        meta=[
+            'id',
+            ['educationOrganizationReference', 'educationOrganizationId'],
+            ['studentReference', 'studentUniqueId'],
+            'hispanicLatinoEthnicity',
+            'limitedEnglishProficiencyDescriptor',
+            'sexDescriptor'
+        ],
+        metaPrefix=None,
+        recordPrefix=None,
+        errors='ignore'
+    )
+
+    get_descriptor_code_value_from_uri(student_school_education_organization_associations_district_normalized, 'limitedEnglishProficiencyDescriptor')
+    get_descriptor_code_value_from_uri(student_school_education_organization_associations_district_normalized, 'sexDescriptor')
+
+    # District Education Organization ends
 
     result_data_frame = pdMerge(
         left=student_school_associations_normalized,
@@ -180,6 +206,69 @@ def student_school_dim_data_frame(
         rightOn=['schoolId'],
         suffixLeft='',
         suffixRight='_schools'
+    )
+
+    result_data_frame = pdMerge(
+        left=result_data_frame,
+        right=student_school_education_organization_associations_normalized,
+        how='left',
+        leftOn=['studentReference.studentUniqueId', 'schoolReference.schoolId'],
+        rightOn=['studentReference.studentUniqueId', 'educationOrganizationReference.educationOrganizationId'],
+        suffixLeft='',
+        suffixRight='_studentEdOrg'
+    )
+    toCsv(result_data_frame, 'C:/temp/edfi/parquet/', 'result_data_frame_indicators.csv', '')
+
+    result_data_frame = pdMerge(
+        left=result_data_frame,
+        right=student_school_education_organization_associations_district_normalized,
+        how='left',
+        leftOn=['studentReference.studentUniqueId', 'localEducationAgencyReference.localEducationAgencyId'],
+        rightOn=['studentReference.studentUniqueId', 'educationOrganizationReference.educationOrganizationId'],
+        suffixLeft='',
+        suffixRight='_districtEdOrg'
+    )
+
+    result_data_frame = subset(result_data_frame, [
+        'schoolReference.schoolId', 
+        'studentReference.studentUniqueId',
+        'entryDate',
+        'entryGradeLevelDescriptor',
+        'exitWithdrawDate',
+        'birthDate',
+        'firstName',
+        'lastSurname',
+        'middleName',
+        'hispanicLatinoEthnicity',
+        'limitedEnglishProficiencyDescriptor',
+        'sexDescriptor',
+        'indicatorName',
+        'hispanicLatinoEthnicity_districtEdOrg',
+        'limitedEnglishProficiencyDescriptor_districtEdOrg',
+        'sexDescriptor_districtEdOrg'
+    ])
+
+    result_data_frame.fillna('')
+
+    # LimitedEnglishProficiency
+    result_data_frame['LimitedEnglishProficiency'] = (
+        result_data_frame.apply(
+            lambda x: x['limitedEnglishProficiencyDescriptor'] if x['limitedEnglishProficiencyDescriptor'] != '' else x['limitedEnglishProficiencyDescriptor_districtEdOrg'], axis=1
+        )
+    )
+    
+    # IsHispanic
+    result_data_frame['IsHispanic'] = (
+        result_data_frame.apply(
+            lambda x: x['hispanicLatinoEthnicity'] if x['hispanicLatinoEthnicity'] != '' else x['hispanicLatinoEthnicity_districtEdOrg'], axis=1
+        )
+    )
+    
+    # Sex
+    result_data_frame['Sex'] = (
+        result_data_frame.apply(
+            lambda x: x['sexDescriptor'] if x['sexDescriptor'] != '' else x['sexDescriptor_districtEdOrg'], axis=1
+        )
     )
     toCsv(result_data_frame, 'C:/temp/edfi/parquet/', 'result_data_frame.csv', '')
     
