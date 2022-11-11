@@ -10,6 +10,7 @@ import requests
 from decouple import config
 
 from edfi_amt_data_lake.helper.changeVersionValues import ChangeVersionValues
+from edfi_amt_data_lake.helper.helper import get_headers
 from edfi_amt_data_lake.helper.token import get_token
 
 
@@ -18,6 +19,12 @@ def create_file_if_not_exists(filepath, path) -> None:
 
     filePath = Path(filepath)
     filePath.touch(exist_ok=True)
+
+
+def _update_change_version_file(pathfilename: str, oldestChangeVersion: str, newestChangeVersion: str) -> None:
+    with open(pathfilename, "w") as outfile:
+        fileLines = [f"{oldestChangeVersion}\n", newestChangeVersion]
+        outfile.writelines(fileLines)
 
 
 def get_change_version_values_from_file(file) -> ChangeVersionValues:
@@ -29,12 +36,20 @@ def get_change_version_values_from_file(file) -> ChangeVersionValues:
     return ChangeVersionValues('0', '0')
 
 
+def _delete_downloaded_files() -> None:
+    import shutil
+    path = f"{config('CHANGE_VERSION_FILEPATH')}"
+    if not os.path.exists(path):
+        raise Exception("Directory not found!")
+    shutil.rmtree(path)
+    return None
+
+
 def get_change_version_values_from_api(school_year="") -> ChangeVersionValues:
     token = get_token()
     school_year_url = f"{school_year}/" if school_year else ""
-    url = f"{config('API_URL')}{config('AVAILABLE_CHANGE_VERSIONS').format(school_year_url)}"
-    headers = {"Authorization": "Bearer " + token}
-    response = requests.get(url, headers=headers)
+    url: str = f"{config('API_URL')}/{config('AVAILABLE_CHANGE_VERSIONS')}/{school_year_url}"
+    response = requests.get(url, headers=get_headers(token))
 
     if response.ok:
         response_json = response.json()
@@ -42,13 +57,14 @@ def get_change_version_values_from_api(school_year="") -> ChangeVersionValues:
         oldestChangeVersion = str(response_json["OldestChangeVersion"])
         newestChangeVersion = str(response_json["NewestChangeVersion"])
         changeVersionValues = ChangeVersionValues(oldestChangeVersion, newestChangeVersion)
+        return changeVersionValues
 
-    return changeVersionValues
+    return ChangeVersionValues("0", "0")
 
 
 def get_change_version_updated(school_year) -> bool:
     school_year_path = f"{school_year}/" if school_year else ""
-    path = config("CHANGE_VERSION_FILEPATH") + f"API_TO_AMT/{school_year_path}"
+    path: str = f"{config('CHANGE_VERSION_FILEPATH')}/API_TO_AMT/{school_year_path}"
     filename = config("CHANGE_VERSION_FILENAME")
     pathfilename = f"{path}{filename}"
 
@@ -63,6 +79,16 @@ def get_change_version_updated(school_year) -> bool:
     oldestChangeVersion = ''
     newestChangeVersion = ''
 
+    disable_change_version = str(config('DISABLE_CHANGE_VERSION', default="False"))
+
+    if eval(disable_change_version):
+        oldestChangeVersion = "0"
+        newestChangeVersion = changeVersionFromAPI.newestChangeVersion
+        _delete_downloaded_files()
+        create_file_if_not_exists(pathfilename, path)
+        _update_change_version_file(pathfilename, oldestChangeVersion, newestChangeVersion)
+        return True
+
     if changeVersionFromFile.newestChangeVersion == 0:
         # First Scenario: Fist time we are saving these values locally.
         oldestChangeVersion = changeVersionFromAPI.oldestChangeVersion
@@ -75,8 +101,6 @@ def get_change_version_updated(school_year) -> bool:
         oldestChangeVersion = changeVersionFromFile.newestChangeVersion
         newestChangeVersion = changeVersionFromAPI.newestChangeVersion
 
-    with open(pathfilename, "w") as outfile:
-        fileLines = [f"{oldestChangeVersion}\n", newestChangeVersion]
-        outfile.writelines(fileLines)
+    _update_change_version_file(pathfilename, oldestChangeVersion, newestChangeVersion)
 
     return True
