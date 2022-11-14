@@ -78,10 +78,9 @@ def student_school_dim_data_frame(
         recordPrefix=None,
         errors='ignore'
     )
-    toCsv(student_school_associations_normalized, 'C:/temp/edfi/parquet/', 'student_school_associations_normalized.csv', '')
 
-    # if student_school_associations_normalized.empty:
-    #     return None
+    if student_school_associations_normalized.empty:
+        return None
 
     get_descriptor_code_value_from_uri(student_school_associations_normalized, 'entryGradeLevelDescriptor')
 
@@ -100,7 +99,6 @@ def student_school_dim_data_frame(
         recordPrefix=None,
         errors='ignore'
     )
-    toCsv(students_normalized, 'C:/temp/edfi/parquet/', 'students_normalized.csv', '')
     
     schools_normalized = jsonNormalize(
         data=schools_content,
@@ -114,147 +112,7 @@ def student_school_dim_data_frame(
         recordPrefix=None,
         errors='ignore'
     )
-    toCsv(schools_normalized, 'C:/temp/edfi/parquet/', 'schools_normalized.csv', '')
     
-    # Student Education Organization
-    student_school_education_organization_associations_normalized = jsonNormalize(
-        data=student_school_education_organization_associations_content,
-        recordPath=None,
-        meta=[
-            'id',
-            ['educationOrganizationReference', 'educationOrganizationId'],
-            ['studentReference', 'studentUniqueId'],
-            'hispanicLatinoEthnicity',
-            'limitedEnglishProficiencyDescriptor',
-            'sexDescriptor'
-        ],
-        metaPrefix=None,
-        recordPrefix=None,
-        errors='ignore'
-    )
-
-    get_descriptor_code_value_from_uri(student_school_education_organization_associations_normalized, 'limitedEnglishProficiencyDescriptor')
-    get_descriptor_code_value_from_uri(student_school_education_organization_associations_normalized, 'sexDescriptor')
-
-    student_school_education_organization_associations_indicators_normalized = jsonNormalize(
-        data=student_school_education_organization_associations_content,
-        recordPath=[
-            'studentIndicators'
-        ],
-        meta=[
-            'id'
-        ],
-        recordMeta=[
-            'indicatorName',
-            'indicator'
-        ],
-        metaPrefix=None,
-        recordPrefix=None,
-        errors='ignore'
-    )
-    toCsv(student_school_education_organization_associations_indicators_normalized, 'C:/temp/edfi/parquet/', 'student_school_education_organization_associations_indicators_normalized.csv', '')
-
-    indicator_df = (student_school_education_organization_associations_indicators_normalized[
-        student_school_education_organization_associations_indicators_normalized['indicatorName'].str.contains('Internet Access In Residence', na=False)
-    ])
-    toCsv(indicator_df, 'C:/temp/edfi/parquet/', 'indicators_internet_access_in_residence_df.csv', '')
-
-    student_school_education_organization_associations_normalized = pdMerge(
-        left=student_school_education_organization_associations_normalized,
-        right=indicator_df,
-        how='left',
-        leftOn=['id'],
-        rightOn=['id'],
-        suffixLeft='',
-        suffixRight='_internet_access_in_residence'
-    )
-
-    indicator_df = (student_school_education_organization_associations_indicators_normalized[
-        student_school_education_organization_associations_indicators_normalized['indicatorName'].str.contains('Internet Access Type In Residence', na=False)
-    ])
-    toCsv(indicator_df, 'C:/temp/edfi/parquet/', 'internet_access_type_in_residence_df.csv', '')
-
-    student_school_education_organization_associations_normalized = pdMerge(
-        left=student_school_education_organization_associations_normalized,
-        right=indicator_df,
-        how='left',
-        leftOn=['id'],
-        rightOn=['id'],
-        suffixLeft='',
-        suffixRight='_internet_access_type_in_residence'
-    )
-
-    indicator_df = (student_school_education_organization_associations_indicators_normalized[
-        student_school_education_organization_associations_indicators_normalized['indicatorName'].str.contains('Internet Performance In Residence', na=False)
-    ])
-    toCsv(indicator_df, 'C:/temp/edfi/parquet/', 'internet_performance_in_residence_df.csv', '')
-
-    student_school_education_organization_associations_normalized = pdMerge(
-        left=student_school_education_organization_associations_normalized,
-        right=indicator_df,
-        how='left',
-        leftOn=['id'],
-        rightOn=['id'],
-        suffixLeft='',
-        suffixRight='_internet_performance_in_residence'
-    )
-
-    indicator_df = (student_school_education_organization_associations_indicators_normalized[
-        student_school_education_organization_associations_indicators_normalized['indicatorName'].str.contains('Digital Device', na=False)
-    ])
-    toCsv(indicator_df, 'C:/temp/edfi/parquet/', 'digital_device_df.csv', '')
-
-    student_school_education_organization_associations_normalized = pdMerge(
-        left=student_school_education_organization_associations_normalized,
-        right=indicator_df,
-        how='left',
-        leftOn=['id'],
-        rightOn=['id'],
-        suffixLeft='',
-        suffixRight='_digital_device'
-    )
-
-    indicator_df = (student_school_education_organization_associations_indicators_normalized[
-        student_school_education_organization_associations_indicators_normalized['indicatorName'].str.contains('Device Access', na=False)
-    ])
-    toCsv(indicator_df, 'C:/temp/edfi/parquet/', 'device_access_df.csv', '')
-
-    student_school_education_organization_associations_normalized = pdMerge(
-        left=student_school_education_organization_associations_normalized,
-        right=indicator_df,
-        how='left',
-        leftOn=['id'],
-        rightOn=['id'],
-        suffixLeft='',
-        suffixRight='_device_access'
-    )
-    toCsv(student_school_education_organization_associations_normalized, 'C:/temp/edfi/parquet/', 'student_school_education_organization_associations_normalized.csv', '')
-
-    # Student Education Organization ends
-
-    # District Education Organization 
-    
-    student_school_education_organization_associations_district_normalized = jsonNormalize(
-        data=student_school_education_organization_associations_content,
-        recordPath=None,
-        meta=[
-            'id',
-            ['educationOrganizationReference', 'educationOrganizationId'],
-            ['studentReference', 'studentUniqueId'],
-            'hispanicLatinoEthnicity',
-            'limitedEnglishProficiencyDescriptor',
-            'sexDescriptor'
-        ],
-        metaPrefix=None,
-        recordPrefix=None,
-        errors='ignore'
-    )
-
-    get_descriptor_code_value_from_uri(student_school_education_organization_associations_district_normalized, 'limitedEnglishProficiencyDescriptor')
-    get_descriptor_code_value_from_uri(student_school_education_organization_associations_district_normalized, 'sexDescriptor')
-
-    # District Education Organization ends
-
     result_data_frame = pdMerge(
         left=student_school_associations_normalized,
         right=students_normalized,
@@ -275,26 +133,172 @@ def student_school_dim_data_frame(
         suffixRight='_schools'
     )
 
-    result_data_frame = pdMerge(
-        left=result_data_frame,
-        right=student_school_education_organization_associations_normalized,
-        how='left',
-        leftOn=['studentReference.studentUniqueId', 'schoolReference.schoolId'],
-        rightOn=['studentReference.studentUniqueId', 'educationOrganizationReference.educationOrganizationId'],
-        suffixLeft='',
-        suffixRight='_studentEdOrg'
-    )
-    toCsv(result_data_frame, 'C:/temp/edfi/parquet/', 'result_data_frame_indicators.csv', '')
+    # Student Education Organization
 
-    result_data_frame = pdMerge(
-        left=result_data_frame,
-        right=student_school_education_organization_associations_district_normalized,
-        how='left',
-        leftOn=['studentReference.studentUniqueId', 'localEducationAgencyReference.localEducationAgencyId'],
-        rightOn=['studentReference.studentUniqueId', 'educationOrganizationReference.educationOrganizationId'],
-        suffixLeft='',
-        suffixRight='_districtEdOrg'
-    )
+    if student_school_education_organization_associations_content == '':
+        addColumnIfNotExists(result_data_frame, 'hispanicLatinoEthnicity')
+        addColumnIfNotExists(result_data_frame, 'limitedEnglishProficiencyDescriptor')
+        addColumnIfNotExists(result_data_frame, 'sexDescriptor')
+    else:
+        student_school_education_organization_associations_normalized = jsonNormalize(
+            data=student_school_education_organization_associations_content,
+            recordPath=None,
+            meta=[
+                'id',
+                ['educationOrganizationReference', 'educationOrganizationId'],
+                ['studentReference', 'studentUniqueId'],
+                'hispanicLatinoEthnicity',
+                'limitedEnglishProficiencyDescriptor',
+                'sexDescriptor'
+            ],
+            metaPrefix=None,
+            recordPrefix=None,
+            errors='ignore'
+        )
+
+        get_descriptor_code_value_from_uri(student_school_education_organization_associations_normalized, 'limitedEnglishProficiencyDescriptor')
+        get_descriptor_code_value_from_uri(student_school_education_organization_associations_normalized, 'sexDescriptor')
+
+        student_school_education_organization_associations_indicators_normalized = jsonNormalize(
+            data=student_school_education_organization_associations_content,
+            recordPath=[
+                'studentIndicators'
+            ],
+            meta=[
+                'id'
+            ],
+            recordMeta=[
+                'indicatorName',
+                'indicator'
+            ],
+            metaPrefix=None,
+            recordPrefix=None,
+            errors='ignore'
+        )
+
+        if student_school_education_organization_associations_indicators_normalized.empty:
+            addColumnIfNotExists(student_school_education_organization_associations_normalized, 'indicatorName')
+            addColumnIfNotExists(student_school_education_organization_associations_normalized, 'indicator')
+        else:
+            indicator_df = (student_school_education_organization_associations_indicators_normalized[
+                student_school_education_organization_associations_indicators_normalized['indicatorName'].str.contains('Internet Access In Residence', na=False)
+            ])
+
+            student_school_education_organization_associations_normalized = pdMerge(
+                left=student_school_education_organization_associations_normalized,
+                right=indicator_df,
+                how='left',
+                leftOn=['id'],
+                rightOn=['id'],
+                suffixLeft='',
+                suffixRight='_internet_access_in_residence'
+            )
+
+            indicator_df = (student_school_education_organization_associations_indicators_normalized[
+                student_school_education_organization_associations_indicators_normalized['indicatorName'].str.contains('Internet Access Type In Residence', na=False)
+            ])
+
+            student_school_education_organization_associations_normalized = pdMerge(
+                left=student_school_education_organization_associations_normalized,
+                right=indicator_df,
+                how='left',
+                leftOn=['id'],
+                rightOn=['id'],
+                suffixLeft='',
+                suffixRight='_internet_access_type_in_residence'
+            )
+
+            indicator_df = (student_school_education_organization_associations_indicators_normalized[
+                student_school_education_organization_associations_indicators_normalized['indicatorName'].str.contains('Internet Performance In Residence', na=False)
+            ])
+
+            student_school_education_organization_associations_normalized = pdMerge(
+                left=student_school_education_organization_associations_normalized,
+                right=indicator_df,
+                how='left',
+                leftOn=['id'],
+                rightOn=['id'],
+                suffixLeft='',
+                suffixRight='_internet_performance_in_residence'
+            )
+
+            indicator_df = (student_school_education_organization_associations_indicators_normalized[
+                student_school_education_organization_associations_indicators_normalized['indicatorName'].str.contains('Digital Device', na=False)
+            ])
+
+            student_school_education_organization_associations_normalized = pdMerge(
+                left=student_school_education_organization_associations_normalized,
+                right=indicator_df,
+                how='left',
+                leftOn=['id'],
+                rightOn=['id'],
+                suffixLeft='',
+                suffixRight='_digital_device'
+            )
+
+            indicator_df = (student_school_education_organization_associations_indicators_normalized[
+                student_school_education_organization_associations_indicators_normalized['indicatorName'].str.contains('Device Access', na=False)
+            ])
+
+            student_school_education_organization_associations_normalized = pdMerge(
+                left=student_school_education_organization_associations_normalized,
+                right=indicator_df,
+                how='left',
+                leftOn=['id'],
+                rightOn=['id'],
+                suffixLeft='',
+                suffixRight='_device_access'
+            )
+
+        result_data_frame = pdMerge(
+            left=result_data_frame,
+            right=student_school_education_organization_associations_normalized,
+            how='left',
+            leftOn=['studentReference.studentUniqueId', 'schoolReference.schoolId'],
+            rightOn=['studentReference.studentUniqueId', 'educationOrganizationReference.educationOrganizationId'],
+            suffixLeft='',
+            suffixRight='_studentEdOrg'
+        )
+
+    # Student Education Organization ends
+
+    # District Education Organization 
+
+    if student_school_education_organization_associations_content == '':
+        addColumnIfNotExists(result_data_frame, 'hispanicLatinoEthnicity')
+        addColumnIfNotExists(result_data_frame, 'limitedEnglishProficiencyDescriptor')
+        addColumnIfNotExists(result_data_frame, 'sexDescriptor')
+    else:
+        student_school_education_organization_associations_district_normalized = jsonNormalize(
+            data=student_school_education_organization_associations_content,
+            recordPath=None,
+            meta=[
+                'id',
+                ['educationOrganizationReference', 'educationOrganizationId'],
+                ['studentReference', 'studentUniqueId'],
+                'hispanicLatinoEthnicity',
+                'limitedEnglishProficiencyDescriptor',
+                'sexDescriptor'
+            ],
+            metaPrefix=None,
+            recordPrefix=None,
+            errors='ignore'
+        )
+
+        get_descriptor_code_value_from_uri(student_school_education_organization_associations_district_normalized, 'limitedEnglishProficiencyDescriptor')
+        get_descriptor_code_value_from_uri(student_school_education_organization_associations_district_normalized, 'sexDescriptor')
+
+        result_data_frame = pdMerge(
+            left=result_data_frame,
+            right=student_school_education_organization_associations_district_normalized,
+            how='left',
+            leftOn=['studentReference.studentUniqueId', 'localEducationAgencyReference.localEducationAgencyId'],
+            rightOn=['studentReference.studentUniqueId', 'educationOrganizationReference.educationOrganizationId'],
+            suffixLeft='',
+            suffixRight='_districtEdOrg'
+        )
+
+    # District Education Organization ends
 
     result_data_frame = result_data_frame.fillna('')
 
@@ -319,8 +323,6 @@ def student_school_dim_data_frame(
         )
     )
     
-    toCsv(result_data_frame, 'C:/temp/edfi/parquet/', 'result_data_frame1.csv', '')
-    
     result_data_frame = subset(result_data_frame, [
         'schoolReference.schoolId', 
         'studentReference.studentUniqueId',
@@ -342,8 +344,6 @@ def student_school_dim_data_frame(
         'indicator_device_access'
     ])
 
-    toCsv(result_data_frame, 'C:/temp/edfi/parquet/', 'result_data_frame2.csv', '')
-    
     result_data_frame = renameColumns(result_data_frame, {
         'schoolReference.schoolId': 'SchoolKey',
         'studentReference.studentUniqueId': 'StudentKey',
@@ -395,6 +395,8 @@ def student_school_dim_data_frame(
     result_data_frame['DeviceAccess'] = result_data_frame['DeviceAccess'].apply(
         lambda x: 'n/a' if x == '' else x
     )
+
+    result_data_frame = result_data_frame[columns]
 
     toCsv(result_data_frame, 'C:/temp/edfi/parquet/', 'result_data_frame.csv', '')
     
