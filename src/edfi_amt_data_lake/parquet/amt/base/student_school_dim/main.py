@@ -69,6 +69,7 @@ def student_school_dim_data_frame(
             'id',
             ['schoolReference', 'schoolId'],
             ['studentReference', 'studentUniqueId'],
+            ['schoolYearTypeReference', 'schoolYear'],
             'entryDate',
             'entryGradeLevelDescriptor',
             'exitWithdrawDate'
@@ -144,22 +145,88 @@ def student_school_dim_data_frame(
             'id'
         ],
         recordMeta=[
-            'indicatorName'
+            'indicatorName',
+            'indicator'
         ],
         metaPrefix=None,
         recordPrefix=None,
         errors='ignore'
     )
     toCsv(student_school_education_organization_associations_indicators_normalized, 'C:/temp/edfi/parquet/', 'student_school_education_organization_associations_indicators_normalized.csv', '')
-    
+
+    indicator_df = (student_school_education_organization_associations_indicators_normalized[
+        student_school_education_organization_associations_indicators_normalized['indicatorName'].str.contains('Internet Access In Residence', na=False)
+    ])
+    toCsv(indicator_df, 'C:/temp/edfi/parquet/', 'indicators_internet_access_in_residence_df.csv', '')
+
     student_school_education_organization_associations_normalized = pdMerge(
         left=student_school_education_organization_associations_normalized,
-        right=student_school_education_organization_associations_indicators_normalized,
+        right=indicator_df,
         how='left',
         leftOn=['id'],
         rightOn=['id'],
         suffixLeft='',
-        suffixRight='_indicators'
+        suffixRight='_internet_access_in_residence'
+    )
+
+    indicator_df = (student_school_education_organization_associations_indicators_normalized[
+        student_school_education_organization_associations_indicators_normalized['indicatorName'].str.contains('Internet Access Type In Residence', na=False)
+    ])
+    toCsv(indicator_df, 'C:/temp/edfi/parquet/', 'internet_access_type_in_residence_df.csv', '')
+
+    student_school_education_organization_associations_normalized = pdMerge(
+        left=student_school_education_organization_associations_normalized,
+        right=indicator_df,
+        how='left',
+        leftOn=['id'],
+        rightOn=['id'],
+        suffixLeft='',
+        suffixRight='_internet_access_type_in_residence'
+    )
+
+    indicator_df = (student_school_education_organization_associations_indicators_normalized[
+        student_school_education_organization_associations_indicators_normalized['indicatorName'].str.contains('Internet Performance In Residence', na=False)
+    ])
+    toCsv(indicator_df, 'C:/temp/edfi/parquet/', 'internet_performance_in_residence_df.csv', '')
+
+    student_school_education_organization_associations_normalized = pdMerge(
+        left=student_school_education_organization_associations_normalized,
+        right=indicator_df,
+        how='left',
+        leftOn=['id'],
+        rightOn=['id'],
+        suffixLeft='',
+        suffixRight='_internet_performance_in_residence'
+    )
+
+    indicator_df = (student_school_education_organization_associations_indicators_normalized[
+        student_school_education_organization_associations_indicators_normalized['indicatorName'].str.contains('Digital Device', na=False)
+    ])
+    toCsv(indicator_df, 'C:/temp/edfi/parquet/', 'digital_device_df.csv', '')
+
+    student_school_education_organization_associations_normalized = pdMerge(
+        left=student_school_education_organization_associations_normalized,
+        right=indicator_df,
+        how='left',
+        leftOn=['id'],
+        rightOn=['id'],
+        suffixLeft='',
+        suffixRight='_digital_device'
+    )
+
+    indicator_df = (student_school_education_organization_associations_indicators_normalized[
+        student_school_education_organization_associations_indicators_normalized['indicatorName'].str.contains('Device Access', na=False)
+    ])
+    toCsv(indicator_df, 'C:/temp/edfi/parquet/', 'device_access_df.csv', '')
+
+    student_school_education_organization_associations_normalized = pdMerge(
+        left=student_school_education_organization_associations_normalized,
+        right=indicator_df,
+        how='left',
+        leftOn=['id'],
+        rightOn=['id'],
+        suffixLeft='',
+        suffixRight='_device_access'
     )
     toCsv(student_school_education_organization_associations_normalized, 'C:/temp/edfi/parquet/', 'student_school_education_organization_associations_normalized.csv', '')
 
@@ -229,26 +296,7 @@ def student_school_dim_data_frame(
         suffixRight='_districtEdOrg'
     )
 
-    result_data_frame = subset(result_data_frame, [
-        'schoolReference.schoolId', 
-        'studentReference.studentUniqueId',
-        'entryDate',
-        'entryGradeLevelDescriptor',
-        'exitWithdrawDate',
-        'birthDate',
-        'firstName',
-        'lastSurname',
-        'middleName',
-        'hispanicLatinoEthnicity',
-        'limitedEnglishProficiencyDescriptor',
-        'sexDescriptor',
-        'indicatorName',
-        'hispanicLatinoEthnicity_districtEdOrg',
-        'limitedEnglishProficiencyDescriptor_districtEdOrg',
-        'sexDescriptor_districtEdOrg'
-    ])
-
-    result_data_frame.fillna('')
+    result_data_frame = result_data_frame.fillna('')
 
     # LimitedEnglishProficiency
     result_data_frame['LimitedEnglishProficiency'] = (
@@ -270,6 +318,84 @@ def student_school_dim_data_frame(
             lambda x: x['sexDescriptor'] if x['sexDescriptor'] != '' else x['sexDescriptor_districtEdOrg'], axis=1
         )
     )
+    
+    toCsv(result_data_frame, 'C:/temp/edfi/parquet/', 'result_data_frame1.csv', '')
+    
+    result_data_frame = subset(result_data_frame, [
+        'schoolReference.schoolId', 
+        'studentReference.studentUniqueId',
+        'schoolYearTypeReference.schoolYear',
+        'entryDate',
+        'entryGradeLevelDescriptor',
+        'exitWithdrawDate',
+        'birthDate',
+        'firstName',
+        'lastSurname',
+        'middleName',
+        'IsHispanic',
+        'LimitedEnglishProficiency',
+        'Sex',
+        'indicator',
+        'indicator_internet_access_type_in_residence',
+        'indicator_internet_performance_in_residence',
+        'indicator_digital_device',
+        'indicator_device_access'
+    ])
+
+    toCsv(result_data_frame, 'C:/temp/edfi/parquet/', 'result_data_frame2.csv', '')
+    
+    result_data_frame = renameColumns(result_data_frame, {
+        'schoolReference.schoolId': 'SchoolKey',
+        'studentReference.studentUniqueId': 'StudentKey',
+        'schoolYearTypeReference.schoolYear': 'SchoolYear',
+        'firstName': 'StudentFirstName',
+        'middleName': 'StudentMiddleName',
+        'lastSurname': 'StudentLastName',
+        'birthDate': 'BirthDate',
+        'entryDate': 'EnrollmentDateKey',
+        'entryGradeLevelDescriptor': 'GradeLevel',
+        'indicator': 'InternetAccessInResidence',
+        'indicator_internet_access_type_in_residence': 'InternetAccessTypeInResidence',
+        'indicator_internet_performance_in_residence': 'InternetPerformance',
+        'indicator_digital_device': 'DigitalDevice',
+        'indicator_device_access': 'DeviceAccess',
+    })
+
+    result_data_frame.fillna('')
+
+    result_data_frame['StudentSchoolKey'] = (
+        result_data_frame['StudentKey'] + '-'
+        + result_data_frame['SchoolKey'].astype(str)
+    )
+
+    result_data_frame['SchoolYear'] = result_data_frame['SchoolYear'].apply(
+        lambda x: 'Unknown' if x == '' else x
+    )
+
+    result_data_frame['LimitedEnglishProficiency'] = result_data_frame['LimitedEnglishProficiency'].apply(
+        lambda x: 'Not applicable' if x == '' else x
+    )
+
+    result_data_frame['InternetAccessInResidence'] = result_data_frame['InternetAccessInResidence'].apply(
+        lambda x: 'n/a' if x == '' else x
+    )
+
+    result_data_frame['InternetAccessTypeInResidence'] = result_data_frame['InternetAccessTypeInResidence'].apply(
+        lambda x: 'n/a' if x == '' else x
+    )
+
+    result_data_frame['InternetPerformance'] = result_data_frame['InternetPerformance'].apply(
+        lambda x: 'n/a' if x == '' else x
+    )
+
+    result_data_frame['DigitalDevice'] = result_data_frame['DigitalDevice'].apply(
+        lambda x: 'n/a' if x == '' else x
+    )
+
+    result_data_frame['DeviceAccess'] = result_data_frame['DeviceAccess'].apply(
+        lambda x: 'n/a' if x == '' else x
+    )
+
     toCsv(result_data_frame, 'C:/temp/edfi/parquet/', 'result_data_frame.csv', '')
     
     return result_data_frame[
