@@ -3,23 +3,25 @@
 # The Ed-Fi Alliance licenses this file to you under the Apache License, Version 2.0.
 # See the LICENSE and NOTICES files in the project root for more information.
 
+from datetime import date
+
 import pandas as pd
 from decouple import config
 
 from edfi_amt_data_lake.helper.data_frame_generation_result import (
     data_frame_generation_result,
 )
-from edfi_amt_data_lake.parquet.Common.descriptor_mapping import get_descriptor_constant
 from edfi_amt_data_lake.parquet.Common.functions import getEndpointJson
 from edfi_amt_data_lake.parquet.Common.pandasWrapper import (
     addColumnIfNotExists,
+    create_empty_data_frame,
     create_parquet_file,
     get_descriptor_code_value_from_uri,
     jsonNormalize,
     pdMerge,
     renameColumns,
     subset,
-    create_empty_data_frame,
+    to_datetime_key,
     toCsv,
 )
 
@@ -80,7 +82,12 @@ def student_school_dim_data_frame(
     )
 
     if student_school_associations_normalized.empty:
-        return None
+        return create_empty_data_frame(columns)
+
+    student_school_associations_normalized['exitWithdrawDate'] = to_datetime_key(student_school_associations_normalized, 'exitWithdrawDate')
+    student_school_associations_normalized['date_now'] = date.today()
+    student_school_associations_normalized['date_now'] = to_datetime_key(student_school_associations_normalized, 'date_now')
+    student_school_associations_normalized = student_school_associations_normalized[student_school_associations_normalized['exitWithdrawDate'] >= student_school_associations_normalized['date_now']]
 
     get_descriptor_code_value_from_uri(student_school_associations_normalized, 'entryGradeLevelDescriptor')
 
@@ -99,7 +106,7 @@ def student_school_dim_data_frame(
         recordPrefix=None,
         errors='ignore'
     )
-    
+
     schools_normalized = jsonNormalize(
         data=schools_content,
         recordPath=None,
@@ -112,7 +119,7 @@ def student_school_dim_data_frame(
         recordPrefix=None,
         errors='ignore'
     )
-    
+
     result_data_frame = pdMerge(
         left=student_school_associations_normalized,
         right=students_normalized,
@@ -177,8 +184,11 @@ def student_school_dim_data_frame(
         )
 
         if student_school_education_organization_associations_indicators_normalized.empty:
-            addColumnIfNotExists(student_school_education_organization_associations_normalized, 'indicatorName')
             addColumnIfNotExists(student_school_education_organization_associations_normalized, 'indicator')
+            addColumnIfNotExists(student_school_education_organization_associations_normalized, 'indicator_internet_access_type_in_residence')
+            addColumnIfNotExists(student_school_education_organization_associations_normalized, 'indicator_internet_performance_in_residence')
+            addColumnIfNotExists(student_school_education_organization_associations_normalized, 'indicator_digital_device')
+            addColumnIfNotExists(student_school_education_organization_associations_normalized, 'indicator_device_access')
         else:
             indicator_df = (student_school_education_organization_associations_indicators_normalized[
                 student_school_education_organization_associations_indicators_normalized['indicatorName'].str.contains('Internet Access In Residence', na=False)
@@ -262,12 +272,17 @@ def student_school_dim_data_frame(
 
     # Student Education Organization ends
 
-    # District Education Organization 
+    # District Education Organization
 
     if student_school_education_organization_associations_content == '':
-        addColumnIfNotExists(result_data_frame, 'hispanicLatinoEthnicity')
-        addColumnIfNotExists(result_data_frame, 'limitedEnglishProficiencyDescriptor')
-        addColumnIfNotExists(result_data_frame, 'sexDescriptor')
+        addColumnIfNotExists(result_data_frame, 'hispanicLatinoEthnicity_districtEdOrg')
+        addColumnIfNotExists(result_data_frame, 'limitedEnglishProficiencyDescriptor_districtEdOrg')
+        addColumnIfNotExists(result_data_frame, 'sexDescriptor_districtEdOrg')
+        addColumnIfNotExists(result_data_frame, 'indicator')
+        addColumnIfNotExists(result_data_frame, 'indicator_internet_access_type_in_residence')
+        addColumnIfNotExists(result_data_frame, 'indicator_internet_performance_in_residence')
+        addColumnIfNotExists(result_data_frame, 'indicator_digital_device')
+        addColumnIfNotExists(result_data_frame, 'indicator_device_access')
     else:
         student_school_education_organization_associations_district_normalized = jsonNormalize(
             data=student_school_education_organization_associations_content,
@@ -308,23 +323,29 @@ def student_school_dim_data_frame(
             lambda x: x['limitedEnglishProficiencyDescriptor'] if x['limitedEnglishProficiencyDescriptor'] != '' else x['limitedEnglishProficiencyDescriptor_districtEdOrg'], axis=1
         )
     )
-    
+
     # IsHispanic
     result_data_frame['IsHispanic'] = (
         result_data_frame.apply(
             lambda x: x['hispanicLatinoEthnicity'] if x['hispanicLatinoEthnicity'] != '' else x['hispanicLatinoEthnicity_districtEdOrg'], axis=1
         )
     )
-    
+
+    result_data_frame['IsHispanic'] = result_data_frame['IsHispanic'].apply(
+        lambda x: False if x == '' else x
+    )
+
+    result_data_frame["IsHispanic"] = result_data_frame["IsHispanic"].astype(int)
+
     # Sex
     result_data_frame['Sex'] = (
         result_data_frame.apply(
             lambda x: x['sexDescriptor'] if x['sexDescriptor'] != '' else x['sexDescriptor_districtEdOrg'], axis=1
         )
     )
-    
+
     result_data_frame = subset(result_data_frame, [
-        'schoolReference.schoolId', 
+        'schoolReference.schoolId',
         'studentReference.studentUniqueId',
         'schoolYearTypeReference.schoolYear',
         'entryDate',
@@ -399,7 +420,7 @@ def student_school_dim_data_frame(
     result_data_frame = result_data_frame[columns]
 
     toCsv(result_data_frame, 'C:/temp/edfi/parquet/', 'result_data_frame.csv', '')
-    
+
     return result_data_frame[
         columns
     ]
