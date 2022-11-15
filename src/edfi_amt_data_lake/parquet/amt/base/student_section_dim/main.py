@@ -10,14 +10,15 @@ from edfi_amt_data_lake.parquet.Common.functions import getEndpointJson
 from edfi_amt_data_lake.parquet.Common.pandasWrapper import (
     addColumnIfNotExists,
     create_parquet_file,
+    get_descriptor_code_value_from_uri,
     get_reference_from_href,
     jsonNormalize,
     pdMerge,
     renameColumns,
-    to_datetime_key,
-    get_descriptor_code_value_from_uri,
     subset,
+    to_datetime_key,
 )
+
 ENDPOINT_ACADEMIC_SUBJECT_DESCRIPTOR = 'academicSubjectDescriptors'
 ENDPOINT_STUDENT_SECTION_ASSOCIATIONS = 'studentSectionAssociations'
 ENDPOINT_STAFF = 'staffs'
@@ -40,6 +41,7 @@ RESULT_COLUMNS = [
     'SchoolKey',
     'SchoolYear',
 ]
+
 
 @create_parquet_file
 def section_dim_dataframe(
@@ -114,7 +116,7 @@ def section_dim_dataframe(
         recordPath=None,
         meta=[
             'id',
-            ['courseOfferingReference', 'link', 'href'],        
+            ['courseOfferingReference', 'link', 'href'],
         ],
         metaPrefix=None,
         recordPrefix=None,
@@ -275,7 +277,7 @@ def section_dim_dataframe(
         staff_normalized['sectionReferenceId'] = ''
     staff_normalized = subset(
         staff_normalized,
-        [ 
+        [
             'TeacherName',
             'sectionReferenceId'
         ]
@@ -348,7 +350,7 @@ def section_dim_dataframe(
     )
     if (result_data_frame is None or result_data_frame.empty):
         return None
-    addColumnIfNotExists(result_data_frame,'TeacherName', '')
+    addColumnIfNotExists(result_data_frame, 'TeacherName', '')
     result_data_frame['StudentKey'] = result_data_frame['StudentKey'].astype(str)
     result_data_frame['SchoolKey'] = result_data_frame['SchoolKey'].astype(str)
     result_data_frame['LocalCourseCode'] = result_data_frame['LocalCourseCode'].astype(str)
@@ -392,4 +394,4 @@ def student_section_dim(school_year) -> None:
         file_name="studentSectionDim.parquet",
         columns=RESULT_COLUMNS,
         school_year=school_year
-    )    
+    )
