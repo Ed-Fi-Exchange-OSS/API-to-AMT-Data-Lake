@@ -3,6 +3,10 @@
 # The Ed-Fi Alliance licenses this file to you under the Apache License, Version 2.0.
 # See the LICENSE and NOTICES files in the project root for more information.
 
+
+from edfi_amt_data_lake.parquet.amt.base.all_student_school_dim.main import (
+    all_student_school_dim,
+)
 from edfi_amt_data_lake.parquet.amt.base.contact_person_dim.main import (
     contact_person_dim,
 )
@@ -28,6 +32,7 @@ from edfi_amt_data_lake.parquet.amt.base.student_program_dim.main import (
 
 
 def base_collection(school_year) -> None:
+    all_student_school_dim(school_year)
     contact_person_dim(school_year)
     date_dim(school_year)
     demographics_dim(school_year)
