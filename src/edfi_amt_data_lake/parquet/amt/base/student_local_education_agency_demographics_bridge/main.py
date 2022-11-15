@@ -75,16 +75,13 @@ def student_local_education_agency_demographics_bridge_dataframe(school_year) ->
         meta=[
             'id',
         ],
+        recordMeta=[
+            'schoolYearTypeReference.schoolYear',
+            'cohortYearTypeDescriptor'
+        ],
         metaPrefix=None,
         recordPrefix='descriptor_',
         errors='ignore'
-    )
-    add_dataframe_column(
-        student_cohort_year_normalize_descriptor,
-        [
-            'descriptor_schoolYearTypeReference.schoolYear',
-            'descriptor_cohortYearTypeDescriptor'
-        ]
     )
     # Get Descriptor
     get_descriptor_code_value_from_uri(
