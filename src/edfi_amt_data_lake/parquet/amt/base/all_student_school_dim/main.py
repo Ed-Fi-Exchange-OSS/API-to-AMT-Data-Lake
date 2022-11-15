@@ -54,8 +54,7 @@ RESULT_COLUMNS = [
 ]
 
 
-@create_parquet_file
-def all_student_school_dim_data_frame(
+def all_student_school_dim_data_frame_base(
     file_name: str,
     columns: list[str],
     school_year: int
@@ -562,6 +561,19 @@ def all_student_school_dim_data_frame(
     return result_data_frame[
         columns
     ]
+
+
+@create_parquet_file
+def all_student_school_dim_data_frame(
+    file_name: str,
+    columns: list[str],
+    school_year: int
+) -> pd.DataFrame:
+    return all_student_school_dim_data_frame_base(
+        file_name=file_name,
+        columns=columns,
+        school_year=school_year
+    )
 
 
 def all_student_school_dim(school_year) -> data_frame_generation_result:
