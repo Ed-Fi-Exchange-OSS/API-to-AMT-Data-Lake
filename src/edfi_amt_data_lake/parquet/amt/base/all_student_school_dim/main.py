@@ -143,6 +143,11 @@ def all_student_school_dim_data_frame(
         addColumnIfNotExists(result_data_frame, 'hispanicLatinoEthnicity')
         addColumnIfNotExists(result_data_frame, 'limitedEnglishProficiencyDescriptor')
         addColumnIfNotExists(result_data_frame, 'sexDescriptor')
+        addColumnIfNotExists(result_data_frame, 'indicator')
+        addColumnIfNotExists(result_data_frame, 'indicator_internet_access_type_in_residence')
+        addColumnIfNotExists(result_data_frame, 'indicator_internet_performance_in_residence')
+        addColumnIfNotExists(result_data_frame, 'indicator_digital_device')
+        addColumnIfNotExists(result_data_frame, 'indicator_device_access')
     else:
         student_school_education_organization_associations_normalized = jsonNormalize(
             data=student_school_education_organization_associations_content,
@@ -188,7 +193,7 @@ def all_student_school_dim_data_frame(
             addColumnIfNotExists(student_school_education_organization_associations_normalized, 'indicator_device_access')
         else:
             indicator_df = (student_school_education_organization_associations_indicators_normalized[
-                student_school_education_organization_associations_indicators_normalized['indicatorName'].str.contains('Internet Access In Residence', na=False)
+                student_school_education_organization_associations_indicators_normalized['indicatorName'] == 'Internet Access In Residence'
             ])
 
             student_school_education_organization_associations_normalized = pdMerge(
@@ -202,7 +207,7 @@ def all_student_school_dim_data_frame(
             )
 
             indicator_df = (student_school_education_organization_associations_indicators_normalized[
-                student_school_education_organization_associations_indicators_normalized['indicatorName'].str.contains('Internet Access Type In Residence', na=False)
+                student_school_education_organization_associations_indicators_normalized['indicatorName'] == 'Internet Access Type In Residence'
             ])
 
             student_school_education_organization_associations_normalized = pdMerge(
@@ -216,7 +221,7 @@ def all_student_school_dim_data_frame(
             )
 
             indicator_df = (student_school_education_organization_associations_indicators_normalized[
-                student_school_education_organization_associations_indicators_normalized['indicatorName'].str.contains('Internet Performance In Residence', na=False)
+                student_school_education_organization_associations_indicators_normalized['indicatorName'] == 'Internet Performance In Residence'
             ])
 
             student_school_education_organization_associations_normalized = pdMerge(
@@ -230,7 +235,7 @@ def all_student_school_dim_data_frame(
             )
 
             indicator_df = (student_school_education_organization_associations_indicators_normalized[
-                student_school_education_organization_associations_indicators_normalized['indicatorName'].str.contains('Digital Device', na=False)
+                student_school_education_organization_associations_indicators_normalized['indicatorName'] == 'Digital Device'
             ])
 
             student_school_education_organization_associations_normalized = pdMerge(
@@ -244,7 +249,7 @@ def all_student_school_dim_data_frame(
             )
 
             indicator_df = (student_school_education_organization_associations_indicators_normalized[
-                student_school_education_organization_associations_indicators_normalized['indicatorName'].str.contains('Device Access', na=False)
+                student_school_education_organization_associations_indicators_normalized['indicatorName'] == 'Device Access'
             ])
 
             student_school_education_organization_associations_normalized = pdMerge(
@@ -300,6 +305,100 @@ def all_student_school_dim_data_frame(
         get_descriptor_code_value_from_uri(student_school_education_organization_associations_district_normalized, 'limitedEnglishProficiencyDescriptor')
         get_descriptor_code_value_from_uri(student_school_education_organization_associations_district_normalized, 'sexDescriptor')
 
+        student_school_education_organization_associations_district_indicators_normalized = jsonNormalize(
+            data=student_school_education_organization_associations_content,
+            recordPath=[
+                'studentIndicators'
+            ],
+            meta=[
+                'id'
+            ],
+            recordMeta=[
+                'indicatorName',
+                'indicator'
+            ],
+            metaPrefix=None,
+            recordPrefix=None,
+            errors='ignore'
+        )
+
+        if student_school_education_organization_associations_district_indicators_normalized.empty:
+            addColumnIfNotExists(student_school_education_organization_associations_district_normalized, 'indicator')
+            addColumnIfNotExists(student_school_education_organization_associations_district_normalized, 'indicator_internet_access_type_in_residence')
+            addColumnIfNotExists(student_school_education_organization_associations_district_normalized, 'indicator_internet_performance_in_residence')
+            addColumnIfNotExists(student_school_education_organization_associations_district_normalized, 'indicator_digital_device')
+            addColumnIfNotExists(student_school_education_organization_associations_district_normalized, 'indicator_device_access')
+        else:
+            indicator_df = (student_school_education_organization_associations_district_indicators_normalized[
+                student_school_education_organization_associations_district_indicators_normalized['indicatorName'] == 'Internet Access In Residence'
+            ])
+
+            student_school_education_organization_associations_district_normalized = pdMerge(
+                left=student_school_education_organization_associations_district_normalized,
+                right=indicator_df,
+                how='left',
+                leftOn=['id'],
+                rightOn=['id'],
+                suffixLeft='',
+                suffixRight='_internet_access_in_residence'
+            )
+
+            indicator_df = (student_school_education_organization_associations_district_indicators_normalized[
+                student_school_education_organization_associations_district_indicators_normalized['indicatorName'] == 'Internet Access Type In Residence'
+            ])
+
+            student_school_education_organization_associations_district_normalized = pdMerge(
+                left=student_school_education_organization_associations_district_normalized,
+                right=indicator_df,
+                how='left',
+                leftOn=['id'],
+                rightOn=['id'],
+                suffixLeft='',
+                suffixRight='_internet_access_type_in_residence'
+            )
+
+            indicator_df = (student_school_education_organization_associations_district_indicators_normalized[
+                student_school_education_organization_associations_district_indicators_normalized['indicatorName'] == 'Internet Performance In Residence'
+            ])
+
+            student_school_education_organization_associations_district_normalized = pdMerge(
+                left=student_school_education_organization_associations_district_normalized,
+                right=indicator_df,
+                how='left',
+                leftOn=['id'],
+                rightOn=['id'],
+                suffixLeft='',
+                suffixRight='_internet_performance_in_residence'
+            )
+
+            indicator_df = (student_school_education_organization_associations_district_indicators_normalized[
+                student_school_education_organization_associations_district_indicators_normalized['indicatorName'] == 'Digital Device'
+            ])
+
+            student_school_education_organization_associations_district_normalized = pdMerge(
+                left=student_school_education_organization_associations_district_normalized,
+                right=indicator_df,
+                how='left',
+                leftOn=['id'],
+                rightOn=['id'],
+                suffixLeft='',
+                suffixRight='_digital_device'
+            )
+
+            indicator_df = (student_school_education_organization_associations_district_indicators_normalized[
+                student_school_education_organization_associations_district_indicators_normalized['indicatorName'] == 'Device Access'
+            ])
+
+            student_school_education_organization_associations_district_normalized = pdMerge(
+                left=student_school_education_organization_associations_district_normalized,
+                right=indicator_df,
+                how='left',
+                leftOn=['id'],
+                rightOn=['id'],
+                suffixLeft='',
+                suffixRight='_device_access'
+            )
+
         result_data_frame = pdMerge(
             left=result_data_frame,
             right=student_school_education_organization_associations_district_normalized,
@@ -341,6 +440,41 @@ def all_student_school_dim_data_frame(
         )
     )
 
+    # Internet Access In Residence
+    result_data_frame['InternetAccessInResidence'] = (
+        result_data_frame.apply(
+            lambda x: x['indicator'] if x['indicator'] != '' else x['indicator_districtEdOrg'], axis=1
+        )
+    ).astype(str)
+
+    # Internet Access Type In Residence
+    result_data_frame['InternetAccessTypeInResidence'] = (
+        result_data_frame.apply(
+            lambda x: x['indicator_internet_access_type_in_residence'] if x['indicator_internet_access_type_in_residence'] != '' else x['indicator_internet_access_type_in_residence_districtEdOrg'], axis=1
+        )
+    ).astype(str)
+
+    # Internet Performance In Residence
+    result_data_frame['InternetPerformance'] = (
+        result_data_frame.apply(
+            lambda x: x['indicator_internet_performance_in_residence'] if x['indicator_internet_performance_in_residence'] != '' else x['indicator_internet_performance_in_residence_districtEdOrg'], axis=1
+        )
+    ).astype(str)
+
+    # Digital Device
+    result_data_frame['DigitalDevice'] = (
+        result_data_frame.apply(
+            lambda x: x['indicator_digital_device'] if x['indicator_digital_device'] != '' else x['indicator_digital_device_districtEdOrg'], axis=1
+        )
+    ).astype(str)
+
+    # Device Access
+    result_data_frame['DeviceAccess'] = (
+        result_data_frame.apply(
+            lambda x: x['indicator_device_access'] if x['indicator_device_access'] != '' else x['indicator_device_access_districtEdOrg'], axis=1
+        )
+    ).astype(str)
+
     result_data_frame = subset(result_data_frame, [
         'schoolReference.schoolId',
         'studentReference.studentUniqueId',
@@ -355,11 +489,11 @@ def all_student_school_dim_data_frame(
         'IsHispanic',
         'LimitedEnglishProficiency',
         'Sex',
-        'indicator',
-        'indicator_internet_access_type_in_residence',
-        'indicator_internet_performance_in_residence',
-        'indicator_digital_device',
-        'indicator_device_access'
+        'InternetAccessInResidence',
+        'InternetAccessTypeInResidence',
+        'InternetPerformance',
+        'DigitalDevice',
+        'DeviceAccess'
     ])
 
     result_data_frame = renameColumns(result_data_frame, {
@@ -372,11 +506,6 @@ def all_student_school_dim_data_frame(
         'birthDate': 'BirthDate',
         'entryDate': 'EnrollmentDateKey',
         'entryGradeLevelDescriptor': 'GradeLevel',
-        'indicator': 'InternetAccessInResidence',
-        'indicator_internet_access_type_in_residence': 'InternetAccessTypeInResidence',
-        'indicator_internet_performance_in_residence': 'InternetPerformance',
-        'indicator_digital_device': 'DigitalDevice',
-        'indicator_device_access': 'DeviceAccess',
         'exitWithdrawDate': 'ExitWithdrawDate'
     })
 
@@ -394,7 +523,7 @@ def all_student_school_dim_data_frame(
     )
 
     result_data_frame['SchoolYear'] = result_data_frame['SchoolYear'].apply(
-        lambda x: 'Unknown' if x == '' else str(x) 
+        lambda x: 'Unknown' if x == '' else str(x)
     )
 
     result_data_frame['LimitedEnglishProficiency'] = result_data_frame['LimitedEnglishProficiency'].apply(
