@@ -25,9 +25,7 @@ from edfi_amt_data_lake.parquet.Common.pandasWrapper import (
     to_datetime_key,
 )
 
-EDUCATION_ORGANIZATION_FILTER = 'School'
 ENDPOINT_STUDENT_EDUCATION_ORGANIZATION_ASSOCIATION = 'studentEducationOrganizationAssociations'
-ENDPOINT_SCHOOL = 'schools'
 ENDPOINT_STUDENT_SCHOOL_ASSOCIATION = 'studentSchoolAssociations'
 RESULT_COLUMNS = [
     'StudentSchoolDemographicBridgeKey',
