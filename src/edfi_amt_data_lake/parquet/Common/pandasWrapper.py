@@ -70,7 +70,7 @@ def jsonNormalize(data, recordPath, meta, recordMeta=[], metaPrefix=None, record
             empty_data_frame,
             df_result
         ])
-        # TODO Select columns from meta
+        # Select columns from meta
         result_dataframe = subset(
             result_dataframe,
             default_columns
@@ -186,6 +186,13 @@ def add_dataframe_column(data=pd.DataFrame, columns=[str]):
         data,
         empty_dataframe,
     ])
+
+
+def copy_value_by_column(data: pd.DataFrame, column: str, replace_value: any):
+    if not (column in data):
+        data[column] = replace_value
+    data.loc[data[column].isnull(), column] = replace_value
+    return data[column]
 
 
 def create_parquet_file(func) -> data_frame_generation_result:
