@@ -3,6 +3,8 @@
 # The Ed-Fi Alliance licenses this file to you under the Apache License, Version 2.0.
 # See the LICENSE and NOTICES files in the project root for more information.
 
+from datetime import date
+
 import pandas as pd
 from decouple import config
 
@@ -15,10 +17,9 @@ from edfi_amt_data_lake.parquet.Common.pandasWrapper import (
     jsonNormalize,
     pdMerge,
     renameColumns,
+    replace_null,
     subset,
     to_datetime_key,
-    replace_null,
-    toCsv,
 )
 
 ENDPOINT_STAFF_SECTION_ASSOCIATIONS = 'staffSectionAssociations'
@@ -53,19 +54,20 @@ def staff_section_dim_dataframe(
 ) -> pd.DataFrame:
     staff_section_association_content = getEndpointJson(ENDPOINT_STAFF_SECTION_ASSOCIATIONS, config('SILVER_DATA_LOCATION'), school_year)
     staff_content = getEndpointJson(ENDPOINT_STAFF, config('SILVER_DATA_LOCATION'), school_year)
-    
+
     staff_section_association_normalized = jsonNormalize(
         staff_section_association_content,
         recordPath=None,
         meta=[
             'id',
-            ['staffReference','staffUniqueId'],
-            ['staffReference','link','href'],
-            ['sectionReference','schoolId'],
-            ['sectionReference','localCourseCode'],
-            ['sectionReference','schoolYear'],
-            ['sectionReference','sectionIdentifier'],
-            ['sectionReference','sessionName']
+            'endDate',
+            ['staffReference', 'staffUniqueId'],
+            ['staffReference', 'link', 'href'],
+            ['sectionReference', 'schoolId'],
+            ['sectionReference', 'localCourseCode'],
+            ['sectionReference', 'schoolYear'],
+            ['sectionReference', 'sectionIdentifier'],
+            ['sectionReference', 'sessionName']
         ],
         metaPrefix=None,
         recordPrefix=None,
@@ -80,7 +82,12 @@ def staff_section_dim_dataframe(
         'staffReference.link.href',
         'staffReferenceId',
     )
-    
+
+    staff_section_association_normalized['endDate'] = to_datetime_key(staff_section_association_normalized, 'endDate')
+    staff_section_association_normalized['date_now'] = date.today()
+    staff_section_association_normalized['date_now'] = to_datetime_key(staff_section_association_normalized, 'date_now')
+    staff_section_association_normalized = staff_section_association_normalized[staff_section_association_normalized['endDate'] > staff_section_association_normalized['date_now']]
+
     staff_normalized = jsonNormalize(
         staff_content,
         recordPath=None,
@@ -140,10 +147,10 @@ def staff_section_dim_dataframe(
     )
 
     if not staff_races_normalized.empty:
-        get_descriptor_code_value_from_uri(staff_races_normalized, 'raceDescriptor')        
-        
+        get_descriptor_code_value_from_uri(staff_races_normalized, 'raceDescriptor')
+
         staff_races_count_normalized = staff_races_normalized.groupby(['id']).agg('count')
-        
+
         staff_races_normalized = pdMerge(
             left=staff_races_normalized,
             right=staff_races_count_normalized,
@@ -174,7 +181,7 @@ def staff_section_dim_dataframe(
 
     addColumnIfNotExists(staff_normalized, 'raceDescriptor', '')
     addColumnIfNotExists(staff_normalized, 'electronicMailAddress', '')
-    
+
     result_data_frame = pdMerge(
         left=staff_section_association_normalized,
         right=staff_normalized,
@@ -186,20 +193,20 @@ def staff_section_dim_dataframe(
     )
 
     result_data_frame['StaffSectionKey'] = (
-        result_data_frame['staffReference.staffUniqueId'] + '-' +
-        result_data_frame['sectionReference.schoolId'].astype(str) + '-' +
-        result_data_frame['sectionReference.localCourseCode'] + '-' +
-        result_data_frame['sectionReference.schoolYear'].astype(str) + '-' +
-        result_data_frame['sectionReference.sectionIdentifier'] + '-' +
-        result_data_frame['sectionReference.sessionName']
+        result_data_frame['staffReference.staffUniqueId'] + '-'
+        + result_data_frame['sectionReference.schoolId'].astype(str) + '-'
+        + result_data_frame['sectionReference.localCourseCode'] + '-'
+        + result_data_frame['sectionReference.schoolYear'].astype(str) + '-'
+        + result_data_frame['sectionReference.sectionIdentifier'] + '-'
+        + result_data_frame['sectionReference.sessionName']
     )
 
     result_data_frame['SectionKey'] = (
-        result_data_frame['sectionReference.schoolId'].astype(str) + '-' +
-        result_data_frame['sectionReference.localCourseCode'] + '-' +
-        result_data_frame['sectionReference.schoolYear'].astype(str) + '-' +
-        result_data_frame['sectionReference.sectionIdentifier'] + '-' +
-        result_data_frame['sectionReference.sessionName']
+        result_data_frame['sectionReference.schoolId'].astype(str) + '-'
+        + result_data_frame['sectionReference.localCourseCode'] + '-'
+        + result_data_frame['sectionReference.schoolYear'].astype(str) + '-'
+        + result_data_frame['sectionReference.sectionIdentifier'] + '-'
+        + result_data_frame['sectionReference.sessionName']
     )
 
     result_data_frame = subset(result_data_frame, [
@@ -245,9 +252,6 @@ def staff_section_dim_dataframe(
         'loginId': 'LoginId'
     })
 
-    toCsv(result_data_frame, 'C:/temp/edfi/parquet/', 'result_data_frame.csv', '')
-
-    # Select columns
     result_data_frame = result_data_frame[
         columns
     ]
