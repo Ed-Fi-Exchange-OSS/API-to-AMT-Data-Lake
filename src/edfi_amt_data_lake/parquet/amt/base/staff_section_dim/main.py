@@ -17,6 +17,7 @@ from edfi_amt_data_lake.parquet.Common.pandasWrapper import (
     renameColumns,
     subset,
     to_datetime_key,
+    replace_null,
     toCsv,
 )
 
@@ -128,11 +129,51 @@ def staff_section_dim_dataframe(
             suffixRight=None
         )
 
+    staff_races_normalized = jsonNormalize(
+        staff_content,
+        recordPath=['races'],
+        meta=['id'],
+        recordMeta=['raceDescriptor'],
+        metaPrefix=None,
+        recordPrefix=None,
+        errors='ignore'
+    )
+
+    if not staff_races_normalized.empty:
+        get_descriptor_code_value_from_uri(staff_races_normalized, 'raceDescriptor')        
+        
+        staff_races_count_normalized = staff_races_normalized.groupby(['id']).agg('count')
+        
+        staff_races_normalized = pdMerge(
+            left=staff_races_normalized,
+            right=staff_races_count_normalized,
+            how='left',
+            leftOn=['id'],
+            rightOn=['id'],
+            suffixLeft=None,
+            suffixRight='_count'
+        )
+
+        staff_races_normalized = staff_races_normalized.drop_duplicates(subset='id')
+
+        staff_races_normalized["raceDescriptor"] = staff_races_normalized.apply(
+            lambda r: ('Multiracial') if r["raceDescriptor_count"] > 1 else r['raceDescriptor'], axis=1
+        )
+
+        staff_normalized = pdMerge(
+            left=staff_normalized,
+            right=staff_races_normalized,
+            how='left',
+            leftOn=['id'],
+            rightOn=['id'],
+            suffixLeft=None,
+            suffixRight='_races'
+        )
+
+        replace_null(staff_normalized, 'raceDescriptor', 'Unknown')
+
+    addColumnIfNotExists(staff_normalized, 'raceDescriptor', '')
     addColumnIfNotExists(staff_normalized, 'electronicMailAddress', '')
-    
-    toCsv(staff_normalized, 'C:/temp/edfi/parquet/', 'staff_normalized.csv', '')
-    toCsv(staff_electronic_mails_normalized, 'C:/temp/edfi/parquet/', 'staff_electronic_mails_normalized.csv', '')
-    toCsv(staff_section_association_normalized, 'C:/temp/edfi/parquet/', 'staff_section_association_normalized.csv', '')
     
     result_data_frame = pdMerge(
         left=staff_section_association_normalized,
@@ -165,6 +206,7 @@ def staff_section_dim_dataframe(
         'StaffSectionKey',
         'sectionReference.schoolId',
         'SectionKey',
+        'staffReference.staffUniqueId',
         'personalTitlePrefix',
         'firstName',
         'middleName',
@@ -172,6 +214,7 @@ def staff_section_dim_dataframe(
         'electronicMailAddress',
         'sexDescriptor',
         'birthDate',
+        'raceDescriptor',
         'hispanicLatinoEthnicity',
         'highestCompletedLevelOfEducationDescriptor',
         'yearsOfPriorProfessionalExperience',
@@ -181,13 +224,33 @@ def staff_section_dim_dataframe(
     ])
 
     result_data_frame["highlyQualifiedTeacher"] = result_data_frame["highlyQualifiedTeacher"].astype(int)
+    result_data_frame["hispanicLatinoEthnicity"] = result_data_frame["hispanicLatinoEthnicity"].astype(int)
+
+    result_data_frame = renameColumns(result_data_frame, {
+        'staffReference.staffUniqueId': 'UserKey',
+        'sectionReference.schoolId': 'SchoolKey',
+        'personalTitlePrefix': 'PersonalTitlePrefix',
+        'firstName': 'StaffFirstName',
+        'middleName': 'StaffMiddleName',
+        'lastSurname': 'StaffLastName',
+        'electronicMailAddress': 'ElectronicMailAddress',
+        'sexDescriptor': 'Sex',
+        'birthDate': 'BirthDate',
+        'raceDescriptor': 'Race',
+        'hispanicLatinoEthnicity': 'HispanicLatinoEthnicity',
+        'highestCompletedLevelOfEducationDescriptor': 'HighestCompletedLevelOfEducation',
+        'yearsOfPriorProfessionalExperience': 'YearsOfPriorProfessionalExperience',
+        'yearsOfPriorTeachingExperience': 'YearsOfPriorTeachingExperience',
+        'highlyQualifiedTeacher': 'HighlyQualifiedTeacher',
+        'loginId': 'LoginId'
+    })
 
     toCsv(result_data_frame, 'C:/temp/edfi/parquet/', 'result_data_frame.csv', '')
 
-    # # Select columns
-    # result_data_frame = result_data_frame[
-    #     columns
-    # ]
+    # Select columns
+    result_data_frame = result_data_frame[
+        columns
+    ]
     return result_data_frame
 
 
