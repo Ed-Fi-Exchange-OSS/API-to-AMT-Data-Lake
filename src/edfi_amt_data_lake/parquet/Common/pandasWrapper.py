@@ -4,8 +4,10 @@
 # See the LICENSE and NOTICES files in the project root for more information.
 
 import os
+import traceback
 
 import pandas as pd
+from dagster import get_dagster_logger
 from decouple import config
 
 from edfi_amt_data_lake.helper.data_frame_generation_result import (
@@ -41,6 +43,7 @@ def toCsv(csvContent=pd.DataFrame, path=str, file_name=str, school_year=str) -> 
 
 
 def jsonNormalize(data, recordPath, meta, recordMeta=[], metaPrefix=None, recordPrefix=None, errors='ignore') -> pd.DataFrame:
+    parquet_logger = get_dagster_logger()
     # Add meta prefix
     if metaPrefix:
         meta = [metaPrefix + column for column in meta]
@@ -72,6 +75,9 @@ def jsonNormalize(data, recordPath, meta, recordMeta=[], metaPrefix=None, record
             result_dataframe,
             default_columns
         )
+        if not (result_dataframe is None or result_dataframe.empty) :
+            parquet_logger.debug(f'Normalize output columns: {result_dataframe.columns}')
+            parquet_logger.debug(f'Normalize output rows: {len(result_dataframe.index)}')
         return result_dataframe
     except KeyError:
         return empty_data_frame
@@ -156,8 +162,8 @@ def get_descriptor_code_value_from_uri(data=pd.DataFrame, column=str):
     if not (column in data):
         data[column] = ''
     if not data[column].empty:
-        if len(data[column].str.split('#')) > 0:
-            data[column] = data[column].str.split("#").str.get(-1)
+        if len(data[column].astype(str).str.split('#')) > 0:
+            data[column] = data[column].astype(str).str.split("#").str.get(-1)
     else:
         data[column] = ''
 
@@ -184,6 +190,7 @@ def add_dataframe_column(data=pd.DataFrame, columns=[str]):
 
 def create_parquet_file(func) -> data_frame_generation_result:
     def inner(file_name, columns, school_year):
+        parquet_logger = get_dagster_logger()
         try:
             result = data_frame_generation_result(
                 data_frame=func(file_name, columns, school_year),
@@ -198,6 +205,7 @@ def create_parquet_file(func) -> data_frame_generation_result:
                 )
             return result
         except Exception as data_frame_exception:
+            parquet_logger.error(f"Exception: {traceback.format_exc()}")
             return data_frame_generation_result(
                 successful=False,
                 exception=data_frame_exception
