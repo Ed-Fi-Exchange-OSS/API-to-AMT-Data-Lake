@@ -62,7 +62,7 @@ def chronic_absenteeism_attendance_fact_dataframe(
         meta=[
             'id',
             'entryDate',
-            'ExitWithdrawDate',
+            'exitWithdrawDate',
             ['calendarReference', 'calendarCode'],
             ['schoolReference', 'schoolId'],
             ['schoolYearTypeReference', 'schoolYear'],
@@ -82,7 +82,8 @@ def chronic_absenteeism_attendance_fact_dataframe(
         meta=[
             'id',
             'date',
-            ['calendarReference', 'calendarCode']
+            ['calendarReference', 'calendarCode'],
+            ['calendarReference', 'schoolId'],
         ],
         metaPrefix=None,
         recordPrefix=None,
@@ -117,8 +118,84 @@ def chronic_absenteeism_attendance_fact_dataframe(
 
     toCsv(calendar_dates_normalize, 'C:/temp/edfi/parquet/', 'calendar_dates_normalize.csv', '')
 
-    result_data_frame = calendar_dates_normalize
+    # - CalendarDateCalendarEvent
+
+    student_school_associations_normalize['_calendar_dates'] = '|'
+
+    result_data_frame = pdMerge(
+        left=student_school_associations_normalize,
+        right=calendar_dates_normalize,
+        how='inner',
+        leftOn=['schoolReference.schoolId'],
+        rightOn=['calendarReference.schoolId'],
+        suffixLeft=None,
+        suffixRight='_calendar_dates'
+    )
+
+    result_data_frame['entryDate_key'] = to_datetime_key(result_data_frame, 'entryDate')
+    result_data_frame['date_key'] = to_datetime_key(result_data_frame, 'date')
+    result_data_frame = result_data_frame[result_data_frame['entryDate_key'] <= result_data_frame['date_key']]
+
+    result_data_frame['exitWithdrawDate_key'] = to_datetime_key(result_data_frame, 'exitWithdrawDate')
+    replace_null(result_data_frame, 'exitWithdrawDate', '')
+    result_data_frame = result_data_frame[(
+        (result_data_frame['exitWithdrawDate'] == '') 
+        | (result_data_frame['exitWithdrawDate_key'] >= result_data_frame['date_key'])
+    )]
+
+    toCsv(result_data_frame, 'C:/temp/edfi/parquet/', 'result_data_frame1.csv', '')
+
+    # - END
+
+    # - StudentSchoolAttendanceEvent
     
+    student_school_attendance_events_normalize = jsonNormalize(
+        student_school_attendance_events_content,
+        recordPath=None,
+        meta=[
+            'id',
+            'eventDate',
+            'attendanceEventCategoryDescriptor',
+            ['schoolReference', 'schoolId'],
+            ['studentReference', 'studentUniqueId'],
+            ['sessionReference', 'schoolYear']
+        ],
+        metaPrefix=None,
+        recordPrefix=None,
+        errors='ignore'
+    )
+
+    student_school_attendance_events_normalize['eventDate_key'] = to_datetime_key(student_school_attendance_events_normalize, 'eventDate')
+
+    toCsv(student_school_attendance_events_normalize, 'C:/temp/edfi/parquet/', 'student_school_attendance_events_normalize.csv', '')
+
+    result_data_frame['_student_school_attendance_events'] = '|'
+
+    result_data_frame = pdMerge(
+        left=result_data_frame,
+        right=student_school_attendance_events_normalize,
+        how='left',
+        leftOn=['schoolReference.schoolId', 'studentReference.studentUniqueId', 'date_key'],
+        rightOn=['schoolReference.schoolId', 'studentReference.studentUniqueId', 'eventDate_key'],
+        suffixLeft=None,
+        suffixRight='_student_school_attendance_events'
+    )
+
+    replace_null(result_data_frame, 'schoolYearTypeReference.schoolYear', '')
+    result_data_frame['schoolYearTypeReference.schoolYear_key'] = to_datetime_key(result_data_frame, 'schoolYearTypeReference.schoolYear')
+
+    replace_null(result_data_frame, 'sessionReference.schoolYear', '')
+    result_data_frame['sessionReference.schoolYear_key'] = to_datetime_key(result_data_frame, 'sessionReference.schoolYear')
+
+    result_data_frame = result_data_frame[(
+        (result_data_frame['schoolYearTypeReference.schoolYear'] == '') 
+        | (result_data_frame['schoolYearTypeReference.schoolYear_key'] == result_data_frame['sessionReference.schoolYear_key'])
+    )]
+
+    toCsv(result_data_frame, 'C:/temp/edfi/parquet/', 'result_data_frame.csv', '')
+
+    # - END
+
     return result_data_frame
 
 
