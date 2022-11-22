@@ -20,10 +20,9 @@ from edfi_amt_data_lake.parquet.Common.pandasWrapper import (
     jsonNormalize,
     pdMerge,
     renameColumns,
+    replace_null,
     subset,
     to_datetime_key,
-    toCsv,
-    replace_null,
 )
 
 ENDPOINT_STUDENT_SCHOOL_ASSOCIATIONS = 'studentSchoolAssociations'
@@ -166,14 +165,10 @@ def all_student_school_dim_data_frame_base(
             errors='ignore'
         )
 
-        toCsv(student_school_education_organization_associations_normalized, 'C:/temp/edfi/parquet/', 'student_school_dim2.csv', '')
-
         replace_null(student_school_education_organization_associations_normalized, 'limitedEnglishProficiencyDescriptor', '')
 
         get_descriptor_code_value_from_uri(student_school_education_organization_associations_normalized, 'limitedEnglishProficiencyDescriptor')
         get_descriptor_code_value_from_uri(student_school_education_organization_associations_normalized, 'sexDescriptor')
-
-        toCsv(student_school_education_organization_associations_normalized, 'C:/temp/edfi/parquet/', 'student_school_dim3.csv', '')
 
         student_school_education_organization_associations_indicators_normalized = jsonNormalize(
             data=student_school_education_organization_associations_content,
@@ -421,8 +416,6 @@ def all_student_school_dim_data_frame_base(
     # District Education Organization ends
 
     result_data_frame = result_data_frame.fillna('')
-
-    toCsv(result_data_frame, 'C:/temp/edfi/parquet/', 'student_school_dim1.csv', '')
 
     # LimitedEnglishProficiency
     result_data_frame['LimitedEnglishProficiency'] = (

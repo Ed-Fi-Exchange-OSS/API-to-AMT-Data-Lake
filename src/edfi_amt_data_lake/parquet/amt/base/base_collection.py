@@ -6,7 +6,7 @@
 
 from edfi_amt_data_lake.parquet.amt.base.all_student_school_dim.main import (
     all_student_school_dim,
-) 
+)
 from edfi_amt_data_lake.parquet.amt.base.class_period_dim.main import class_period_dim
 from edfi_amt_data_lake.parquet.amt.base.contact_person_dim.main import (
     contact_person_dim,
@@ -33,11 +33,11 @@ from edfi_amt_data_lake.parquet.amt.base.student_program_dim.main import (
 from edfi_amt_data_lake.parquet.amt.base.student_school_demographics_bridge.main import (
     student_school_demographics_bridge,
 )
-from edfi_amt_data_lake.parquet.amt.base.student_section_dim.main import (
-    student_section_dim,
-)
 from edfi_amt_data_lake.parquet.amt.base.student_school_dim.main import (
     student_school_dim,
+)
+from edfi_amt_data_lake.parquet.amt.base.student_section_dim.main import (
+    student_section_dim,
 )
 
 

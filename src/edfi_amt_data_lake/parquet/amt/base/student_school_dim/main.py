@@ -8,12 +8,10 @@ import pandas as pd
 from edfi_amt_data_lake.helper.data_frame_generation_result import (
     data_frame_generation_result,
 )
-from edfi_amt_data_lake.parquet.Common.pandasWrapper import (
-    create_parquet_file
-)
 from edfi_amt_data_lake.parquet.amt.base.all_student_school_dim.main import (
     all_student_school_dim_data_frame_base,
 )
+from edfi_amt_data_lake.parquet.Common.pandasWrapper import create_parquet_file
 
 RESULT_COLUMNS = [
     'StudentSchoolKey',
@@ -44,7 +42,7 @@ def student_school_dim_data_frame(
     school_year: int
 ) -> pd.DataFrame:
     file_name = file_name
-    
+
     all_student_school_dim_columns = [
         'AllStudentSchoolKey',
         'StudentSchoolKey',
