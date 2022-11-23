@@ -13,6 +13,7 @@ from decouple import config
 from edfi_amt_data_lake.helper.data_frame_generation_result import (
     data_frame_generation_result,
 )
+from edfi_amt_data_lake.helper.helper import get_path
 
 
 def pdMerge(left=pd.DataFrame, right=pd.DataFrame, how=str, leftOn=[str], rightOn=[str], suffixLeft='_x', suffixRight='_y') -> pd.DataFrame:
@@ -120,13 +121,13 @@ def renameColumns(data=pd.DataFrame, renameColumns={}, errors='ignore') -> pd.Da
 
 
 def saveParquetFile(data=pd.DataFrame, path=str, file_name=str, school_year=str) -> None:
-    school_year_path = f"{school_year}/" if school_year else ""
-    destination_folder = os.path.join(path, school_year_path)
+    parquet_logger = get_dagster_logger()
+    destination_folder = get_path(path, school_year)
     destination_path = os.path.join(destination_folder, file_name)
-
     if not os.path.exists(destination_folder):
         os.makedirs(destination_folder, exist_ok=True)
     data.to_parquet(f"{destination_path}", engine='fastparquet')
+    parquet_logger.info(f'Parquet {file_name} (Saved!)')
 
 
 def addColumnIfNotExists(data=pd.DataFrame, column=str, default_value='') -> pd.DataFrame:
@@ -201,19 +202,32 @@ def copy_value_by_column(data: pd.DataFrame, column: str, replace_value: any):
 def create_parquet_file(func) -> data_frame_generation_result:
     def inner(file_name, columns, school_year):
         parquet_logger = get_dagster_logger()
+        file_path = os.path.join(
+            get_path(config('PARQUET_FILES_LOCATION'), school_year),
+            file_name
+        )
         try:
-            result = data_frame_generation_result(
-                data_frame=func(file_name, columns, school_year),
-                columns=columns
-            )
-            if result.successful:
-                saveParquetFile(
-                    data=result.data_frame,
-                    path=f"{config('PARQUET_FILES_LOCATION')}",
-                    file_name=file_name,
-                    school_year=school_year
+            result_data_frame = get_data_frame_from_file(file_path=file_path)
+            result = None
+            if not (result_data_frame is None):
+                result = data_frame_generation_result(
+                    data_frame=result_data_frame,
+                    columns=columns
                 )
-            return result
+                return result
+            else:
+                result = data_frame_generation_result(
+                    data_frame=func(file_name, columns, school_year),
+                    columns=columns
+                )
+                if result.successful:
+                    saveParquetFile(
+                        data=result.data_frame,
+                        path=f"{config('PARQUET_FILES_LOCATION')}",
+                        file_name=file_name,
+                        school_year=school_year
+                    )
+                return result
         except Exception as data_frame_exception:
             parquet_logger.error(f"Exception: {traceback.format_exc()}")
             return data_frame_generation_result(
@@ -221,3 +235,16 @@ def create_parquet_file(func) -> data_frame_generation_result:
                 exception=data_frame_exception
             )
     return inner
+
+
+def get_data_frame_from_file(file_path: str) -> pd.DataFrame:
+    try:
+        parquet_logger = get_dagster_logger()
+        if os.path.isfile(file_path):
+            parquet_logger.info(f'Read parquet from file {file_path}')
+            return pd.read_parquet(file_path, engine='fastparquet')
+        else:
+            return None
+    except Exception:
+        parquet_logger.error(f"get_data_frame_from_file - Exception: {traceback.format_exc()}")
+        return None

@@ -6,8 +6,9 @@
 from datetime import date
 
 import pandas as pd
-from decouple import config
 from dagster import get_dagster_logger
+from decouple import config
+
 from edfi_amt_data_lake.helper.data_frame_generation_result import (
     data_frame_generation_result,
 )
@@ -41,7 +42,7 @@ def student_school_demographics_bridge_data_frame(
     school_year: int
 ) -> pd.DataFrame:
     parquet_logger = get_dagster_logger()
-    parquet_logger.debug(f'Start with file: {file_name}')    
+    parquet_logger.debug(f'Start with file: {file_name}')
     student_school_association_content = getEndpointJson(ENDPOINT_STUDENT_SCHOOL_ASSOCIATION, config('SILVER_DATA_LOCATION'), school_year)
     student_education_organization_association_content = getEndpointJson(ENDPOINT_STUDENT_EDUCATION_ORGANIZATION_ASSOCIATION, config('SILVER_DATA_LOCATION'), school_year)
     demographics_dictionary_list = [
@@ -143,8 +144,8 @@ def student_school_demographics_bridge_data_frame(
             demographics_data_frame = (
                 pd_concat(
                     [
-                        demographics_data_frame, 
-                        result_demographics,                                                       
+                        demographics_data_frame,
+                        result_demographics,
                     ]
                 )
             )
@@ -175,20 +176,20 @@ def student_school_demographics_bridge_data_frame(
             )
             result_data_frame = (
                 result_data_frame[
-                result_data_frame['exitWithdrawDateKey'] >= result_data_frame['dateKey']
+                    result_data_frame['exitWithdrawDateKey'] >= result_data_frame['dateKey']
                 ]
             )
         else:
             return None
     else:
         return None
-    # Select needed columns.    
-    result_data_frame = subset(result_data_frame, columns)    
+    # Select needed columns.
+    result_data_frame = subset(result_data_frame, columns)
     return result_data_frame
 
 
 def get_student_demographic(content, item) -> pd.DataFrame:
-    parquet_logger = get_dagster_logger()
+    get_dagster_logger()
     student_education_organization_association_content = content
     path = item['path']
     derived_path = item['derived_path'] if 'derived_path' in item else ''
@@ -259,7 +260,11 @@ def get_student_demographic(content, item) -> pd.DataFrame:
         recordPrefix='descriptor_',
         errors='ignore'
     )
-    student_demographic_descriptor_normalize.loc[student_demographic_descriptor_normalize[f'descriptor_{item["descriptor"]}'].isnull(),f'descriptor_{item["descriptor"]}'] = '' 
+    student_demographic_descriptor_normalize.loc[
+        student_demographic_descriptor_normalize[
+            f'descriptor_{item["descriptor"]}'
+        ].isnull(), f'descriptor_{item["descriptor"]}'
+    ] = ''
     # Get Descriptor
     get_descriptor_code_value_from_uri(
         student_demographic_descriptor_normalize,
@@ -276,7 +281,7 @@ def get_student_demographic(content, item) -> pd.DataFrame:
         student_demographic_descriptor_normalize,
         'prefix',
         item['prefix']
-    )        
+    )
     student_demographic_descriptor_normalize = (
         student_demographic_descriptor_normalize[
             'descriptorCodeValue' in student_demographic_descriptor_normalize
@@ -315,10 +320,11 @@ def get_student_demographic(content, item) -> pd.DataFrame:
         if derived_path != '':
             derived_column = f'descriptor_{derived_path}'
             student_demographic_descriptor_normalize_derived = student_demographic_descriptor_normalize.copy()
-            student_demographic_descriptor_normalize_derived[derived_column] =  student_demographic_descriptor_normalize[derived_column].explode().apply(pd.Series)
+            student_demographic_descriptor_normalize_derived[derived_column] = student_demographic_descriptor_normalize[derived_column].explode().apply(pd.Series)
             student_demographic_descriptor_normalize_derived.loc[
-                student_demographic_descriptor_normalize_derived[derived_column].isnull(),derived_column
-            ] = '' 
+                student_demographic_descriptor_normalize_derived[derived_column].isnull(),
+                derived_column
+            ] = ''
             # Get Descriptor
             get_descriptor_code_value_from_uri(
                 student_demographic_descriptor_normalize_derived,
@@ -355,7 +361,7 @@ def get_student_demographic(content, item) -> pd.DataFrame:
         suffixLeft=None,
         suffixRight=None
     )
-    
+
     student_demographic_normalize['SchoolKey'] = student_demographic_normalize['SchoolKey'].astype(str)
     if prefix == 'CohortYear':
         student_demographic_normalize['DemographicKey'] = (

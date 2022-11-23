@@ -6,6 +6,7 @@
 import json
 import os
 
+from dagster import get_dagster_logger
 from dagster.utils import file_relative_path
 from decouple import config
 
@@ -31,17 +32,17 @@ def get_endpoint() -> list:
 
 # Create a function to save JSON into a file in the json directory.
 def save_file(json_file: JSONFile, json_file_sufix: any, data: any, school_year: str) -> None:
-    school_year_path = f"/{school_year}/" if school_year else ""
+    parquet_logger = get_dagster_logger()
     if data:
-        json_location = config('SILVER_DATA_LOCATION')
-        path = f"{json_location}{school_year_path}{json_file.directory}"
+        json_location = get_path(config('SILVER_DATA_LOCATION'), school_year)
+        path = os.path.join(json_location, json_file.directory)
         if not os.path.exists(path):
             os.makedirs(path, exist_ok=True)
-
-        with open(f"{json_location}{school_year_path}{json_file.directory}/{json_file.name}_{json_file_sufix}.json", "w") as file:
+        file_path = os.path.join(path, f'{json_file.name}_{json_file_sufix}.json')
+        with open(file_path, "w") as file:
             json.dump(data, file, indent=4)
-            file_size = os.path.getsize(f"{json_location}{school_year_path}{json_file.directory}/{json_file.name}_{json_file_sufix}.json") / 1000000
-            print(f"File {json_file.name}({json_file_sufix}) saved with {file_size} MB")
+            file_size = os.path.getsize(file_path) / 1000000
+            parquet_logger.info(f"File {json_file.name}({json_file_sufix}) saved with {file_size} MB")
 
 
 # Create a function to get endpoint url.
@@ -64,3 +65,33 @@ def get_descriptor_mapping_config() -> list:
     with open(file_relative_path(__file__, './descriptor_map/descriptor_map.json'), "r") as file:
         data = json.load(file)
     return data
+
+
+def get_path(path: str, school_year: str):
+    school_year_path = f"{school_year}/" if school_year else ""
+    destination_folder = os.path.join(path, school_year_path) if school_year_path == '' else path
+    return destination_folder
+
+
+def delete_files_by_extension(path: str, extension_list: list[str]) -> None:
+    parquet_logger = get_dagster_logger()
+    parquet_logger.info('Delete parquet files')
+    files_to_delete = os.listdir(path)
+    count_deleted_files = 0
+    for file in files_to_delete:
+        for extension in extension_list:
+            if file.endswith(f"{extension}"):
+                file_to_remove = os.path.join(path, file)
+                os.remove(file_to_remove)
+                parquet_logger.debug(f'Deleted file: {file_to_remove}')
+                count_deleted_files += 1
+    parquet_logger.info(f'Deleted files: {count_deleted_files}')
+
+
+def clean_parquet_folder(school_year: str) -> None:
+    path = config('PARQUET_FILES_LOCATION')
+    destination_path = get_path(path, school_year)
+    delete_files_by_extension(
+        path=destination_path,
+        extension_list=['parquet']
+    )

@@ -3,7 +3,9 @@
 # The Ed-Fi Alliance licenses this file to you under the Apache License, Version 2.0.
 # See the LICENSE and NOTICES files in the project root for more information.
 
+from dagster import get_dagster_logger
 
+from edfi_amt_data_lake.helper.helper import clean_parquet_folder
 from edfi_amt_data_lake.parquet.amt.asmt.asmt_collection import asmt_collection
 from edfi_amt_data_lake.parquet.amt.base.base_collection import base_collection
 from edfi_amt_data_lake.parquet.amt.chrab.chrab_collection import chrab_collection
@@ -16,6 +18,13 @@ from edfi_amt_data_lake.parquet.amt.rls.rls_collection import rls_collection
 
 
 def generate_amt_parquet(school_year) -> None:
+    parquet_logger = get_dagster_logger()
+    parquet_logger.info(
+        '*************************************\n'
+        + f'* Start Parquet Generation {school_year}'
+        + '\n*************************************'
+    )
+    clean_parquet_folder(school_year)
     asmt_collection(school_year)
     base_collection(school_year)
     chrab_collection(school_year)
@@ -25,3 +34,8 @@ def generate_amt_parquet(school_year) -> None:
     ews_collection(school_year)
     qews_collection(school_year)
     rls_collection(school_year)
+    parquet_logger.info(
+        '*************************************\n'
+        + f'* Finished Parquet Generation Process'
+        + '\n*************************************'
+    )
