@@ -213,5 +213,20 @@
 		"constantName": "Address.Home",
 		"descriptor": "AddressTypeDescriptor",
 		"codeValue": "Home"
+	},
+	{
+		"constantName": "AttendanceEvent.Present",
+		"descriptor": "AttendanceEventCategoryDescriptor",
+		"codeValue": "In Attendance"
+	},
+	{
+		"constantName": "AttendanceEvent.Absence",
+		"descriptor": "AttendanceEventCategoryDescriptor",
+		"codeValue": "Unexcused Absence"
+	},
+	{
+		"constantName": "AttendanceEvent.Absence",
+		"descriptor": "AttendanceEventCategoryDescriptor",
+		"codeValue": "Excused Absence"
 	}
 ]
