@@ -159,12 +159,15 @@ def createDataFrame(data, columns) -> pd.DataFrame:
 
 
 def get_descriptor_code_value_from_uri(data=pd.DataFrame, column=str):
-    if not (column in data):
-        data[column] = ''
-    if not data[column].empty:
-        if len(data[column].astype(str).str.split('#')) > 0:
-            data[column] = data[column].astype(str).str.split("#").str.get(-1)
-    else:
+    try:
+        if not (column in data):
+            data[column] = ''
+        if not data[column].empty:
+            if len(data[column].str.split('#')) > 0:
+                data[column] = data[column].str.split("#").str.get(-1)
+        else:
+            data[column] = ''
+    except Exception:
         data[column] = ''
 
 
