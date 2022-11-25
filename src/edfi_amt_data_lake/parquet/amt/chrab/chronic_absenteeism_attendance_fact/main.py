@@ -13,15 +13,12 @@ from edfi_amt_data_lake.parquet.Common.descriptor_mapping import get_descriptor_
 from edfi_amt_data_lake.parquet.Common.pandasWrapper import (
     addColumnIfNotExists,
     create_parquet_file,
-    get_descriptor_code_value_from_uri,
-    get_reference_from_href,
     jsonNormalize,
     pdMerge,
     renameColumns,
     replace_null,
     subset,
     to_datetime_key,
-    create_empty_data_frame,
     crossTab,
     toCsv
 )
@@ -105,6 +102,9 @@ def chronic_absenteeism_attendance_fact_dataframe(
         errors='ignore'
     )
 
+    if calendar_dates_calendar_events_normalize.empty:
+        return None
+
     calendar_dates_normalize = pdMerge(
         left=calendar_dates_normalize,
         right=calendar_dates_calendar_events_normalize,
@@ -129,20 +129,20 @@ def chronic_absenteeism_attendance_fact_dataframe(
         suffixRight='_calendar_dates'
     )
 
-    result_data_frame['entryDate_key'] = to_datetime_key(result_data_frame, 'entryDate')
-    result_data_frame['date_key'] = to_datetime_key(result_data_frame, 'date')
-    result_data_frame = result_data_frame[result_data_frame['entryDate_key'] <= result_data_frame['date_key']]
+    result_data_frame['entryDate'] = to_datetime_key(result_data_frame, 'entryDate')
+    result_data_frame['date'] = to_datetime_key(result_data_frame, 'date')
+    result_data_frame = result_data_frame[result_data_frame['entryDate'] <= result_data_frame['date']]
 
-    result_data_frame['exitWithdrawDate_key'] = to_datetime_key(result_data_frame, 'exitWithdrawDate')
+    result_data_frame['exitWithdrawDate'] = to_datetime_key(result_data_frame, 'exitWithdrawDate')
     replace_null(result_data_frame, 'exitWithdrawDate', '')
     result_data_frame = result_data_frame[(
         (result_data_frame['exitWithdrawDate'] == '') 
-        | (result_data_frame['exitWithdrawDate_key'] >= result_data_frame['date_key'])
+        | (result_data_frame['exitWithdrawDate'] >= result_data_frame['date'])
     )]
 
     # - END
 
-    # --- School attendance BEGIN
+    # --- School attendance
 
     student_attendance_events = jsonNormalize(
         student_school_attendance_events_content,
@@ -160,13 +160,13 @@ def chronic_absenteeism_attendance_fact_dataframe(
         errors='ignore'
     )
 
-    student_attendance_events['eventDate_key'] = to_datetime_key(student_attendance_events, 'eventDate')
+    student_attendance_events['eventDate'] = to_datetime_key(student_attendance_events, 'eventDate')
 
     student_attendance_events = get_descriptor_constant(student_attendance_events, 'attendanceEventCategoryDescriptor')
 
     attendance_events = (
         student_attendance_events[[
-            'studentReference.studentUniqueId','schoolReference.schoolId','eventDate_key','attendanceEventCategoryDescriptor_constantName'
+            'studentReference.studentUniqueId','schoolReference.schoolId','eventDate','attendanceEventCategoryDescriptor_constantName'
         ]]
     )
 
@@ -175,7 +175,7 @@ def chronic_absenteeism_attendance_fact_dataframe(
         index=[
             attendance_events['studentReference.studentUniqueId'],
             attendance_events['schoolReference.schoolId'],
-            attendance_events['eventDate_key']
+            attendance_events['eventDate']
         ],
         columns=attendance_events['attendanceEventCategoryDescriptor_constantName']).reset_index()
 
@@ -188,8 +188,8 @@ def chronic_absenteeism_attendance_fact_dataframe(
         left=student_attendance_events,
         right=attendance_events,
         how='left',
-        leftOn=['schoolReference.schoolId', 'studentReference.studentUniqueId', 'eventDate_key'],
-        rightOn=['schoolReference.schoolId', 'studentReference.studentUniqueId', 'eventDate_key'],
+        leftOn=['schoolReference.schoolId', 'studentReference.studentUniqueId', 'eventDate'],
+        rightOn=['schoolReference.schoolId', 'studentReference.studentUniqueId', 'eventDate'],
         suffixLeft=None,
         suffixRight='_attendance_events_school'
     )
@@ -200,26 +200,40 @@ def chronic_absenteeism_attendance_fact_dataframe(
         left=result_data_frame,
         right=student_attendance_events,
         how='left',
-        leftOn=['schoolReference.schoolId', 'studentReference.studentUniqueId', 'date_key'],
-        rightOn=['schoolReference.schoolId', 'studentReference.studentUniqueId', 'eventDate_key'],
+        leftOn=['schoolReference.schoolId', 'studentReference.studentUniqueId', 'date'],
+        rightOn=['schoolReference.schoolId', 'studentReference.studentUniqueId', 'eventDate'],
         suffixLeft=None,
         suffixRight='_student_school_attendance_events'
     )
 
     replace_null(result_data_frame, 'schoolYearTypeReference.schoolYear', '')
-    result_data_frame['schoolYearTypeReference.schoolYear_key'] = to_datetime_key(result_data_frame, 'schoolYearTypeReference.schoolYear')
+    result_data_frame['schoolYearTypeReference.schoolYear'] = to_datetime_key(result_data_frame, 'schoolYearTypeReference.schoolYear')
 
     replace_null(result_data_frame, 'sessionReference.schoolYear', '')
-    result_data_frame['sessionReference.schoolYear_key'] = to_datetime_key(result_data_frame, 'sessionReference.schoolYear')
+    result_data_frame['sessionReference.schoolYear'] = to_datetime_key(result_data_frame, 'sessionReference.schoolYear')
 
     result_data_frame = result_data_frame[(
         (result_data_frame['schoolYearTypeReference.schoolYear'] == '') 
-        | (result_data_frame['schoolYearTypeReference.schoolYear_key'] == result_data_frame['sessionReference.schoolYear_key'])
+        | (result_data_frame['schoolYearTypeReference.schoolYear'] == result_data_frame['sessionReference.schoolYear'])
     )]
 
-    # --- School attendance END
+    # --- 
 
-    # --- Section attendance BEGIN
+    result_data_frame = subset(result_data_frame, [
+        'id',
+        'schoolReference.schoolId',
+        'schoolYearTypeReference.schoolYear',
+        'studentReference.studentUniqueId',
+        'calendarEventDescriptor',
+        'date',
+        'AttendanceEvent.Absence',
+        'AttendanceEvent.Present',
+        '_calendar_dates',
+        '_attendance_events_school',
+        '_student_school_attendance_events'
+    ])
+
+    # --- Section attendance
 
     student_section_associations_normalize = jsonNormalize(
         student_section_associations_content,
@@ -258,15 +272,13 @@ def chronic_absenteeism_attendance_fact_dataframe(
         errors='ignore'
     )
 
-    student_attendance_events['eventDate_key'] = to_datetime_key(student_attendance_events, 'eventDate')
+    student_attendance_events['eventDate'] = to_datetime_key(student_attendance_events, 'eventDate')
 
     student_attendance_events = get_descriptor_constant(student_attendance_events, 'attendanceEventCategoryDescriptor')
 
-    toCsv(student_attendance_events, 'C:/temp/edfi/parquet/', 'school_attendance_events.csv', '')
-
     attendance_events = (
         student_attendance_events[[
-            'studentReference.studentUniqueId','sectionReference.schoolId','eventDate_key','attendanceEventCategoryDescriptor_constantName'
+            'studentReference.studentUniqueId','sectionReference.schoolId','eventDate','attendanceEventCategoryDescriptor_constantName'
         ]]
     )
 
@@ -275,28 +287,26 @@ def chronic_absenteeism_attendance_fact_dataframe(
         index=[
             attendance_events['studentReference.studentUniqueId'],
             attendance_events['sectionReference.schoolId'],
-            attendance_events['eventDate_key']
+            attendance_events['eventDate']
         ],
         columns=attendance_events['attendanceEventCategoryDescriptor_constantName']).reset_index()
 
     addColumnIfNotExists(attendance_events, 'AttendanceEvent.Present', 0)
     addColumnIfNotExists(attendance_events, 'AttendanceEvent.Absence', 0)
     
-    toCsv(attendance_events, 'C:/temp/edfi/parquet/', 'attendance_events.csv', '')
-
     student_attendance_events['_attendance_events_section'] = '|'
 
     student_attendance_events = pdMerge(
         left=student_attendance_events,
         right=attendance_events,
         how='left',
-        leftOn=['sectionReference.schoolId', 'studentReference.studentUniqueId', 'eventDate_key'],
-        rightOn=['sectionReference.schoolId', 'studentReference.studentUniqueId', 'eventDate_key'],
+        leftOn=['sectionReference.schoolId', 'studentReference.studentUniqueId', 'eventDate'],
+        rightOn=['sectionReference.schoolId', 'studentReference.studentUniqueId', 'eventDate'],
         suffixLeft=None,
         suffixRight='_attendance_events_section'
     )
 
-    toCsv(student_attendance_events, 'C:/temp/edfi/parquet/', 'student_attendance_events2.csv', '')
+    student_section_associations_normalize['_student_attendance_events_section'] = '|'
 
     student_sections_attendance_events = pdMerge(
         left=student_section_associations_normalize,
@@ -308,8 +318,7 @@ def chronic_absenteeism_attendance_fact_dataframe(
             'sectionReference.schoolId',
             'sectionReference.schoolYear',
             'sectionReference.sectionIdentifier',
-            'sectionReference.sessionName',
-            'eventDate_key'
+            'sectionReference.sessionName'
         ],
         rightOn=[
             'studentReference.studentUniqueId',
@@ -317,58 +326,102 @@ def chronic_absenteeism_attendance_fact_dataframe(
             'sectionReference.schoolId',
             'sectionReference.schoolYear',
             'sectionReference.sectionIdentifier',
-            'sectionReference.sessionName',
-            'eventDate_key'
+            'sectionReference.sessionName'
         ],
         suffixLeft=None,
-        suffixRight='_attendance_events_section'
+        suffixRight='_student_attendance_events_section'
     )
 
+    # --- 
 
-    # result_data_frame['_student_section_attendance_events'] = '|'
+    student_sections_attendance_events = subset(student_sections_attendance_events, [
+        'homeroomIndicator',
+        'studentReference.studentUniqueId',
+        'sectionReference.schoolId',
+        'sectionReference.schoolYear',
+        'eventDate',
+        'AttendanceEvent.Absence',
+        'AttendanceEvent.Present',
+        '_student_attendance_events_section',
+        '_attendance_events_section'
+    ])
 
-    # result_data_frame = pdMerge(
-    #     left=result_data_frame,
-    #     right=student_attendance_events,
-    #     how='left',
-    #     leftOn=['schoolReference.schoolId', 'studentReference.studentUniqueId', 'date_key'],
-    #     rightOn=['schoolReference.schoolId', 'studentReference.studentUniqueId', 'eventDate_key'],
-    #     suffixLeft=None,
-    #     suffixRight='_student_school_attendance_events'
-    # )
+    result_data_frame['_student_section_attendance_events'] = '|'
 
-    # replace_null(result_data_frame, 'schoolYearTypeReference.schoolYear', '')
-    # result_data_frame['schoolYearTypeReference.schoolYear_key'] = to_datetime_key(result_data_frame, 'schoolYearTypeReference.schoolYear')
+    result_data_frame = pdMerge(
+        left=result_data_frame,
+        right=student_sections_attendance_events,
+        how='left',
+        leftOn=['schoolReference.schoolId', 'studentReference.studentUniqueId', 'date'],
+        rightOn=['sectionReference.schoolId', 'studentReference.studentUniqueId', 'eventDate'],
+        suffixLeft=None,
+        suffixRight='_student_school_attendance_events'
+    )
 
-    # replace_null(result_data_frame, 'sessionReference.schoolYear', '')
-    # result_data_frame['sessionReference.schoolYear_key'] = to_datetime_key(result_data_frame, 'sessionReference.schoolYear')
+    replace_null(result_data_frame, 'sectionReference.schoolYear', '')
+    result_data_frame['sectionReference.schoolYear'] = to_datetime_key(result_data_frame, 'sectionReference.schoolYear')
 
-    # result_data_frame = result_data_frame[(
-    #     (result_data_frame['schoolYearTypeReference.schoolYear'] == '') 
-    #     | (result_data_frame['schoolYearTypeReference.schoolYear_key'] == result_data_frame['sectionReference.schoolYear'])
-    # )]
+    result_data_frame = result_data_frame[(
+        (result_data_frame['schoolYearTypeReference.schoolYear'] == '') 
+        | (result_data_frame['schoolYearTypeReference.schoolYear'] == result_data_frame['sectionReference.schoolYear'])
+    )]
 
+    result_data_frame = subset(result_data_frame, [
+        'schoolReference.schoolId',
+        'studentReference.studentUniqueId',
+        'date',
+        'AttendanceEvent.Absence',
+        'AttendanceEvent.Present',
+        'AttendanceEvent.Absence_student_school_attendance_events',
+        'AttendanceEvent.Present_student_school_attendance_events'
+    ])
 
-    # ------- Section attendance END
+    result_data_frame = result_data_frame.groupby(
+        [
+            'schoolReference.schoolId',
+            'studentReference.studentUniqueId',
+            'date'
+        ]).max().reset_index()
 
-    # result_data_frame = subset(result_data_frame, [
-    #     'id',
-    #     'schoolReference.schoolId',
-    #     'schoolYearTypeReference.schoolYear',
-    #     'studentReference.studentUniqueId',
-    #     '_calendar_dates',
-    #     'date',
-    #     'calendarReference.calendarCode_calendar_dates',
-    #     'calendarEventDescriptor',
-    #     'date_key',
-    #     '_student_school_attendance_events',
-    #     'attendanceEventCategoryDescriptor_constantName',
-    #     'attendanceEventCategoryDescriptor_codeValue_data',
-    #     '_attendance_events',
-    #     'AttendanceEvent.Absence',
-    #     'AttendanceEvent.ExcusedAbsence',
-    #     'AttendanceEvent.UnexcusedAbsence'
-    # ])
+    result_data_frame = renameColumns(result_data_frame, {
+        'schoolReference.schoolId': 'SchoolKey',
+        'studentReference.studentUniqueId': 'StudentKey',
+        'date': 'DateKey',
+        'AttendanceEvent.Absence': 'ReportedAsAbsentFromSchool',
+        'AttendanceEvent.Present': 'ReportedAsPresentAtSchool',
+        'AttendanceEvent.Absence_student_school_attendance_events': 'ReportedAsAbsentFromHomeRoom',
+        'AttendanceEvent.Present_student_school_attendance_events': 'ReportedAsPresentAtHomeRoom',
+    })
+
+    result_data_frame['StudentSchoolKey'] = result_data_frame['StudentKey'].astype(str) + '-' + result_data_frame['SchoolKey'].astype(str)
+
+    result_data_frame["ReportedAsAbsentFromSchool"] = result_data_frame.apply(
+        lambda r: 1 if r["ReportedAsAbsentFromSchool"] > 0 else 0, axis=1
+    )
+
+    result_data_frame["ReportedAsPresentAtSchool"] = result_data_frame.apply(
+        lambda r: 1 if r["ReportedAsPresentAtSchool"] > 0 else 0, axis=1
+    )
+
+    result_data_frame["ReportedAsAbsentFromHomeRoom"] = result_data_frame.apply(
+        lambda r: 1 if r["ReportedAsAbsentFromHomeRoom"] > 0 else 0, axis=1
+    )
+
+    result_data_frame["ReportedAsPresentAtHomeRoom"] = result_data_frame.apply(
+        lambda r: 1 if r["ReportedAsPresentAtHomeRoom"] > 0 else 0, axis=1
+    )
+    
+    result_data_frame["ReportedAsIsPresentInAllSections"] = result_data_frame.apply(
+        lambda r: 1 if r["ReportedAsAbsentFromHomeRoom"] == 0 & r["ReportedAsAbsentFromHomeRoom"] == 1 else 0, axis=1
+    )
+    
+    result_data_frame["ReportedAsAbsentFromAnySection"] = result_data_frame.apply(
+        lambda r: 1 if r["ReportedAsAbsentFromHomeRoom"] == 1 else 0, axis=1
+    )
+    
+    result_data_frame = result_data_frame[
+        columns
+    ]
 
     toCsv(result_data_frame, 'C:/temp/edfi/parquet/', 'result_data_frame.csv', '')
 
