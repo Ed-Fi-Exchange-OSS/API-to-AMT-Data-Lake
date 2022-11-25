@@ -36,6 +36,6 @@ def generate_amt_parquet(school_year) -> None:
     rls_collection(school_year)
     parquet_logger.info(
         '*************************************\n'
-        + f'* Finished Parquet Generation Process'
+        + f'* Finished Parquet Generation Process {school_year}'
         + '\n*************************************'
     )
