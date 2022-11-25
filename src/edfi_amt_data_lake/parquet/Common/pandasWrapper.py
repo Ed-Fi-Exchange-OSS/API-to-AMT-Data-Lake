@@ -210,12 +210,14 @@ def create_parquet_file(func) -> data_frame_generation_result:
             result_data_frame = get_data_frame_from_file(file_path=file_path)
             result = None
             if not (result_data_frame is None):
+                parquet_logger.debug(f'Read DataFrame {file_name} from file.')
                 result = data_frame_generation_result(
                     data_frame=result_data_frame,
                     columns=columns
                 )
                 return result
             else:
+                parquet_logger.debug(f'Create DataFrame {file_name} from script.')
                 result = data_frame_generation_result(
                     data_frame=func(file_name, columns, school_year),
                     columns=columns

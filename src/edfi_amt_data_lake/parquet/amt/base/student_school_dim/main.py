@@ -9,7 +9,7 @@ from edfi_amt_data_lake.helper.data_frame_generation_result import (
     data_frame_generation_result,
 )
 from edfi_amt_data_lake.parquet.amt.base.all_student_school_dim.main import (
-    all_student_school_dim_data_frame_base,
+    all_student_school_dim,
 )
 from edfi_amt_data_lake.parquet.Common.pandasWrapper import create_parquet_file
 
@@ -43,39 +43,10 @@ def student_school_dim_data_frame(
 ) -> pd.DataFrame:
     file_name = file_name
 
-    all_student_school_dim_columns = [
-        'AllStudentSchoolKey',
-        'StudentSchoolKey',
-        'StudentKey',
-        'SchoolKey',
-        'SchoolYear',
-        'StudentFirstName',
-        'StudentMiddleName',
-        'StudentLastName',
-        'BirthDate',
-        'EnrollmentDateKey',
-        'GradeLevel',
-        'LimitedEnglishProficiency',
-        'IsHispanic',
-        'Sex',
-        'InternetAccessInResidence',
-        'InternetAccessTypeInResidence',
-        'InternetPerformance',
-        'DigitalDevice',
-        'DeviceAccess',
-        'IsEnrolled',
-        'ExitWithdrawDate'
-    ]
-
-
-    result_data_frame = all_student_school_dim_data_frame_base(
-        file_name=file_name,
-        columns=all_student_school_dim_columns,
-        school_year=school_year
-    )
-
+    result_data_frame = all_student_school_dim(school_year=school_year).data_frame
+    if result_data_frame is None:
+        return None
     result_data_frame = result_data_frame[result_data_frame['IsEnrolled'] == 1]
-
     return result_data_frame[
         columns
     ]
