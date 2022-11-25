@@ -12,11 +12,11 @@ from edfi_amt_data_lake.helper.data_frame_generation_result import (
 from edfi_amt_data_lake.parquet.Common.functions import getEndpointJson
 from edfi_amt_data_lake.parquet.Common.pandasWrapper import (
     addColumnIfNotExists,
+    create_empty_data_frame,
     create_parquet_file,
     jsonNormalize,
     pdMerge,
     renameColumns,
-    create_empty_data_frame
 )
 
 ENDPOINT_SECTIONS = 'sections'
@@ -40,7 +40,7 @@ def class_period_dim_data_frame(
 ) -> pd.DataFrame:
     file_name = file_name
     sections_content = getEndpointJson(ENDPOINT_SECTIONS, config('SILVER_DATA_LOCATION'), school_year)
-    
+
     schools_normalized = jsonNormalize(
         data=sections_content,
         recordPath=None,
@@ -97,11 +97,11 @@ def class_period_dim_data_frame(
     )
 
     result_data_frame["SectionKey"] = (
-        result_data_frame["courseOfferingReference.schoolId"].astype(str) + "-" +
-        result_data_frame["courseOfferingReference.localCourseCode"] + "-" +
-        result_data_frame["courseOfferingReference.schoolYear"].astype(str) + "-" +
-        result_data_frame["sectionIdentifier"] + "-" +
-        result_data_frame["courseOfferingReference.sessionName"]
+        result_data_frame["courseOfferingReference.schoolId"].astype(str)
+        + "-" + result_data_frame["courseOfferingReference.localCourseCode"]
+        + "-" + result_data_frame["courseOfferingReference.schoolYear"].astype(str)
+        + "-" + result_data_frame["sectionIdentifier"]
+        + "-" + result_data_frame["courseOfferingReference.sessionName"]
     )
 
     result_data_frame = renameColumns(result_data_frame, {

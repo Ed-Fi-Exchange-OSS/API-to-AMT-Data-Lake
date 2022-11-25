@@ -27,6 +27,9 @@ from edfi_amt_data_lake.parquet.amt.base.section_dim.main import section_dim
 from edfi_amt_data_lake.parquet.amt.base.student_local_education_agency_demographics_bridge.main import (
     student_local_education_agency_demographics_bridge,
 )
+from edfi_amt_data_lake.parquet.amt.base.student_local_education_agency_dim.main import (
+    student_local_education_agency_dim,
+)
 from edfi_amt_data_lake.parquet.amt.base.student_program_dim.main import (
     student_program_dim,
 )
@@ -56,4 +59,5 @@ def base_collection(school_year) -> None:
     student_local_education_agency_demographics_bridge(school_year)
     student_school_demographics_bridge(school_year)
     student_section_dim(school_year)
+    student_local_education_agency_dim(school_year)
     student_school_dim(school_year)
