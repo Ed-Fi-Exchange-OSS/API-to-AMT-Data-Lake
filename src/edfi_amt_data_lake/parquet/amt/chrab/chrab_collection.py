@@ -4,7 +4,10 @@
 # See the LICENSE and NOTICES files in the project root for more information.
 
 
-from edfi_amt_data_lake.parquet.amt.chrab.chronic_absenteeism_attendance_fact.main import chronic_absenteeism_attendance_fact
+from edfi_amt_data_lake.parquet.amt.chrab.chronic_absenteeism_attendance_fact.main import (
+    chronic_absenteeism_attendance_fact,
+)
+
 
 def chrab_collection(school_year) -> None:
     chronic_absenteeism_attendance_fact(school_year)
