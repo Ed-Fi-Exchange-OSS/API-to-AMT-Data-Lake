@@ -70,7 +70,7 @@ def jsonNormalize(data, recordPath, meta, recordMeta=[], metaPrefix=None, record
             empty_data_frame,
             df_result
         ])
-        # TODO Select columns from meta
+        # Select columns from meta
         result_dataframe = subset(
             result_dataframe,
             default_columns
@@ -159,12 +159,15 @@ def createDataFrame(data, columns) -> pd.DataFrame:
 
 
 def get_descriptor_code_value_from_uri(data=pd.DataFrame, column=str):
-    if not (column in data):
-        data[column] = ''
-    if not data[column].empty:
-        if len(data[column].astype(str).str.split('#')) > 0:
-            data[column] = data[column].astype(str).str.split("#").str.get(-1)
-    else:
+    try:
+        if not (column in data):
+            data[column] = ''
+        if not data[column].empty:
+            if len(data[column].str.split('#')) > 0:
+                data[column] = data[column].str.split("#").str.get(-1)
+        else:
+            data[column] = ''
+    except Exception:
         data[column] = ''
 
 
@@ -186,6 +189,13 @@ def add_dataframe_column(data=pd.DataFrame, columns=[str]):
         data,
         empty_dataframe,
     ])
+
+
+def copy_value_by_column(data: pd.DataFrame, column: str, replace_value: any):
+    if not (column in data):
+        data[column] = replace_value
+    data.loc[data[column].isnull(), column] = replace_value
+    return data[column]
 
 
 def create_parquet_file(func) -> data_frame_generation_result:

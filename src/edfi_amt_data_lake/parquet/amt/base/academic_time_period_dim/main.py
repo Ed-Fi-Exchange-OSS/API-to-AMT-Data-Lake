@@ -15,11 +15,12 @@ from edfi_amt_data_lake.parquet.Common.pandasWrapper import (
     jsonNormalize,
     renameColumns,
     create_parquet_file,
-    addColumnIfNotExists,
+    get_reference_from_href,
     get_descriptor_code_value_from_uri
 )
 
 ENDPOINT_SESSIONS = "sessions"
+ENDPOINT_GRADING_PERIOD = "gradingPeriods"
 ENDPOINT_GRADING_PERIOD_DESCRIPTORS = "gradingPeriodDescriptors"
 ENDPOINT_TERM_DESCRIPTORS = "termDescriptors"
 ENDPOINT_SCHOOL_YEAR_TYPES = "schoolYearTypes"
@@ -34,8 +35,7 @@ RESULT_COLUMNS = [
     "SessionName",
     "TermName",
     "GradingPeriodKey",
-    "GradingPeriodName",
-    "LastModifiedDate"
+    "GradingPeriodName"
 ]
 
 
@@ -47,6 +47,7 @@ def academic_time_period_dim_frame(
 ) -> pd.DataFrame:
     file_name = file_name
     sessions_content = getEndpointJson(ENDPOINT_SESSIONS, config("SILVER_DATA_LOCATION"), school_year)
+    grading_periods_content = getEndpointJson(ENDPOINT_GRADING_PERIOD, config("SILVER_DATA_LOCATION"), school_year)
     grading_periods_descriptors_content = getEndpointJson(ENDPOINT_GRADING_PERIOD_DESCRIPTORS, config("SILVER_DATA_LOCATION"), school_year)
     term_descriptors_content = getEndpointJson(ENDPOINT_TERM_DESCRIPTORS, config("SILVER_DATA_LOCATION"), school_year)
     school_year_types_content = getEndpointJson(ENDPOINT_SCHOOL_YEAR_TYPES, config("SILVER_DATA_LOCATION"), school_year)
@@ -59,7 +60,8 @@ def academic_time_period_dim_frame(
             "gradingPeriodReference.schoolId",
             "gradingPeriodReference.schoolYear",
             "gradingPeriodReference.gradingPeriodDescriptor",
-            "gradingPeriodReference.periodSequence"
+            "gradingPeriodReference.periodSequence",
+            "gradingPeriodReference.link.href",
         ],
         metaPrefix=None,
         recordPrefix="session_",
@@ -68,6 +70,17 @@ def academic_time_period_dim_frame(
 
     get_descriptor_code_value_from_uri(session_normalized, "termDescriptor")
     get_descriptor_code_value_from_uri(session_normalized, "session_gradingPeriodReference.gradingPeriodDescriptor")
+    get_reference_from_href(session_normalized, "session_gradingPeriodReference.link.href", "gradingPeriodsId")
+
+    grading_periods_normalized = jsonNormalize(
+        data=grading_periods_content,
+        recordPath=None,
+        meta=["id", "beginDate"],
+        recordMeta=None,
+        metaPrefix=None,
+        recordPrefix="gradingPeriod_",
+        errors="ignore"
+    )
 
     grading_period_descriptor_normalized = jsonNormalize(
         data=grading_periods_descriptors_content,
@@ -89,7 +102,7 @@ def academic_time_period_dim_frame(
         errors="ignore"
     )
 
-    schoolYearTypes_normalized = jsonNormalize(
+    school_year_types_normalized = jsonNormalize(
         data=school_year_types_content,
         recordPath=None,
         meta=[],
@@ -119,9 +132,9 @@ def academic_time_period_dim_frame(
         suffixRight="_grading_period_descriptor_normalized"
     )
 
-    result_data_frame = pdMerge(
+    session_with_term_descriptor_merged_and_grading_period_descriptor_normalized_school_year_types_normalized = pdMerge(
         left=session_with_term_descriptor_merged_and_grading_period_descriptor_normalized,
-        right=schoolYearTypes_normalized,
+        right=school_year_types_normalized,
         how="inner",
         leftOn=["session_gradingPeriodReference.schoolYear"],
         rightOn=["schoolYear"],
@@ -129,14 +142,25 @@ def academic_time_period_dim_frame(
         suffixRight="_schoolYearTypes_normalized"
     )
 
-    addColumnIfNotExists(result_data_frame, "LastModifiedDate")
+    result_data_frame = pdMerge(
+        left=session_with_term_descriptor_merged_and_grading_period_descriptor_normalized_school_year_types_normalized,
+        right=grading_periods_normalized,
+        how="inner",
+        leftOn=["gradingPeriodsId"],
+        rightOn=["id"],
+        suffixLeft="_s_td_gpd_sytn",
+        suffixRight="_grading_periods_normalized"
+    )
+
+    if result_data_frame is None:
+        return None
 
     result_data_frame["AcademicTimePeriodKey"] = (
         result_data_frame["session_gradingPeriodReference.schoolId"].astype(str)
         + "-" + result_data_frame["session_gradingPeriodReference.schoolYear"].astype(str)
         + "-" + result_data_frame["termDescriptorId"].astype(str)
         + "-" + result_data_frame["gradingPeriodDescriptorId"].astype(str)
-        + "-" + result_data_frame["beginDate"].astype(str).str.replace("-", "")
+        + "-" + result_data_frame["beginDate_grading_periods_normalized"].astype(str).str.replace("-", "")
     )
 
     result_data_frame["SessionKey"] = (
@@ -148,24 +172,23 @@ def academic_time_period_dim_frame(
     result_data_frame["GradingPeriodKey"] = (
         result_data_frame["gradingPeriodDescriptorId"].astype(str)
         + "-" + result_data_frame["session_gradingPeriodReference.schoolId"].astype(str)
-        + "-" + result_data_frame["beginDate"].astype(str).str.replace("-", "")
+        + "-" + result_data_frame["beginDate_grading_periods_normalized"].astype(str).str.replace("-", "")
+    )
+
+    result_data_frame["IsCurrentSchoolYear"] = (
+        result_data_frame["currentSchoolYear"].astype(int)
     )
 
     result_data_frame = renameColumns(result_data_frame, {
         "session_gradingPeriodReference.schoolYear": "SchoolYear",
         "schoolYearDescription": "SchoolYearName",
-        "currentSchoolYear": "IsCurrentSchoolYear",
         "session_gradingPeriodReference.schoolId": "SchoolKey",
         "sessionName": "SessionName",
         "codeValue_session_with_term_descriptor_merged": "TermName",
         "codeValue_grading_period_descriptor_normalized": "GradingPeriodName",
     })
 
-    result_data_frame = result_data_frame[columns]
-
-    return result_data_frame[
-        columns
-    ]
+    return result_data_frame[columns]
 
 
 def academic_time_period_dim(school_year) -> data_frame_generation_result:
