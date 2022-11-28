@@ -75,7 +75,7 @@ def student_local_education_agency_dataframe(
     school_year: int
 ) -> pd.DataFrame:
     parquet_logger = get_dagster_logger()
-    parquet_logger.debug(f'Start with file: {file_name}') 
+    parquet_logger.debug(f'Start with file: {file_name}')
     student_education_organization_association_content = getEndpointJson(ENDPOINT_STUDENT_EDUCATION_ORGANIZATION_ASSOCIATION, config('SILVER_DATA_LOCATION'), school_year)
     student_content = getEndpointJson(ENDPOINT_STUDENT, config('SILVER_DATA_LOCATION'), school_year)
     student_school_association_content = getEndpointJson(ENDPOINT_STUDENT_SCHOOL_ASSOCIATION, config('SILVER_DATA_LOCATION'), school_year)
@@ -97,7 +97,8 @@ def student_local_education_agency_dataframe(
         recordPrefix=None,
         errors='ignore'
     )
-    student_normalize = renameColumns(student_normalize,
+    student_normalize = renameColumns(
+        student_normalize,
         {
             'id': 'studentReferenceId',
             'studentUniqueId': 'StudentKey',
@@ -144,13 +145,13 @@ def student_local_education_agency_dataframe(
         suffixLeft='_student',
         suffixRight='_student_school_association'
     )
-    if student_normalize is None: 
+    if student_normalize is None:
         return None
     student_normalize = (
-            student_normalize[
-                student_normalize['exitWithdrawDateKey'] >= student_normalize['dateKey']
-            ]
-        )
+        student_normalize[
+            student_normalize['exitWithdrawDateKey'] >= student_normalize['dateKey']
+        ]
+    )
     ############################
     # LocalEducationAgency
     ############################
@@ -165,7 +166,8 @@ def student_local_education_agency_dataframe(
         recordPrefix=None,
         errors='ignore'
     )
-    local_education_agency_normalize = renameColumns(local_education_agency_normalize,
+    local_education_agency_normalize = renameColumns(
+        local_education_agency_normalize,
         {
             'id': 'localEducationAgencyReferenceId',
             'localEducationAgencyId': 'LocalEducationAgencyKey'
@@ -263,7 +265,7 @@ def student_local_education_agency_dataframe(
             index='studentEducationOrganizationAssociationReferenceId',
             columns='indicatorName',
             values='indicator'
-         )
+        )
     )
     for item in INDICATOR_LIST_MAP:
         student_edorg_association_indicator_normalize[item['destination']] = (
@@ -285,7 +287,7 @@ def student_local_education_agency_dataframe(
         suffixLeft='_studentEdOrgAssociation',
         suffixRight='_local_education_agency'
     )
-    if result_data_frame is None: 
+    if result_data_frame is None:
         return None
     ############################
     # student_education_organization_association
@@ -299,7 +301,7 @@ def student_local_education_agency_dataframe(
         suffixLeft='_studentEdOrgAssociation',
         suffixRight='_studentEdOrgAssociationIndicator'
     )
-    if result_data_frame is None: 
+    if result_data_frame is None:
         return None
     ############################
     # student_education_organization_association
@@ -313,9 +315,9 @@ def student_local_education_agency_dataframe(
         suffixLeft='_studentEdOrgAssociation',
         suffixRight='_student'
     )
-    if result_data_frame is None: 
+    if result_data_frame is None:
         return None
-    
+
     result_data_frame['StudentLocalEducationAgencyKey'] = (
         result_data_frame['StudentKey']
         + '-' + result_data_frame['LocalEducationAgencyKey']
