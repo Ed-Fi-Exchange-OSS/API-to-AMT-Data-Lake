@@ -4,8 +4,15 @@
 # See the LICENSE and NOTICES files in the project root for more information.
 
 import os
+import traceback
 
 import pandas as pd
+from dagster import get_dagster_logger
+from decouple import config
+
+from edfi_amt_data_lake.helper.data_frame_generation_result import (
+    data_frame_generation_result,
+)
 
 
 def pdMerge(left=pd.DataFrame, right=pd.DataFrame, how=str, leftOn=[str], rightOn=[str], suffixLeft='_x', suffixRight='_y') -> pd.DataFrame:
@@ -36,13 +43,18 @@ def toCsv(csvContent=pd.DataFrame, path=str, file_name=str, school_year=str) -> 
 
 
 def jsonNormalize(data, recordPath, meta, recordMeta=[], metaPrefix=None, recordPrefix=None, errors='ignore') -> pd.DataFrame:
+    parquet_logger = get_dagster_logger()
+    # Add meta prefix
+    if metaPrefix:
+        meta = [metaPrefix + column for column in meta]
+    # Add record prefix
     if not recordMeta:
         recordMeta = []
-    elif recordMeta and len(recordMeta) > 0 and metaPrefix:
-        recordMeta = [metaPrefix + column for column in recordMeta]
+    elif recordMeta and len(recordMeta) > 0 and recordPrefix:
+        recordMeta = [recordPrefix + column for column in recordMeta]
     # Create an empty database with columns.
     default_columns = get_meta_columns(meta + recordMeta)
-    empty_data_frame = create_empty_dataframe(default_columns)
+    empty_data_frame = create_empty_data_frame(default_columns)
     if not data:
         return empty_data_frame
     try:
@@ -54,15 +66,18 @@ def jsonNormalize(data, recordPath, meta, recordMeta=[], metaPrefix=None, record
             errors=errors
         )
         # Concat normalize result and empty dataframe
-        result_dataframe = pd.concat([
+        result_dataframe = pd_concat([
             empty_data_frame,
             df_result
         ])
-        # TODO Select columns from meta
+        # Select columns from meta
         result_dataframe = subset(
             result_dataframe,
             default_columns
         )
+        if not (result_dataframe is None or result_dataframe.empty) :
+            parquet_logger.debug(f'Normalize output columns: {result_dataframe.columns}')
+            parquet_logger.debug(f'Normalize output rows: {len(result_dataframe.index)}')
         return result_dataframe
     except KeyError:
         return empty_data_frame
@@ -84,7 +99,7 @@ def get_meta_columns(columns=[]):
     return dataframe_columns
 
 
-def create_empty_dataframe(columns=[]):
+def create_empty_data_frame(columns=[]):
     return pd.DataFrame(columns=columns)
 
 
@@ -144,12 +159,15 @@ def createDataFrame(data, columns) -> pd.DataFrame:
 
 
 def get_descriptor_code_value_from_uri(data=pd.DataFrame, column=str):
-    if not (column in data):
-        data[column] = ''
-    if not data[column].empty:
-        if len(data[column].str.split('#')) > 0:
-            data[column] = data[column].str.split("#").str.get(-1)
-    else:
+    try:
+        if not (column in data):
+            data[column] = ''
+        if not data[column].empty:
+            if len(data[column].str.split('#')) > 0:
+                data[column] = data[column].str.split("#").str.get(-1)
+        else:
+            data[column] = ''
+    except Exception:
         data[column] = ''
 
 
@@ -164,10 +182,42 @@ def get_reference_from_href(data=pd.DataFrame, column=str, destination_column=st
 
 
 def add_dataframe_column(data=pd.DataFrame, columns=[str]):
-    empty_dataframe = create_empty_dataframe(columns=columns)
+    empty_dataframe = create_empty_data_frame(columns=columns)
     if (data is None):
         data = empty_dataframe
     return pd.concat([
         data,
         empty_dataframe,
     ])
+
+
+def copy_value_by_column(data: pd.DataFrame, column: str, replace_value: any):
+    if not (column in data):
+        data[column] = replace_value
+    data.loc[data[column].isnull(), column] = replace_value
+    return data[column]
+
+
+def create_parquet_file(func) -> data_frame_generation_result:
+    def inner(file_name, columns, school_year):
+        parquet_logger = get_dagster_logger()
+        try:
+            result = data_frame_generation_result(
+                data_frame=func(file_name, columns, school_year),
+                columns=columns
+            )
+            if result.successful:
+                saveParquetFile(
+                    data=result.data_frame,
+                    path=f"{config('PARQUET_FILES_LOCATION')}",
+                    file_name=file_name,
+                    school_year=school_year
+                )
+            return result
+        except Exception as data_frame_exception:
+            parquet_logger.error(f"Exception: {traceback.format_exc()}")
+            return data_frame_generation_result(
+                successful=False,
+                exception=data_frame_exception
+            )
+    return inner

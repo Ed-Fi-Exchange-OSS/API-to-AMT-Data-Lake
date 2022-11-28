@@ -32,12 +32,13 @@ def get_descriptor_constant(data=pd.DataFrame, column=str):
             'constantName': f"{column}_constantName",
             'descriptor': f"{column}_descriptor"
         })
-
         if not data[column].empty:
-            if len(data[f"{column}"].str.split('#')) > 0:
-                data[f"{column}_descriptor"] = column
-                data[f"{column}_codeValue"] = data[column].str.split("#").str.get(-1)
-
+            if len(data[column].str.split('/')) > 0:
+                data[f"{column}_descriptor_tail"] = data[column].str.split("/").str.get(-1)
+                if len(data[f"{column}_descriptor_tail"].str.split('#')) > 0:
+                    data[f"{column}_descriptor"] = data[f"{column}_descriptor_tail"].str.split("#").str.get(-2)
+                    data[f"{column}_codeValue"] = data[f"{column}_descriptor_tail"].str.split("#").str.get(-1)
+        data = data.drop(f"{column}_descriptor_tail", axis=1)
         ############################
         # Join to get descriptor constant
         ############################
