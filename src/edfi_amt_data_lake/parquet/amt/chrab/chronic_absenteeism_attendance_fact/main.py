@@ -3,6 +3,7 @@
 # The Ed-Fi Alliance licenses this file to you under the Apache License, Version 2.0.
 # See the LICENSE and NOTICES files in the project root for more information.
 
+from datetime import date
 
 import pandas as pd
 from decouple import config
@@ -19,6 +20,7 @@ from edfi_amt_data_lake.parquet.Common.pandasWrapper import (
     replace_null,
     subset,
     to_datetime_key,
+    get_descriptor_code_value_from_uri,
     toCsv,
 )
 
@@ -139,6 +141,8 @@ def chronic_absenteeism_attendance_fact_dataframe(
         | (result_data_frame['exitWithdrawDate'] >= result_data_frame['date'])
     )]
 
+    toCsv(result_data_frame, 'C:/temp/edfi/parquet/', 'result_data_frame1.csv', '')
+
     # - END
 
     # --- School attendance
@@ -216,6 +220,7 @@ def chronic_absenteeism_attendance_fact_dataframe(
         | (result_data_frame['schoolYearTypeReference.schoolYear'] == result_data_frame['sessionReference.schoolYear'])
     )]
 
+    toCsv(result_data_frame, 'C:/temp/edfi/parquet/', 'result_data_frame2.csv', '')
     # ---
 
     result_data_frame = subset(result_data_frame, [
@@ -231,6 +236,13 @@ def chronic_absenteeism_attendance_fact_dataframe(
         '_attendance_events_school',
         '_student_school_attendance_events'
     ])
+
+    get_descriptor_code_value_from_uri(result_data_frame, 'calendarEventDescriptor')
+    result_data_frame = result_data_frame[result_data_frame['calendarEventDescriptor'] == 'Instructional day'] 
+
+    result_data_frame['date_now'] = date.today()
+    result_data_frame['date_now'] = to_datetime_key(result_data_frame, 'date_now')
+    result_data_frame = result_data_frame[result_data_frame['date'] <= result_data_frame['date_now']]
 
     # --- Section attendance
 
@@ -344,6 +356,8 @@ def chronic_absenteeism_attendance_fact_dataframe(
         '_student_attendance_events_section',
         '_attendance_events_section'
     ])
+
+    toCsv(result_data_frame, 'C:/temp/edfi/parquet/', 'result_data_frame3.csv', '')
 
     result_data_frame['_student_section_attendance_events'] = '|'
 
