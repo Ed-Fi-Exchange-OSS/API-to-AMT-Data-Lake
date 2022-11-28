@@ -260,7 +260,11 @@ def get_student_demographic(content, item) -> pd.DataFrame:
         recordPrefix='descriptor_',
         errors='ignore'
     )
-    student_demographic_descriptor_normalize.loc[student_demographic_descriptor_normalize[f'descriptor_{item["descriptor"]}'].isnull(), f'descriptor_{item["descriptor"]}'] = ''
+    student_demographic_descriptor_normalize.loc[
+        student_demographic_descriptor_normalize[
+            f'descriptor_{item["descriptor"]}'
+        ].isnull(), f'descriptor_{item["descriptor"]}'
+    ] = ''
     # Get Descriptor
     get_descriptor_code_value_from_uri(
         student_demographic_descriptor_normalize,
@@ -318,7 +322,8 @@ def get_student_demographic(content, item) -> pd.DataFrame:
             student_demographic_descriptor_normalize_derived = student_demographic_descriptor_normalize.copy()
             student_demographic_descriptor_normalize_derived[derived_column] = student_demographic_descriptor_normalize[derived_column].explode().apply(pd.Series)
             student_demographic_descriptor_normalize_derived.loc[
-                student_demographic_descriptor_normalize_derived[derived_column].isnull(), derived_column
+                student_demographic_descriptor_normalize_derived[derived_column].isnull(),
+                derived_column
             ] = ''
             # Get Descriptor
             get_descriptor_code_value_from_uri(

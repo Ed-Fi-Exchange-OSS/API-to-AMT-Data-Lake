@@ -88,20 +88,20 @@ def class_period_dim_data_frame(
     addColumnIfNotExists(result_data_frame, 'classPeriodReference.classPeriodName')
 
     result_data_frame["ClassPeriodKey"] = (
-        result_data_frame["classPeriodReference.classPeriodName"] + "-"
-        + result_data_frame["courseOfferingReference.localCourseCode"] + "-"
-        + result_data_frame["courseOfferingReference.schoolId"].astype(str) + "-"
-        + result_data_frame["courseOfferingReference.schoolYear"].astype(str) + "-"
-        + result_data_frame["sectionIdentifier"] + "-"
-        + result_data_frame["courseOfferingReference.sessionName"]
+        result_data_frame["classPeriodReference.classPeriodName"]
+        + "-" + result_data_frame["courseOfferingReference.localCourseCode"]
+        + "-" + result_data_frame["courseOfferingReference.schoolId"].astype(str)
+        + "-" + result_data_frame["courseOfferingReference.schoolYear"].astype(str)
+        + "-" + result_data_frame["sectionIdentifier"]
+        + "-" + result_data_frame["courseOfferingReference.sessionName"]
     )
 
     result_data_frame["SectionKey"] = (
-        result_data_frame["courseOfferingReference.schoolId"].astype(str) + "-"
-        + result_data_frame["courseOfferingReference.localCourseCode"] + "-"
-        + result_data_frame["courseOfferingReference.schoolYear"].astype(str) + "-"
-        + result_data_frame["sectionIdentifier"] + "-"
-        + result_data_frame["courseOfferingReference.sessionName"]
+        result_data_frame["courseOfferingReference.schoolId"].astype(str)
+        + "-" + result_data_frame["courseOfferingReference.localCourseCode"]
+        + "-" + result_data_frame["courseOfferingReference.schoolYear"].astype(str)
+        + "-" + result_data_frame["sectionIdentifier"]
+        + "-" + result_data_frame["courseOfferingReference.sessionName"]
     )
 
     result_data_frame = renameColumns(result_data_frame, {
