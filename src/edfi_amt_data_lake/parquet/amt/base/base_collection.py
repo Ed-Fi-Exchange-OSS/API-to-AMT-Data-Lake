@@ -4,6 +4,9 @@
 # See the LICENSE and NOTICES files in the project root for more information.
 
 
+from edfi_amt_data_lake.parquet.amt.base.academic_time_period_dim.main import (
+    academic_time_period_dim,
+)
 from edfi_amt_data_lake.parquet.amt.base.all_student_school_dim.main import (
     all_student_school_dim,
 )
@@ -42,9 +45,6 @@ from edfi_amt_data_lake.parquet.amt.base.student_school_dim.main import (
 )
 from edfi_amt_data_lake.parquet.amt.base.student_section_dim.main import (
     student_section_dim,
-)
-from edfi_amt_data_lake.parquet.amt.base.academic_time_period_dim.main import (
-    academic_time_period_dim,
 )
 
 
