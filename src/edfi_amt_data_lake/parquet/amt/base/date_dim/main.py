@@ -20,15 +20,15 @@ from edfi_amt_data_lake.parquet.Common.pandasWrapper import (
 
 ENDPOINT_CALENDAR_DATES = 'calendarDates'
 RESULT_COLUMNS = [
-    'dateKey',
-    'date',
-    'day',
-    'month',
-    'monthName',
-    'calendarQuarter',
-    'calendarQuarterName',
-    'year',
-    'schoolYear'
+    'DateKey',
+    'Date',
+    'Day',
+    'Month',
+    'MonthName',
+    'CalendarQuarter',
+    'CalendarQuarterName',
+    'Year',
+    'SchoolYear'
 ]
 
 
@@ -74,6 +74,20 @@ def date_dim_data_frame(
     result_data_frame['calendarQuarter'] = result_data_frame['date'].dt.quarter
     result_data_frame['calendarQuarterName'] = result_data_frame['calendarQuarter'].map(
         {1: 'First', 2: 'Second', 3: 'Third', 4: 'Fourth'})
+    result_data_frame = renameColumns(
+        result_data_frame,
+        {
+            'dateKey': 'DateKey',
+            'date': 'Date',
+            'day': 'Day',
+            'month': 'Month',
+            'monthName': 'MonthName',
+            'calendarQuarter': 'CalendarQuarter',
+            'calendarQuarterName': 'CalendarQuarterName',
+            'year': 'Year',
+            'schoolYear': 'SchoolYear'
+        }
+    )
     # Select needed columns.
     result_data_frame = subset(result_data_frame, columns)
     return result_data_frame
