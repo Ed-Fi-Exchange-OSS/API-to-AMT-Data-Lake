@@ -126,7 +126,7 @@ def grading_period_dim_dataframe(
         + '-' + result_data_frame['schoolKey']
         + '-' + result_data_frame['gradingPeriodBeginDateKey']
     )
-    result_data_frame = renameColumns (
+    result_data_frame = renameColumns(
         result_data_frame,
         {
             'gradingPeriodKey': 'GradingPeriodKey',
