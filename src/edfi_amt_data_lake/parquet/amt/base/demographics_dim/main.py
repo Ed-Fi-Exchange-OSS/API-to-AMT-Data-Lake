@@ -5,13 +5,16 @@
 
 import pandas as pd
 from decouple import config
-
+from edfi_amt_data_lake.helper.data_frame_generation_result import (
+    data_frame_generation_result,
+)
 from edfi_amt_data_lake.parquet.Common.functions import getEndpointJson
 from edfi_amt_data_lake.parquet.Common.pandasWrapper import (
+    create_parquet_file,
     jsonNormalize,
     pd_concat,
     pdMerge,
-    saveParquetFile,
+    renameColumns,
     subset,
 )
 
@@ -24,9 +27,21 @@ ENDPOINT_LANGUAGE_USE_DESCRIPTOR = 'languageUseDescriptors'
 ENDPOINT_RACE_DESCRIPTOR = 'raceDescriptors'
 ENDPOINT_TRIBAL_AFFILIATION_DESCRIPTOR = 'tribalAffiliationDescriptors'
 ENDPOINT_STUDENT_CHARACTERISTIC_DESCRIPTOR = 'studentCharacteristicDescriptors'
+RESULT_COLUMNS = [
+    'DemographicKey',
+    'DemographicParentKey',
+    'DemographicLabel',
+    'ShortDescription'
+]
 
 
-def demographics_dim_dataframe(school_year) -> pd.DataFrame:
+@create_parquet_file
+def demographics_dim_dataframe(
+    file_name: str,
+    columns: list[str],
+    school_year: int
+):
+    file_name = file_name
     school_year_type_content = getEndpointJson(ENDPOINT_SCHOOL_YEAR_TYPE, config('SILVER_DATA_LOCATION'), school_year)
     cohort_year_type_descriptor_content = getEndpointJson(ENDPOINT_COHORT_YEAR_TYPE_DESCRIPTOR, config('SILVER_DATA_LOCATION'), school_year)
     disability_descriptor_content = getEndpointJson(ENDPOINT_DISABILITY_DESCRIPTOR, config('SILVER_DATA_LOCATION'), school_year)
@@ -352,9 +367,27 @@ def demographics_dim_dataframe(school_year) -> pd.DataFrame:
             student_characteristic_descriptor_normalize
         ],
     )
+    if result_data_frame is None:
+        return None
+    result_data_frame = renameColumns(
+        result_data_frame,
+        {
+            'demographicKey': 'DemographicKey',
+            'demographicParentKey': 'DemographicParentKey',
+            'demographicLabel': 'DemographicLabel',
+            'shortDescription': 'ShortDescription'
+        }
+    )
+    result_data_frame = subset(
+        result_data_frame,
+        columns
+    )
     return result_data_frame
 
 
-def demographics_dim(school_year) -> None:
-    result_data_frame = demographics_dim_dataframe(school_year)
-    saveParquetFile(result_data_frame, f"{config('PARQUET_FILES_LOCATION')}", "demographicDim.parquet", school_year)
+def demographics_dim(school_year) -> data_frame_generation_result:
+    return demographics_dim_dataframe(
+        file_name="demographicDim.parquet",
+        columns=RESULT_COLUMNS,
+        school_year=school_year
+    )
