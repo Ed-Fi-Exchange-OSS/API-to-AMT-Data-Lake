@@ -139,14 +139,6 @@ def grading_period_dim_dataframe(
             'schoolYear': 'SchoolYear'
         }
     )
-    'GradingPeriodKey',
-    'GradingPeriodBeginDateKey',
-    'GradingPeriodEndDateKey',
-    'GradingPeriodDescription',
-    'TotalInstructionalDays',
-    'PeriodSequence',
-    'SchoolKey',
-    'SchoolYear'
     # Select needed columns.
     result_data_frame = subset(result_data_frame, columns)
     return result_data_frame
