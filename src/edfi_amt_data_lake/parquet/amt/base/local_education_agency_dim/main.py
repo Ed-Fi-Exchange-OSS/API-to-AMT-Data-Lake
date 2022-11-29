@@ -3,27 +3,46 @@
 # The Ed-Fi Alliance licenses this file to you under the Apache License, Version 2.0.
 # See the LICENSE and NOTICES files in the project root for more information.
 
-import pandas as pd
 from decouple import config
 
+from edfi_amt_data_lake.helper.data_frame_generation_result import (
+    data_frame_generation_result,
+)
 from edfi_amt_data_lake.parquet.Common.functions import getEndpointJson
 from edfi_amt_data_lake.parquet.Common.pandasWrapper import (
+    create_parquet_file,
     get_descriptor_code_value_from_uri,
     get_reference_from_href,
     jsonNormalize,
     pdMerge,
     renameColumns,
     replace_null,
-    saveParquetFile,
     subset,
 )
 
 ENDPOINT_LOCAL_EDUCATION_AGENCY = 'localEducationAgencies'
 ENDPOINT_STATE_EDUCATION_AGENCY = 'stateEducationAgencies'
 ENDPOINT_EDUCATION_SERVICE_CENTER = 'educationServiceCenters'
+RESULT_COLUMNS = [
+    'LocalEducationAgencyKey',
+    'LocalEducationAgencyName',
+    'LocalEducationAgencyType',
+    'LocalEducationAgencyParentLocalEducationAgencyKey',
+    'LocalEducationAgencyStateEducationAgencyName',
+    'LocalEducationAgencyStateEducationAgencyKey',
+    'LocalEducationAgencyServiceCenterName',
+    'LocalEducationAgencyServiceCenterKey',
+    'LocalEducationAgencyCharterStatus',
+]
 
 
-def local_education_agency_dataframe(school_year) -> pd.DataFrame:
+@create_parquet_file
+def local_education_agency_dataframe(
+    file_name: str,
+    columns: list[str],
+    school_year: int
+):
+    file_name = file_name
     local_education_agency_content = getEndpointJson(ENDPOINT_LOCAL_EDUCATION_AGENCY, config('SILVER_DATA_LOCATION'), school_year)
     state_education_agency_content = getEndpointJson(ENDPOINT_STATE_EDUCATION_AGENCY, config('SILVER_DATA_LOCATION'), school_year)
     education_service_center_content = getEndpointJson(ENDPOINT_EDUCATION_SERVICE_CENTER, config('SILVER_DATA_LOCATION'), school_year)
@@ -156,21 +175,28 @@ def local_education_agency_dataframe(school_year) -> pd.DataFrame:
         suffixLeft='_localEducationAgencies',
         suffixRight='_educationServiceCenter'
     )
+    result_data_frame = renameColumns(
+        result_data_frame,
+        {
+            'localEducationAgencyKey': 'LocalEducationAgencyKey',
+            'localEducationAgencyName': 'LocalEducationAgencyName',
+            'localEducationAgencyType': 'LocalEducationAgencyType',
+            'localEducationAgencyParentLocalEducationAgencyKey': 'LocalEducationAgencyParentLocalEducationAgencyKey',
+            'localEducationAgencyStateEducationAgencyName': 'LocalEducationAgencyStateEducationAgencyName',
+            'localEducationAgencyStateEducationAgencyKey': 'LocalEducationAgencyStateEducationAgencyKey',
+            'localEducationAgencyServiceCenterName': 'LocalEducationAgencyServiceCenterName',
+            'localEducationAgencyServiceCenterKey': 'LocalEducationAgencyServiceCenterKey',
+            'localEducationAgencyCharterStatus': 'LocalEducationAgencyCharterStatus',
+        }
+    )
     # Select needed columns.
-    result_data_frame = subset(result_data_frame, [
-        'localEducationAgencyKey',
-        'localEducationAgencyName',
-        'localEducationAgencyType',
-        'localEducationAgencyParentLocalEducationAgencyKey',
-        'localEducationAgencyStateEducationAgencyName',
-        'localEducationAgencyStateEducationAgencyKey',
-        'localEducationAgencyServiceCenterName',
-        'localEducationAgencyServiceCenterKey',
-        'localEducationAgencyCharterStatus',
-    ])
+    result_data_frame = subset(result_data_frame, columns)
     return result_data_frame
 
 
-def local_education_agency_dim(school_year) -> None:
-    result_data_frame = local_education_agency_dataframe(school_year)
-    saveParquetFile(result_data_frame, f"{config('PARQUET_FILES_LOCATION')}", "localEducationAgencyDim.parquet", school_year)
+def local_education_agency_dim(school_year) -> data_frame_generation_result:
+    return local_education_agency_dataframe(
+        file_name="localEducationAgencyDim.parquet",
+        columns=RESULT_COLUMNS,
+        school_year=school_year
+    )
