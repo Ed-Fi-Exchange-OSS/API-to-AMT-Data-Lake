@@ -10,16 +10,15 @@ from edfi_amt_data_lake.parquet.amt.base.grading_period_dim.main import (
     grading_period_dim,
 )
 from edfi_amt_data_lake.parquet.Common.pandasWrapper import create_parquet_file
-
 RESULT_COLUMNS = [
-    'gradingPeriodKey',
-    'gradingPeriodBeginDateKey',
-    'gradingPeriodEndDateKey',
-    'gradingPeriodDescription',
-    'totalInstructionalDays',
-    'periodSequence',
-    'schoolKey',
-    'schoolYear'
+    'GradingPeriodKey',
+    'GradingPeriodBeginDateKey',
+    'GradingPeriodEndDateKey',
+    'GradingPeriodDescription',
+    'TotalInstructionalDays',
+    'PeriodSequence',
+    'SchoolKey',
+    'SchoolYear'
 ]
 
 

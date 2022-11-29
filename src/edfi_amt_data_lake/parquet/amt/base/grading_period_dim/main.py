@@ -22,14 +22,14 @@ from edfi_amt_data_lake.parquet.Common.pandasWrapper import (
 ENDPOINT_GRADING_PERIOD = 'gradingPeriods'
 ENDPOINT_GRADING_PERIOD_DESCRIPTOR = 'gradingPeriodDescriptors'
 RESULT_COLUMNS = [
-    'gradingPeriodKey',
-    'gradingPeriodBeginDateKey',
-    'gradingPeriodEndDateKey',
-    'gradingPeriodDescription',
-    'totalInstructionalDays',
-    'periodSequence',
-    'schoolKey',
-    'schoolYear'
+    'GradingPeriodKey',
+    'GradingPeriodBeginDateKey',
+    'GradingPeriodEndDateKey',
+    'GradingPeriodDescription',
+    'TotalInstructionalDays',
+    'PeriodSequence',
+    'SchoolKey',
+    'SchoolYear'
 ]
 
 
@@ -126,6 +126,27 @@ def grading_period_dim_dataframe(
         + '-' + result_data_frame['schoolKey']
         + '-' + result_data_frame['gradingPeriodBeginDateKey']
     )
+    result_data_frame = renameColumns (
+        result_data_frame,
+        {
+            'gradingPeriodKey': 'GradingPeriodKey',
+            'gradingPeriodBeginDateKey': 'GradingPeriodBeginDateKey',
+            'gradingPeriodEndDateKey': 'GradingPeriodEndDateKey',
+            'gradingPeriodDescription': 'GradingPeriodDescription',
+            'totalInstructionalDays': 'TotalInstructionalDays',
+            'periodSequence': 'PeriodSequence',
+            'schoolKey': 'SchoolKey',
+            'schoolYear': 'SchoolYear'
+        }
+    )
+    'GradingPeriodKey',
+    'GradingPeriodBeginDateKey',
+    'GradingPeriodEndDateKey',
+    'GradingPeriodDescription',
+    'TotalInstructionalDays',
+    'PeriodSequence',
+    'SchoolKey',
+    'SchoolYear'
     # Select needed columns.
     result_data_frame = subset(result_data_frame, columns)
     return result_data_frame
