@@ -5,77 +5,252 @@
 
 from decouple import config
 
+from edfi_amt_data_lake.helper.data_frame_generation_result import (
+    data_frame_generation_result,
+)
 from edfi_amt_data_lake.parquet.Common.functions import getEndpointJson
 from edfi_amt_data_lake.parquet.Common.pandasWrapper import (
-    addColumnIfNotExists,
+    create_parquet_file,
     get_descriptor_code_value_from_uri,
     jsonNormalize,
     pdMerge,
     renameColumns,
-    saveParquetFile,
-    subset,
 )
 
 ENDPOINT_ASSESSSMENTS = 'assessments'
 ENDPOINT_OBJECTIVEASSESSMENTS = 'objectiveAssessments'
+ENDPOINT_GRADE_LEVEL_DESCRIPTOR = 'gradeLevelDescriptors'
+ENDPOINT_ASSESSMENT_REPORTING_METHOD_DESCRIPTOR = 'assessmentReportingMethodDescriptors'
+ENDPOINT_ACADEMIC_SUBJECT_DESCRIPTOR = 'academicSubjectDescriptors'
+ENDPOINT_RESULT_DATATYPE_TYPE_DESCRIPTOR = 'resultDatatypeTypeDescriptors'
+
+RESULT_COLUMNS = [
+    'AssessmentFactKey',
+    'AssessmentKey',
+    'AssessmentIdentifier',
+    'Namespace',
+    'Title',
+    'Version',
+    'Category',
+    'AssessedGradeLevel',
+    'AcademicSubject',
+    'ResultDataType',
+    'ReportingMethod',
+    'ObjectiveAssessmentKey',
+    'IdentificationCode',
+    'ParentObjectiveAssessmentKey',
+    'ObjectiveAssessmentDescription',
+    'PercentOfAssessment',
+    'MinScore',
+    'MaxScore',
+    'LearningStandard'
+]
 
 
-def assessment_fact(school_year) -> None:
-
+@create_parquet_file
+def assessment_fact_data_frame(
+    file_name: str,
+    columns: list[str],
+    school_year: int
+) -> None:
+    file_name = file_name
     silverDataLocation = config('SILVER_DATA_LOCATION')
     assessmentsContent = getEndpointJson(ENDPOINT_ASSESSSMENTS, silverDataLocation, school_year)
     objectiveAssessmentsContent = getEndpointJson(ENDPOINT_OBJECTIVEASSESSMENTS, silverDataLocation, school_year)
-
-    assessmentsContentNormalized = jsonNormalize(
-        assessmentsContent,
+    grade_level_descriptor_content = getEndpointJson(ENDPOINT_GRADE_LEVEL_DESCRIPTOR, silverDataLocation, school_year)
+    assessment_reporting_method_descriptor_content = getEndpointJson(ENDPOINT_ASSESSMENT_REPORTING_METHOD_DESCRIPTOR, silverDataLocation, school_year)
+    academic_subject_descriptor_content = getEndpointJson(ENDPOINT_ACADEMIC_SUBJECT_DESCRIPTOR, silverDataLocation, school_year)
+    result_datatype_type_descriptor_content = getEndpointJson(ENDPOINT_RESULT_DATATYPE_TYPE_DESCRIPTOR, silverDataLocation, school_year)
+    # Descriptors
+    ############################
+    # gradeLevelDescriptor
+    ############################
+    grade_level_descriptor_normalized = jsonNormalize(
+        grade_level_descriptor_content,
         recordPath=None,
-        meta=None,
+        meta=[
+            'gradeLevelDescriptorId',
+            'codeValue',
+            'description',
+        ],
         metaPrefix=None,
         recordPrefix=None,
         errors='ignore'
     )
-
-    # Keep the fields I actually need
-    assessmentsContentNormalized = subset(assessmentsContentNormalized, [
-        'assessmentIdentifier',
-        'namespace',
-        'assessmentCategoryDescriptor',
-        'assessmentTitle',
-        'assessmentVersion'
-    ])
-
+    grade_level_descriptor_normalized = renameColumns(
+        grade_level_descriptor_normalized,
+        {
+            'codeValue': 'gradeLevelDescriptor',
+            'description': 'gradeLevelDescriptorDescription'
+        }
+    )
+    ############################
+    # assessment_reporting_method_descriptor
+    ############################
+    assessment_reporting_method_descriptor_normalized = jsonNormalize(
+        assessment_reporting_method_descriptor_content,
+        recordPath=None,
+        meta=[
+            'assessmentReportingMethodDescriptorId',
+            'codeValue',
+            'description',
+        ],
+        metaPrefix=None,
+        recordPrefix=None,
+        errors='ignore'
+    )
+    assessment_reporting_method_descriptor_normalized = renameColumns(
+        assessment_reporting_method_descriptor_normalized,
+        {
+            'codeValue': 'assessmentReportingMethodDescriptor',
+            'description': 'assessmentReportingMethodDescriptorDescription'
+        }
+    )
+    ############################
+    # academic_subject_descriptor
+    ############################
+    academic_subject_descriptor_normalized = jsonNormalize(
+        academic_subject_descriptor_content,
+        recordPath=None,
+        meta=[
+            'academicSubjectDescriptorId',
+            'codeValue',
+            'description',
+        ],
+        metaPrefix=None,
+        recordPrefix=None,
+        errors='ignore'
+    )
+    academic_subject_descriptor_normalized = renameColumns(
+        academic_subject_descriptor_normalized,
+        {
+            'codeValue': 'academicSubjectDescriptor',
+            'description': 'academicSubjectDescriptorDescription'
+        }
+    )
+    ############################
+    # result_datatype_type_descriptor
+    ############################
+    result_datatype_type_descriptor_normalized = jsonNormalize(
+        result_datatype_type_descriptor_content,
+        recordPath=None,
+        meta=[
+            'resultDatatypeTypeDescriptorId',
+            'codeValue',
+            'description',
+        ],
+        metaPrefix=None,
+        recordPrefix=None,
+        errors='ignore'
+    )
+    result_datatype_type_descriptor_normalized = renameColumns(
+        result_datatype_type_descriptor_normalized,
+        {
+            'codeValue': 'resultDatatypeTypeDescriptor',
+            'description': 'resultDatatypeTypeDescriptorDescription'
+        }
+    )
+    # assessments
+    assessmentsContentNormalized = jsonNormalize(
+        assessmentsContent,
+        recordPath=None,
+        meta=[
+            'assessmentIdentifier',
+            'namespace',
+            'assessmentCategoryDescriptor',
+            'assessmentTitle',
+            'assessmentVersion'
+        ],
+        metaPrefix=None,
+        recordPrefix=None,
+        errors='ignore'
+    )
     # Assessment Assessed Grade Levels normalization
     assessmentsAssessedGradeLevelsContentNormalized = jsonNormalize(
         assessmentsContent,
         recordPath=['assessedGradeLevels'],
-        meta=['assessmentIdentifier', 'namespace'],
+        meta=[
+            'assessmentIdentifier',
+            'namespace'
+        ],
+        recordMeta=['gradeLevelDescriptor'],
         metaPrefix=None,
         recordPrefix=None,
         errors='ignore'
     )
-
+    get_descriptor_code_value_from_uri(assessmentsAssessedGradeLevelsContentNormalized, 'gradeLevelDescriptor')
+    assessmentsAssessedGradeLevelsContentNormalized = pdMerge(
+        left=assessmentsAssessedGradeLevelsContentNormalized,
+        right=grade_level_descriptor_normalized,
+        how='left',
+        leftOn=['gradeLevelDescriptor'],
+        rightOn=['gradeLevelDescriptor'],
+        suffixLeft=None,
+        suffixRight=None
+    )
     # Assessment Scores normalization
     assessmentsScoresContentNormalized = jsonNormalize(
         assessmentsContent,
         recordPath=['scores'],
-        meta=['assessmentIdentifier', 'namespace'],
+        meta=[
+            'assessmentIdentifier',
+            'namespace'
+        ],
+        recordMeta=[
+            'assessmentReportingMethodDescriptor',
+            'maximumScore',
+            'minimumScore',
+            'resultDatatypeTypeDescriptor'
+        ],
         metaPrefix=None,
         recordPrefix=None,
         errors='ignore'
     )
-
+    get_descriptor_code_value_from_uri(assessmentsScoresContentNormalized, 'assessmentReportingMethodDescriptor')
+    get_descriptor_code_value_from_uri(assessmentsScoresContentNormalized, 'resultDatatypeTypeDescriptor')
+    assessmentsScoresContentNormalized = pdMerge(
+        left=assessmentsScoresContentNormalized,
+        right=result_datatype_type_descriptor_normalized,
+        how='left',
+        leftOn=['resultDatatypeTypeDescriptor'],
+        rightOn=['resultDatatypeTypeDescriptor'],
+        suffixLeft=None,
+        suffixRight=None
+    )
+    assessmentsScoresContentNormalized = pdMerge(
+        left=assessmentsScoresContentNormalized,
+        right=assessment_reporting_method_descriptor_normalized,
+        how='left',
+        leftOn=['assessmentReportingMethodDescriptor'],
+        rightOn=['assessmentReportingMethodDescriptor'],
+        suffixLeft=None,
+        suffixRight=None
+    )
     # Assessment Academic Subjects normalization
     assessmentsAcademicSubjectsContentNormalized = jsonNormalize(
         assessmentsContent,
         recordPath=['academicSubjects'],
-        meta=['assessmentIdentifier', 'namespace'],
+        meta=[
+            'assessmentIdentifier',
+            'namespace'
+        ],
+        recordMeta=['academicSubjectDescriptor'],
         metaPrefix=None,
         recordPrefix=None,
         errors='ignore'
     )
-
+    get_descriptor_code_value_from_uri(assessmentsAcademicSubjectsContentNormalized, 'academicSubjectDescriptor')
+    assessmentsAcademicSubjectsContentNormalized = pdMerge(
+        left=assessmentsAcademicSubjectsContentNormalized,
+        right=academic_subject_descriptor_normalized,
+        how='left',
+        leftOn=['academicSubjectDescriptor'],
+        rightOn=['academicSubjectDescriptor'],
+        suffixLeft=None,
+        suffixRight=None
+    )
     # Assessed Grade Levels merge
-    restultDataFrame = pdMerge(
+    result_data_frame = pdMerge(
         left=assessmentsContentNormalized,
         right=assessmentsAssessedGradeLevelsContentNormalized,
         how='left',
@@ -84,10 +259,11 @@ def assessment_fact(school_year) -> None:
         suffixLeft=None,
         suffixRight=None
     )
-
+    if result_data_frame is None:
+        return None
     # Scores merge
-    restultDataFrame = pdMerge(
-        left=restultDataFrame,
+    result_data_frame = pdMerge(
+        left=result_data_frame,
         right=assessmentsScoresContentNormalized,
         how='left',
         leftOn=['assessmentIdentifier', 'namespace'],
@@ -95,10 +271,11 @@ def assessment_fact(school_year) -> None:
         suffixLeft=None,
         suffixRight=None
     )
-
+    if result_data_frame is None:
+        return None
     # Academic Subjects merge
-    restultDataFrame = pdMerge(
-        left=restultDataFrame,
+    result_data_frame = pdMerge(
+        left=result_data_frame,
         right=assessmentsAcademicSubjectsContentNormalized,
         how='left',
         leftOn=['assessmentIdentifier', 'namespace'],
@@ -106,34 +283,26 @@ def assessment_fact(school_year) -> None:
         suffixLeft=None,
         suffixRight=None
     )
-
+    if result_data_frame is None:
+        return None
     # Objective Assessment
     objectiveAssessmentsContentNormalized = jsonNormalize(
         objectiveAssessmentsContent,
         recordPath=None,
-        meta=None,
+        meta=[
+            'assessmentReference.namespace',
+            'assessmentReference.assessmentIdentifier',
+            'identificationCode',
+            'parentObjectiveAssessmentReference.assessmentIdentifier',
+            'parentObjectiveAssessmentReference.identificationCode',
+            'parentObjectiveAssessmentReference.namespace',
+            'description',
+            'percentOfAssessment'
+        ],
         metaPrefix=None,
         recordPrefix=None,
         errors='ignore'
     )
-
-    addColumnIfNotExists(objectiveAssessmentsContentNormalized, 'parentObjectiveAssessmentReference.assessmentIdentifier')
-    addColumnIfNotExists(objectiveAssessmentsContentNormalized, 'parentObjectiveAssessmentReference.identificationCode')
-    addColumnIfNotExists(objectiveAssessmentsContentNormalized, 'parentObjectiveAssessmentReference.namespace')
-    addColumnIfNotExists(objectiveAssessmentsContentNormalized, 'description')
-
-    # Keep the fields I actually need
-    objectiveAssessmentsContentNormalized = subset(objectiveAssessmentsContentNormalized, [
-        'assessmentReference.namespace',
-        'assessmentReference.assessmentIdentifier',
-        'identificationCode',
-        'parentObjectiveAssessmentReference.assessmentIdentifier',
-        'parentObjectiveAssessmentReference.identificationCode',
-        'parentObjectiveAssessmentReference.namespace',
-        'description',
-        'percentOfAssessment'
-    ])
-
     # Objective Assessment Scores normalization
     objectiveAssessmentsScoresContentNormalized = jsonNormalize(
         objectiveAssessmentsContent,
@@ -143,11 +312,36 @@ def assessment_fact(school_year) -> None:
             ['assessmentReference', 'namespace'],
             'identificationCode'
         ],
+        recordMeta=[
+            'assessmentReportingMethodDescriptor',
+            'maximumScore',
+            'minimumScore',
+            'resultDatatypeTypeDescriptor'
+        ],
         metaPrefix=None,
         recordPrefix=None,
         errors='ignore'
     )
-
+    get_descriptor_code_value_from_uri(objectiveAssessmentsScoresContentNormalized, 'assessmentReportingMethodDescriptor')
+    get_descriptor_code_value_from_uri(objectiveAssessmentsScoresContentNormalized, 'resultDatatypeTypeDescriptor')
+    objectiveAssessmentsScoresContentNormalized = pdMerge(
+        left=objectiveAssessmentsScoresContentNormalized,
+        right=result_datatype_type_descriptor_normalized,
+        how='left',
+        leftOn=['resultDatatypeTypeDescriptor'],
+        rightOn=['resultDatatypeTypeDescriptor'],
+        suffixLeft=None,
+        suffixRight=None
+    )
+    objectiveAssessmentsScoresContentNormalized = pdMerge(
+        left=objectiveAssessmentsScoresContentNormalized,
+        right=assessment_reporting_method_descriptor_normalized,
+        how='left',
+        leftOn=['assessmentReportingMethodDescriptor'],
+        rightOn=['assessmentReportingMethodDescriptor'],
+        suffixLeft=None,
+        suffixRight=None
+    )
     # Objective Assessment Learning Standards normalization
     objectiveAssessmentsLearningStandardsContentNormalized = jsonNormalize(
         objectiveAssessmentsContent,
@@ -157,13 +351,17 @@ def assessment_fact(school_year) -> None:
             ['assessmentReference', 'namespace'],
             'identificationCode'
         ],
+        recordMeta=[
+            'learningStandardReference.learningStandardId',
+            'learningStandardReference.link.href'
+        ],
         metaPrefix=None,
         recordPrefix=None,
         errors='ignore'
     )
 
     # Objective Scores merge
-    restultObjectiveDataFrame = pdMerge(
+    result_objective_data_frame = pdMerge(
         left=objectiveAssessmentsContentNormalized,
         right=objectiveAssessmentsScoresContentNormalized,
         how='left',
@@ -172,10 +370,11 @@ def assessment_fact(school_year) -> None:
         suffixLeft=None,
         suffixRight=None
     )
-
+    if result_objective_data_frame is None:
+        return None
     # Objective Learning Standards merge
-    restultObjectiveDataFrame = pdMerge(
-        left=restultObjectiveDataFrame,
+    result_objective_data_frame = pdMerge(
+        left=result_objective_data_frame,
         right=objectiveAssessmentsLearningStandardsContentNormalized,
         how='left',
         leftOn=['assessmentReference.assessmentIdentifier', 'assessmentReference.namespace', 'identificationCode'],
@@ -183,78 +382,80 @@ def assessment_fact(school_year) -> None:
         suffixLeft=None,
         suffixRight=None
     )
-
+    if result_objective_data_frame is None:
+        return None
     # Merge Assessment data and Objective Assessment data
-    restultDataFrame = pdMerge(
-        left=restultDataFrame,
-        right=restultObjectiveDataFrame,
+    result_data_frame = pdMerge(
+        left=result_data_frame,
+        right=result_objective_data_frame,
         how='left',
         leftOn=['assessmentIdentifier', 'namespace'],
         rightOn=['assessmentReference.assessmentIdentifier', 'assessmentReference.namespace'],
         suffixLeft=None,
         suffixRight='_objective'
     )
-
+    if result_data_frame is None:
+        return None
     # Removes namespace from Category Descriptor
-    get_descriptor_code_value_from_uri(restultDataFrame, 'assessmentCategoryDescriptor')
+    get_descriptor_code_value_from_uri(result_data_frame, 'assessmentCategoryDescriptor')
 
     # Removes namespace from Assessed Grade Level Descriptor
-    get_descriptor_code_value_from_uri(restultDataFrame, 'gradeLevelDescriptor')
+    get_descriptor_code_value_from_uri(result_data_frame, 'gradeLevelDescriptor')
 
     # Removes namespace from Academic Subject Descriptor
-    get_descriptor_code_value_from_uri(restultDataFrame, 'academicSubjectDescriptor')
+    get_descriptor_code_value_from_uri(result_data_frame, 'academicSubjectDescriptor')
 
     # Removes namespace from Result Data Type Descriptor
-    get_descriptor_code_value_from_uri(restultDataFrame, 'resultDatatypeTypeDescriptor')
+    get_descriptor_code_value_from_uri(result_data_frame, 'resultDatatypeTypeDescriptor')
 
     # Removes namespace from Reporting Method Descriptor
-    get_descriptor_code_value_from_uri(restultDataFrame, 'assessmentReportingMethodDescriptor')
+    get_descriptor_code_value_from_uri(result_data_frame, 'assessmentReportingMethodDescriptor')
 
     # Removes namespace from Objective Assessment Reporting Method Descriptor
-    get_descriptor_code_value_from_uri(restultDataFrame, 'assessmentReportingMethodDescriptor_objective')
+    get_descriptor_code_value_from_uri(result_data_frame, 'assessmentReportingMethodDescriptor_objective')
 
     # Removes namespace from Objective Result Datatype Type Descriptor
-    get_descriptor_code_value_from_uri(restultDataFrame, 'resultDatatypeTypeDescriptor_objective')
+    get_descriptor_code_value_from_uri(result_data_frame, 'resultDatatypeTypeDescriptor_objective')
 
     # Replace any N/A value with empty
-    restultDataFrame = restultDataFrame.fillna('')
+    result_data_frame = result_data_frame.fillna('')
 
     # Concatanation fields
-    restultDataFrame['AssessmentFactKey'] = (
-        restultDataFrame['assessmentIdentifier'] + '-'
-        + restultDataFrame['namespace'] + '-'
-        + restultDataFrame['gradeLevelDescriptor'] + '-'
-        + restultDataFrame['assessmentReportingMethodDescriptor'] + '-'
-        + restultDataFrame['academicSubjectDescriptor'] + '-'
-        + restultDataFrame['identificationCode'] + '-'
-        + restultDataFrame['parentObjectiveAssessmentReference.identificationCode'] + '-'
-        + restultDataFrame['resultDatatypeTypeDescriptor_objective'] + '-'
-        + restultDataFrame['learningStandardReference.learningStandardId']
+    result_data_frame['AssessmentFactKey'] = (
+        result_data_frame['assessmentIdentifier'] + '-'
+        + result_data_frame['namespace'] + '-'
+        + result_data_frame['gradeLevelDescriptorId'].astype(str) + '-'
+        + result_data_frame['assessmentReportingMethodDescriptorId'].astype(str) + '-'
+        + result_data_frame['academicSubjectDescriptorId'].astype(str) + '-'
+        + result_data_frame['identificationCode'] + '-'
+        + result_data_frame['parentObjectiveAssessmentReference.identificationCode'] + '-'
+        + result_data_frame['assessmentReportingMethodDescriptorId_objective'].astype(str) + '-'
+        + result_data_frame['learningStandardReference.learningStandardId']
     )
 
-    restultDataFrame['AssessmentKey'] = (
-        restultDataFrame['assessmentIdentifier'] + '-'
-        + restultDataFrame['namespace']
+    result_data_frame['AssessmentKey'] = (
+        result_data_frame['assessmentIdentifier'] + '-'
+        + result_data_frame['namespace']
     )
 
-    restultDataFrame['ObjectiveAssessmentKey'] = (
-        restultDataFrame['assessmentReference.assessmentIdentifier'] + '-'
-        + restultDataFrame['identificationCode'] + '-'
-        + restultDataFrame['assessmentReference.namespace']
+    result_data_frame['ObjectiveAssessmentKey'] = (
+        result_data_frame['assessmentReference.assessmentIdentifier'] + '-'
+        + result_data_frame['identificationCode'] + '-'
+        + result_data_frame['assessmentReference.namespace']
     )
 
-    restultDataFrame['ParentObjectiveAssessmentKey'] = (
-        restultDataFrame['parentObjectiveAssessmentReference.assessmentIdentifier'] + '-'
-        + restultDataFrame['parentObjectiveAssessmentReference.identificationCode'] + '-'
-        + restultDataFrame['parentObjectiveAssessmentReference.namespace']
+    result_data_frame['ParentObjectiveAssessmentKey'] = (
+        result_data_frame['parentObjectiveAssessmentReference.assessmentIdentifier'] + '-'
+        + result_data_frame['parentObjectiveAssessmentReference.identificationCode'] + '-'
+        + result_data_frame['parentObjectiveAssessmentReference.namespace']
     )
 
     # If this field has '--' it's because there is no Key
-    restultDataFrame.loc[restultDataFrame.ObjectiveAssessmentKey == '--', 'ObjectiveAssessmentKey'] = ''
-    restultDataFrame.loc[restultDataFrame.ParentObjectiveAssessmentKey == '--', 'ParentObjectiveAssessmentKey'] = ''
+    result_data_frame.loc[result_data_frame.ObjectiveAssessmentKey == '--', 'ObjectiveAssessmentKey'] = ''
+    result_data_frame.loc[result_data_frame.ParentObjectiveAssessmentKey == '--', 'ParentObjectiveAssessmentKey'] = ''
 
     # Rename columns to match AMT
-    restultDataFrame = renameColumns(restultDataFrame, {
+    result_data_frame = renameColumns(result_data_frame, {
         'assessmentIdentifier': 'AssessmentIdentifier',
         'namespace': 'Namespace',
         'assessmentTitle': 'Title',
@@ -272,38 +473,26 @@ def assessment_fact(school_year) -> None:
         'learningStandardReference.learningStandardId': 'LearningStandard'
     })
 
-    restultDataFrame.loc[restultDataFrame['ResultDataType'] == '', 'ResultDataType'] = restultDataFrame['resultDatatypeTypeDescriptor_objective']
-    restultDataFrame.loc[restultDataFrame['ReportingMethod'] == '', 'ReportingMethod'] = restultDataFrame['assessmentReportingMethodDescriptor_objective']
+    result_data_frame.loc[result_data_frame['ResultDataType'] == '', 'ResultDataType'] = result_data_frame['resultDatatypeTypeDescriptor_objective']
+    result_data_frame.loc[result_data_frame['ReportingMethod'] == '', 'ReportingMethod'] = result_data_frame['assessmentReportingMethodDescriptor_objective']
 
-    restultDataFrame.loc[restultDataFrame['MinScore'] == '', 'MinScore'] = restultDataFrame['minimumScore_objective']
-    restultDataFrame.loc[restultDataFrame['MinScore'] == '', 'MinScore'] = restultDataFrame['maximumScore_objective']
+    result_data_frame.loc[result_data_frame['MinScore'] == '', 'MinScore'] = result_data_frame['minimumScore_objective']
+    result_data_frame.loc[result_data_frame['MinScore'] == '', 'MinScore'] = result_data_frame['maximumScore_objective']
 
     # Converting some fields to str as preparation for the parquet file.
-    restultDataFrame['Version'] = restultDataFrame['Version'].astype(str)
-    restultDataFrame['PercentOfAssessment'] = restultDataFrame['PercentOfAssessment'].astype(str)
+    result_data_frame['Version'] = result_data_frame['Version'].astype(str)
+    result_data_frame['PercentOfAssessment'] = result_data_frame['PercentOfAssessment'].astype(str)
 
     # Reorder columns to match AMT
-    restultDataFrame = restultDataFrame[
-        [
-            'AssessmentFactKey',
-            'AssessmentKey',
-            'AssessmentIdentifier',
-            'Namespace',
-            'Title',
-            'Version',
-            'Category',
-            'AssessedGradeLevel',
-            'AcademicSubject',
-            'ResultDataType',
-            'ReportingMethod',
-            'ObjectiveAssessmentKey',
-            'IdentificationCode',
-            'ParentObjectiveAssessmentKey',
-            'ObjectiveAssessmentDescription',
-            'PercentOfAssessment',
-            'MinScore',
-            'MaxScore',
-            'LearningStandard'
-        ]]
+    result_data_frame = result_data_frame[
+        columns
+    ]
+    return result_data_frame
 
-    saveParquetFile(restultDataFrame, f"{config('PARQUET_FILES_LOCATION')}", "asmt_AssessmentFact.parquet", school_year)
+
+def assessment_fact(school_year) -> data_frame_generation_result:
+    return assessment_fact_data_frame(
+        file_name="asmt_AssessmentFact.parquet",
+        columns=RESULT_COLUMNS,
+        school_year=school_year
+    )
