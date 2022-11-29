@@ -5,20 +5,40 @@
 
 from decouple import config
 
+from edfi_amt_data_lake.helper.data_frame_generation_result import (
+    data_frame_generation_result,
+)
 from edfi_amt_data_lake.parquet.Common.functions import getEndpointJson
 from edfi_amt_data_lake.parquet.Common.pandasWrapper import (
+    create_parquet_file,
     jsonNormalize,
     renameColumns,
-    saveParquetFile,
     subset,
     to_datetime,
     to_datetime_key,
 )
 
 ENDPOINT_CALENDAR_DATES = 'calendarDates'
+RESULT_COLUMNS = [
+    'DateKey',
+    'Date',
+    'Day',
+    'Month',
+    'MonthName',
+    'CalendarQuarter',
+    'CalendarQuarterName',
+    'Year',
+    'SchoolYear'
+]
 
 
-def date_dim(school_year) -> None:
+@create_parquet_file
+def date_dim_data_frame(
+    file_name: str,
+    columns: list[str],
+    school_year: int
+):
+    file_name = file_name
     calendar_date_content = getEndpointJson(ENDPOINT_CALENDAR_DATES, config('SILVER_DATA_LOCATION'), school_year)
     ############################
     # calendarDates
@@ -42,6 +62,8 @@ def date_dim(school_year) -> None:
         'date',
         'schoolYear'
     ])
+    if result_data_frame is None:
+        return None
     result_data_frame.drop_duplicates()
     result_data_frame['dateKey'] = to_datetime_key(result_data_frame, 'date')
     result_data_frame['date'] = to_datetime(result_data_frame, 'date')
@@ -52,17 +74,28 @@ def date_dim(school_year) -> None:
     result_data_frame['calendarQuarter'] = result_data_frame['date'].dt.quarter
     result_data_frame['calendarQuarterName'] = result_data_frame['calendarQuarter'].map(
         {1: 'First', 2: 'Second', 3: 'Third', 4: 'Fourth'})
+    result_data_frame = renameColumns(
+        result_data_frame,
+        {
+            'dateKey': 'DateKey',
+            'date': 'Date',
+            'day': 'Day',
+            'month': 'Month',
+            'monthName': 'MonthName',
+            'calendarQuarter': 'CalendarQuarter',
+            'calendarQuarterName': 'CalendarQuarterName',
+            'year': 'Year',
+            'schoolYear': 'SchoolYear'
+        }
+    )
     # Select needed columns.
-    result_data_frame = subset(result_data_frame, [
-        'dateKey',
-        'date',
-        'day',
-        'month',
-        'monthName',
-        'calendarQuarter',
-        'calendarQuarterName',
-        'year',
-        'schoolYear'
-    ])
+    result_data_frame = subset(result_data_frame, columns)
+    return result_data_frame
 
-    saveParquetFile(result_data_frame, f"{config('PARQUET_FILES_LOCATION')}", "dateDim.parquet", school_year)
+
+def date_dim(school_year) -> data_frame_generation_result:
+    return date_dim_data_frame(
+        file_name="dateDim.parquet",
+        columns=RESULT_COLUMNS,
+        school_year=school_year
+    )
