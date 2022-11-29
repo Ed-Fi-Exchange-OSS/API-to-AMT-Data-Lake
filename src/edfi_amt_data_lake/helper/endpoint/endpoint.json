@@ -33,6 +33,7 @@
     {"endpoint": "/ed-fi/programs", "table_name": "base_edfi_programs" },
     {"endpoint": "/ed-fi/programTypeDescriptors", "table_name": "edfi_descriptors_programType"},
     {"endpoint": "/ed-fi/raceDescriptors", "table_name": "base_edfi_descriptors"},
+    {"endpoint": "/ed-fi/resultDatatypeTypeDescriptors", "table_name": "base_edfi_descriptors"},
     {"endpoint": "/ed-fi/schools", "table_name": "base_edfi_schools" },
     {"endpoint": "/ed-fi/schoolFoodServiceProgramServiceDescriptors", "table_name": "edfi_descriptors_school_food_service_program_service"},
     {"endpoint": "/ed-fi/schoolTypeDescriptors", "table_name": "base_edfi_descriptors"},
