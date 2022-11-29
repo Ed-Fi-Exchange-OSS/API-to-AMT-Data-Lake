@@ -49,7 +49,7 @@ def get_change_version_values_from_api(school_year="") -> ChangeVersionValues:
 def _delete_files() -> None:
     import shutil
     path = config("CHANGE_VERSION_FILEPATH")
-    shutil.rmtree(path)
+    shutil.rmtree(path, ignore_errors=True, onerror=None)
 
 
 def _update_change_version_file(pathfilename: str, oldestChangeVersion: str, newestChangeVersion: str) -> None:
@@ -80,6 +80,7 @@ def get_change_version_updated(school_year) -> bool:
         _delete_files()
         create_file_if_not_exists(pathfilename, path)
         _update_change_version_file(pathfilename, "0", changeVersionFromAPI.newestChangeVersion)
+        return True
 
     if changeVersionFromFile.newestChangeVersion == 0:
         # First Scenario: Fist time we are saving these values locally.
