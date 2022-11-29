@@ -3,25 +3,43 @@
 # The Ed-Fi Alliance licenses this file to you under the Apache License, Version 2.0.
 # See the LICENSE and NOTICES files in the project root for more information.
 
-import pandas as pd
 from decouple import config
 
+from edfi_amt_data_lake.helper.data_frame_generation_result import (
+    data_frame_generation_result,
+)
 from edfi_amt_data_lake.parquet.Common.functions import getEndpointJson
 from edfi_amt_data_lake.parquet.Common.pandasWrapper import (
+    create_parquet_file,
     get_descriptor_code_value_from_uri,
     jsonNormalize,
     pdMerge,
     renameColumns,
-    saveParquetFile,
     subset,
     to_datetime_key,
 )
 
 ENDPOINT_GRADING_PERIOD = 'gradingPeriods'
 ENDPOINT_GRADING_PERIOD_DESCRIPTOR = 'gradingPeriodDescriptors'
+RESULT_COLUMNS = [
+    'gradingPeriodKey',
+    'gradingPeriodBeginDateKey',
+    'gradingPeriodEndDateKey',
+    'gradingPeriodDescription',
+    'totalInstructionalDays',
+    'periodSequence',
+    'schoolKey',
+    'schoolYear'
+]
 
 
-def grading_period_dim_dataframe(school_year) -> pd.DataFrame:
+@create_parquet_file
+def grading_period_dim_dataframe(
+    file_name: str,
+    columns: list[str],
+    school_year: int
+):
+    file_name = file_name
     grading_period_content = getEndpointJson(ENDPOINT_GRADING_PERIOD, config('SILVER_DATA_LOCATION'), school_year)
     grading_period_descriptor_content = getEndpointJson(ENDPOINT_GRADING_PERIOD_DESCRIPTOR, config('SILVER_DATA_LOCATION'), school_year)
     ############################
@@ -95,6 +113,8 @@ def grading_period_dim_dataframe(school_year) -> pd.DataFrame:
         suffixLeft='_grading_period',
         suffixRight='_grading_period_descriptor'
     )
+    if result_data_frame is None:
+        return None
     result_data_frame['gradingPeriodDescriptorId'] = result_data_frame['gradingPeriodDescriptorId'].astype(str)
     result_data_frame['schoolKey'] = result_data_frame['schoolId'].astype(str)
     result_data_frame['schoolYear'] = result_data_frame['schoolYear'].astype(str)
@@ -106,23 +126,14 @@ def grading_period_dim_dataframe(school_year) -> pd.DataFrame:
         + '-' + result_data_frame['schoolKey']
         + '-' + result_data_frame['gradingPeriodBeginDateKey']
     )
-
     # Select needed columns.
-    result_data_frame = subset(result_data_frame, [
-        'gradingPeriodKey',
-        'gradingPeriodBeginDateKey',
-        'gradingPeriodEndDateKey',
-        'gradingPeriodDescription',
-        'totalInstructionalDays',
-        'periodSequence',
-        'schoolKey',
-        'schoolYear'
-    ])
-
+    result_data_frame = subset(result_data_frame, columns)
     return result_data_frame
 
 
-def grading_period_dim(school_year) -> None:
-    result_data_frame = grading_period_dim_dataframe(school_year)
-
-    saveParquetFile(result_data_frame, f"{config('PARQUET_FILES_LOCATION')}", "gradingPeriodDim.parquet", school_year)
+def grading_period_dim(school_year) -> data_frame_generation_result:
+    return grading_period_dim_dataframe(
+        file_name="gradingPeriodDim.parquet",
+        columns=RESULT_COLUMNS,
+        school_year=school_year
+    )
