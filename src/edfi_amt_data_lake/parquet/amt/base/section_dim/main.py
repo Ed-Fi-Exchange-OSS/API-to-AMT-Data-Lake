@@ -3,16 +3,18 @@
 # The Ed-Fi Alliance licenses this file to you under the Apache License, Version 2.0.
 # See the LICENSE and NOTICES files in the project root for more information.
 
-import pandas as pd
 from decouple import config
 
+from edfi_amt_data_lake.helper.data_frame_generation_result import (
+    data_frame_generation_result,
+)
 from edfi_amt_data_lake.parquet.Common.functions import getEndpointJson
 from edfi_amt_data_lake.parquet.Common.pandasWrapper import (
+    create_parquet_file,
     get_reference_from_href,
     jsonNormalize,
     pdMerge,
     renameColumns,
-    saveParquetFile,
 )
 
 ENDPOINT_ACADEMIC_SUBJECT_DESCRIPTOR = 'academicSubjectDescriptors'
@@ -23,9 +25,28 @@ ENDPOINT_COURSE_OFFERINGS = 'courseOfferings'
 ENDPOINT_SCHOOLS = 'schools'
 ENDPOINT_SECTIONS = 'sections'
 ENDPOINT_SESSIONS = 'sessions'
+RESULT_COLUMNS = [
+    'SchoolKey',
+    'SectionKey',
+    'Description',
+    'SectionName',
+    'SessionName',
+    'LocalCourseCode',
+    'SchoolYear',
+    'EducationalEnvironmentDescriptor',
+    'LocalEducationAgencyKey',
+    'CourseTitle',
+    'SessionKey'
+]
 
 
-def section_dim_dataframe(school_year) -> pd.DataFrame:
+@create_parquet_file
+def section_dim_dataframe(
+    file_name: str,
+    columns: list[str],
+    school_year: int
+):
+    file_name = file_name
     academic_subject_descriptor_content = getEndpointJson(ENDPOINT_ACADEMIC_SUBJECT_DESCRIPTOR, config('SILVER_DATA_LOCATION'), school_year)
     term_descriptor_content = getEndpointJson(ENDPOINT_TERM_DESCRIPTOR, config('SILVER_DATA_LOCATION'), school_year)
     educational_environment_descriptor_content = getEndpointJson(ENDPOINT_EDUCATIONAL_ENVIRONMENT_DESCRIPTOR, config('SILVER_DATA_LOCATION'), school_year)
@@ -49,11 +70,9 @@ def section_dim_dataframe(school_year) -> pd.DataFrame:
         recordPrefix=None,
         errors='ignore'
     )
-
     academic_subject_descriptor_normalized['namespaceWithCodeValue'] = (
         academic_subject_descriptor_normalized['namespace'] + '#' + academic_subject_descriptor_normalized['codeValue']
     )
-
     term_descriptor_normalized = jsonNormalize(
         term_descriptor_content,
         recordPath=None,
@@ -68,11 +87,9 @@ def section_dim_dataframe(school_year) -> pd.DataFrame:
         recordPrefix=None,
         errors='ignore'
     )
-
     term_descriptor_normalized['namespaceWithCodeValue'] = (
         term_descriptor_normalized['namespace'] + '#' + term_descriptor_normalized['codeValue']
     )
-
     educational_environment_descriptor_normalized = jsonNormalize(
         educational_environment_descriptor_content,
         recordPath=None,
@@ -87,11 +104,9 @@ def section_dim_dataframe(school_year) -> pd.DataFrame:
         recordPrefix=None,
         errors='ignore'
     )
-
     educational_environment_descriptor_normalized['namespaceWithCodeValue'] = (
         educational_environment_descriptor_normalized['namespace'] + '#' + educational_environment_descriptor_normalized['codeValue']
     )
-
     sections_normalized = jsonNormalize(
         sections_content,
         recordPath=None,
@@ -110,30 +125,32 @@ def section_dim_dataframe(school_year) -> pd.DataFrame:
         recordPrefix=None,
         errors='ignore'
     )
-
     get_reference_from_href(
         sections_normalized,
         'courseOfferingReference.link.href',
         'courseOfferingReferenceId'
     )
-
     sections_class_periods_normalized = jsonNormalize(
         sections_content,
         recordPath=['classPeriods'],
         meta=[
             'id'
         ],
+        recordMeta=[
+            'classPeriodReference.classPeriodName'
+        ],
         metaPrefix=None,
         recordPrefix=None,
         errors='ignore'
     )
-
     courses_offerings_normalized = jsonNormalize(
         courses_offerings_content,
         recordPath=None,
         meta=[
             'id',
-            ['courseReference', 'link', 'href']
+            ['courseReference', 'link', 'href'],
+            'sessionReference.link.href',
+            'schoolReference.link.href'
         ],
         metaPrefix=None,
         recordPrefix=None,
@@ -165,6 +182,7 @@ def section_dim_dataframe(school_year) -> pd.DataFrame:
             'id',
             ['educationOrganizationReference', 'educationOrganizationId'],
             'courseCode',
+            'courseTitle',
             'academicSubjectDescriptor'
         ],
         metaPrefix=None,
@@ -177,13 +195,12 @@ def section_dim_dataframe(school_year) -> pd.DataFrame:
         recordPath=None,
         meta=[
             'id',
-            ['termDescriptor']
+            'termDescriptor'
         ],
         metaPrefix=None,
         recordPrefix=None,
         errors='ignore'
     )
-
     schools_normalized = jsonNormalize(
         schools_content,
         recordPath=None,
@@ -206,7 +223,8 @@ def section_dim_dataframe(school_year) -> pd.DataFrame:
         suffixLeft=None,
         suffixRight='_courseOfferings'
     )
-
+    if result_data_frame is None:
+        return None
     result_data_frame = pdMerge(
         left=result_data_frame,
         right=courses_normalized,
@@ -216,7 +234,8 @@ def section_dim_dataframe(school_year) -> pd.DataFrame:
         suffixLeft=None,
         suffixRight='_courses'
     )
-
+    if result_data_frame is None:
+        return None
     result_data_frame = pdMerge(
         left=result_data_frame,
         right=sections_class_periods_normalized,
@@ -226,7 +245,8 @@ def section_dim_dataframe(school_year) -> pd.DataFrame:
         suffixLeft=None,
         suffixRight='_classPeriods'
     )
-
+    if result_data_frame is None:
+        return None
     result_data_frame = pdMerge(
         left=result_data_frame,
         right=sessions_normalized,
@@ -236,7 +256,8 @@ def section_dim_dataframe(school_year) -> pd.DataFrame:
         suffixLeft=None,
         suffixRight='_sessions'
     )
-
+    if result_data_frame is None:
+        return None
     result_data_frame = pdMerge(
         left=result_data_frame,
         right=schools_normalized,
@@ -246,37 +267,41 @@ def section_dim_dataframe(school_year) -> pd.DataFrame:
         suffixLeft=None,
         suffixRight='_schools'
     )
-
+    if result_data_frame is None:
+        return None
     result_data_frame = pdMerge(
         left=result_data_frame,
         right=academic_subject_descriptor_normalized,
-        how='inner',
+        how='left',
         leftOn=['academicSubjectDescriptor'],
         rightOn=['namespaceWithCodeValue'],
         suffixLeft=None,
         suffixRight='_academic_subj_desc'
     )
-
+    if result_data_frame is None:
+        return None
     result_data_frame = pdMerge(
         left=result_data_frame,
         right=term_descriptor_normalized,
-        how='inner',
+        how='left',
         leftOn=['termDescriptor'],
         rightOn=['namespaceWithCodeValue'],
         suffixLeft=None,
         suffixRight='_term_desc'
     )
-
+    if result_data_frame is None:
+        return None
     result_data_frame = pdMerge(
         left=result_data_frame,
         right=educational_environment_descriptor_normalized,
-        how='inner',
+        how='left',
         leftOn=['educationalEnvironmentDescriptor'],
         rightOn=['namespaceWithCodeValue'],
         suffixLeft=None,
         suffixRight='_educational_environment_desc'
     )
-
+    if result_data_frame is None:
+        return None
     result_data_frame = result_data_frame[[
         'sectionIdentifier',
         'courseOfferingReference.localCourseCode',
@@ -296,6 +321,8 @@ def section_dim_dataframe(school_year) -> pd.DataFrame:
 
     result_data_frame['courseOfferingReference.schoolId'] = result_data_frame['courseOfferingReference.schoolId'].astype(str)
     result_data_frame['courseOfferingReference.schoolYear'] = result_data_frame['courseOfferingReference.schoolYear'].astype(str)
+
+    result_data_frame = result_data_frame.fillna('')
 
     result_data_frame['SectionKey'] = (
         result_data_frame['courseOfferingReference.schoolId']
@@ -345,23 +372,13 @@ def section_dim_dataframe(school_year) -> pd.DataFrame:
         'courseTitle': 'CourseTitle'
     })
 
-    result_data_frame = result_data_frame[[
-        'SchoolKey',
-        'SectionKey',
-        'Description',
-        'SectionName',
-        'SessionName',
-        'LocalCourseCode',
-        'SchoolYear',
-        'EducationalEnvironmentDescriptor',
-        'LocalEducationAgencyKey',
-        'CourseTitle',
-        'SessionKey'
-    ]]
-
+    result_data_frame = result_data_frame[columns]
     return result_data_frame
 
 
-def section_dim(school_year) -> None:
-    result_data_frame = section_dim_dataframe(school_year)
-    saveParquetFile(result_data_frame, f"{config('PARQUET_FILES_LOCATION')}", "sectionDim.parquet", school_year)
+def section_dim(school_year) -> data_frame_generation_result:
+    return section_dim_dataframe(
+        file_name="sectionDim.parquet",
+        columns=RESULT_COLUMNS,
+        school_year=school_year
+    )

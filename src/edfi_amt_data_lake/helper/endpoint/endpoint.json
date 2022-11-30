@@ -17,6 +17,7 @@
     {"endpoint": "/ed-fi/disciplineActions", "table_name": "base_edfi_discipline_actions" },
     {"endpoint": "/ed-fi/disciplineDescriptors", "table_name": "base_edfi_discipline_descriptors" },
     {"endpoint": "/ed-fi/disciplineIncidents", "table_name": "base_edfi_discipline_incidents" },
+    {"endpoint": "/ed-fi/educationalEnvironmentDescriptors", "table_name": "base_edfi_descriptors"},
     {"endpoint": "/ed-fi/educationServiceCenters", "table_name": "base_edfi_education_service_centers" },
     {"endpoint": "/ed-fi/feederSchoolAssociations", "table_name": "base_edfi_feeder_school_associations" },
     {"endpoint": "/ed-fi/grades", "table_name": "base_edfi_grades" },
