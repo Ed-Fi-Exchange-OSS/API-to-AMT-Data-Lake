@@ -272,7 +272,7 @@ def section_dim_dataframe(
     result_data_frame = pdMerge(
         left=result_data_frame,
         right=academic_subject_descriptor_normalized,
-        how='inner',
+        how='left',
         leftOn=['academicSubjectDescriptor'],
         rightOn=['namespaceWithCodeValue'],
         suffixLeft=None,
@@ -283,7 +283,7 @@ def section_dim_dataframe(
     result_data_frame = pdMerge(
         left=result_data_frame,
         right=term_descriptor_normalized,
-        how='inner',
+        how='left',
         leftOn=['termDescriptor'],
         rightOn=['namespaceWithCodeValue'],
         suffixLeft=None,
@@ -294,7 +294,7 @@ def section_dim_dataframe(
     result_data_frame = pdMerge(
         left=result_data_frame,
         right=educational_environment_descriptor_normalized,
-        how='inner',
+        how='left',
         leftOn=['educationalEnvironmentDescriptor'],
         rightOn=['namespaceWithCodeValue'],
         suffixLeft=None,
@@ -321,6 +321,8 @@ def section_dim_dataframe(
 
     result_data_frame['courseOfferingReference.schoolId'] = result_data_frame['courseOfferingReference.schoolId'].astype(str)
     result_data_frame['courseOfferingReference.schoolYear'] = result_data_frame['courseOfferingReference.schoolYear'].astype(str)
+
+    result_data_frame = result_data_frame.fillna('')
 
     result_data_frame['SectionKey'] = (
         result_data_frame['courseOfferingReference.schoolId']
