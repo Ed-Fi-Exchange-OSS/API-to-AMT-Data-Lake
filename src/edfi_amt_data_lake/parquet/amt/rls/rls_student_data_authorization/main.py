@@ -3,7 +3,6 @@
 # The Ed-Fi Alliance licenses this file to you under the Apache License, Version 2.0.
 # See the LICENSE and NOTICES files in the project root for more information.
 
-import pandas as pd
 from decouple import config
 
 from edfi_amt_data_lake.parquet.Common.functions import getEndpointJson
@@ -15,8 +14,8 @@ from edfi_amt_data_lake.parquet.Common.pandasWrapper import (
     renameColumns,
     subset,
 )
+
 ENDPOINT_SECTION_ASSOCIATION = 'studentSectionAssociations'
-ENDPOINT_SECTION = 'sections'
 RESULT_COLUMNS = [
     'StudentKey',
     'SchoolKey',
@@ -59,14 +58,14 @@ def rls_student_data_authorization_dataframe(
     get_reference_from_href(student_section_association_normalize, 'sectionReference.link.href', 'sectionId')
     # Select needed columns.
     student_section_association_normalize = renameColumns(
-        student_section_association_normalize, 
+        student_section_association_normalize,
         {
             'studentKey': 'StudentKey',
             'schoolKey': 'SchoolKey',
             'sectionId': 'SectionId',
             'beginDate': 'BeginDate',
             'endDate': 'EndDate'
-        }        
+        }
     )
     # Select needed columns.
     result_data_frame = subset(student_section_association_normalize, columns)
