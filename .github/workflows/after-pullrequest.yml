@@ -1,0 +1,36 @@
+# SPDX-License-Identifier: Apache-2.0
+# Licensed to the Ed-Fi Alliance under one or more agreements.
+# The Ed-Fi Alliance licenses this file to you under the Apache License, Version 2.0.
+# See the LICENSE and NOTICES files in the project root for more information.
+
+name: After Pull Request
+on:
+  workflow_run:
+    workflows:
+      - "On Pull Request"
+    types:
+      - completed
+
+jobs:
+  report-test-results:
+    name: Report Test Results
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Dagster Test Results
+        uses: dorny/test-reporter@c9b3d0e2bd2a4e96aaf424dbaa31c46b42318226 # v1.6.0
+        with:
+          artifact: dagster-tests
+          name: Dagster Data Lake Test Results
+          path: "*.xml"
+          reporter: junit
+          fail-on-error: false
+
+      - name: Ed-Fi Test Results
+        uses: dorny/test-reporter@c9b3d0e2bd2a4e96aaf424dbaa31c46b42318226 # v1.6.0
+        with:
+          artifact: edfi-tests
+          name: Ed-Fi Data Lake Test Results
+          path: "*.xml"
+          reporter: junit
+          fail-on-error: false

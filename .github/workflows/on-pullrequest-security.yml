@@ -1,0 +1,57 @@
+# SPDX-License-Identifier: Apache-2.0
+# Licensed to the Ed-Fi Alliance under one or more agreements.
+# The Ed-Fi Alliance licenses this file to you under the Apache License, Version 2.0.
+# See the LICENSE and NOTICES files in the project root for more information.
+
+name: On Pull Request - Security
+
+on:
+  pull_request:
+    branches: [ main ]
+    paths:
+      - "**/*.py"
+      - "**/pyproject.toml"
+      - ".github/**/*.yml"
+  workflow_dispatch:
+
+jobs:
+  scan-actions-bidi:
+    name: Scan Actions, scan all files for BIDI Trojan Attacks
+    uses: ed-fi-alliance-oss/ed-fi-actions/.github/workflows/repository-scanner.yml@main
+
+  dependencies:
+    - name: Dependency Review ("Dependabot on PR")
+      uses: actions/dependency-review-action@a9c83d3af6b9031e20feba03b904645bb23d1dab # v1.0.2
+
+  code-ql:
+    name: Run CodeQL
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@2541b1294d2704b0964813337f33b291d3f8596b # v3.0.2
+
+    - name: Install Poetry
+      run: pipx install poetry
+
+    - name: Install Python 3.9
+      uses: actions/setup-python@98f2ad02fd48d057ee3b4d4f66525b231c3e52b6 # v3.1.2
+      with:
+        python-version: "3.9"
+        cache: "poetry"
+
+    - name: Install Dependencies
+      run: | 
+        # Next line keeps poetry from trying to use the runner's default Python version
+        pushd ${{ env.SRC_DIR }} && poetry env use "3.9" && popd
+        poetry install
+      working-directory: src
+
+    - name: Initialize CodeQL
+      uses: github/codeql-action/init@1fae5bf71b0ecdc7d0a2ef0d0c28409d99693966  # v2.9.2
+      with:
+        languages: "python"
+        setup-python-dependencies: false
+
+    - name: Perform CodeQL Analysis
+      uses: github/codeql-action/analyze@1fae5bf71b0ecdc7d0a2ef0d0c28409d99693966  # v2.9.2

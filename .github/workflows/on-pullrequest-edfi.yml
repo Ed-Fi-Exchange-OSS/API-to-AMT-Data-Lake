@@ -1,0 +1,65 @@
+# SPDX-License-Identifier: Apache-2.0
+# Licensed to the Ed-Fi Alliance under one or more agreements.
+# The Ed-Fi Alliance licenses this file to you under the Apache License, Version 2.0.
+# See the LICENSE and NOTICES files in the project root for more information.
+
+name: On Pull Request - Ed-Fi
+
+on:
+  pull_request:
+    branches: [ main ]
+    paths:
+      - "src/edfi_amt_data_lake/**/*.py"
+      - "**/pyproject.toml"
+      - ".github/**/*.yml"
+  workflow_dispatch:
+
+jobs:
+  run-py-tests:
+    name: Run Python Tests
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: src
+
+    env:
+      PROJECT: edfi_amt_data_lake
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@2541b1294d2704b0964813337f33b291d3f8596b # v3.0.2
+
+    - name: Install Poetry
+      run: pipx install poetry
+
+    - name: Install Python 3.9
+      uses: actions/setup-python@98f2ad02fd48d057ee3b4d4f66525b231c3e52b6 # v3.1.2
+      with:
+        python-version: "3.9"
+        cache: "poetry"
+
+    - name: Install Dependencies
+      run: |
+        # Next line keeps poetry from trying to use the runner's default Python version
+        pushd ${{ env.SRC_DIR }} && poetry env use "3.9" && popd
+        poetry install
+
+    - name: MyPy Linting
+      run: poetry run mypy ${{ env.PROJECT }} --junit-xml mypy-junit.xml
+
+    - name: Flake8 Linting
+      run: |
+        poetry run flake8 ${{ env.PROJECT }} --output-file flake8.txt
+        poetry run flake8_junit flake8.txt flake8.xml
+
+    - name: Run Unit Tests
+      run: |
+        poetry run pytest ${{ env.PROJECT }} --junitxml=pytest-junit.xml
+
+    - name: Upload Test Results
+      uses: actions/upload-artifact@3cea5372237819ed00197afe530f5a7ea3e805c8 # v3.1.0
+      with:
+        name: edfi-tests
+        path: *.xml
+        retention-days: 5
