@@ -9,18 +9,30 @@ from decouple import config
 from edfi_amt_data_lake.parquet.Common.functions import getEndpointJson
 from edfi_amt_data_lake.parquet.Common.pandasWrapper import (
     addColumnIfNotExists,
+    create_parquet_file,
     get_reference_from_href,
     jsonNormalize,
     renameColumns,
-    saveParquetFile,
     subset,
 )
-
 ENDPOINT_SECTION_ASSOCIATION = 'studentSectionAssociations'
 ENDPOINT_SECTION = 'sections'
+RESULT_COLUMNS = [
+    'StudentKey',
+    'SchoolKey',
+    'SectionId',
+    'BeginDate',
+    'EndDate'
+]
 
 
-def rls_student_data_authorization_dataframe(school_year) -> pd.DataFrame:
+@create_parquet_file
+def rls_student_data_authorization_dataframe(
+    file_name: str,
+    columns: list[str],
+    school_year: int
+):
+    file_name = file_name
     student_section_association_content = getEndpointJson(ENDPOINT_SECTION_ASSOCIATION, config('SILVER_DATA_LOCATION'), school_year)
     ############################
     # studentSectionAssociations
@@ -46,16 +58,24 @@ def rls_student_data_authorization_dataframe(school_year) -> pd.DataFrame:
     addColumnIfNotExists(student_section_association_normalize, 'endDate')
     get_reference_from_href(student_section_association_normalize, 'sectionReference.link.href', 'sectionId')
     # Select needed columns.
-    result_data_frame = subset(student_section_association_normalize, [
-        'studentKey',
-        'schoolKey',
-        'sectionId',
-        'beginDate',
-        'endDate'
-    ])
+    student_section_association_normalize = renameColumns(
+        student_section_association_normalize, 
+        {
+            'studentKey': 'StudentKey',
+            'schoolKey': 'SchoolKey',
+            'sectionId': 'SectionId',
+            'beginDate': 'BeginDate',
+            'endDate': 'EndDate'
+        }        
+    )
+    # Select needed columns.
+    result_data_frame = subset(student_section_association_normalize, columns)
     return result_data_frame
 
 
 def rls_student_data_authorization(school_year) -> None:
-    result_data_frame = rls_student_data_authorization_dataframe(school_year)
-    saveParquetFile(result_data_frame, f"{config('PARQUET_FILES_LOCATION')}", "rls_StudentDataAuthorization.parquet", school_year)
+    return rls_student_data_authorization_dataframe(
+        file_name="rls_StudentDataAuthorization.parquet",
+        columns=RESULT_COLUMNS,
+        school_year=school_year
+    )
