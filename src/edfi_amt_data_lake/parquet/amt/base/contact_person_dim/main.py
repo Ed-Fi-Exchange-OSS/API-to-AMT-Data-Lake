@@ -4,24 +4,22 @@
 # See the LICENSE and NOTICES files in the project root for more information.
 
 from datetime import date
+
+from decouple import config
+
 from edfi_amt_data_lake.helper.data_frame_generation_result import (
     data_frame_generation_result,
 )
-import pandas as pd
-from decouple import config
-
 from edfi_amt_data_lake.parquet.Common.descriptor_mapping import get_descriptor_constant
 from edfi_amt_data_lake.parquet.Common.functions import getEndpointJson
 from edfi_amt_data_lake.parquet.Common.pandasWrapper import (
     create_parquet_file,
-    addColumnIfNotExists,
     get_descriptor_code_value_from_uri,
     jsonNormalize,
     pdMerge,
     renameColumns,
     subset,
     to_datetime_key,
-    toCsv
 )
 
 ENDPOINT_STUDENT_PARENT_ASSOCIATIONS = 'studentParentAssociations'
@@ -51,6 +49,8 @@ RESULT_COLUMNS = [
     'ContactRestrictions',
     'PostalCode'
 ]
+
+
 @create_parquet_file
 def contact_person_dim_dataframe(
     file_name: str,
@@ -78,12 +78,9 @@ def contact_person_dim_dataframe(
         errors='ignore'
     )
 
-    addColumnIfNotExists(student_parent_associations_normalize, 'primaryContactStatus', False)
-    addColumnIfNotExists(student_parent_associations_normalize, 'livesWith', False)
-    addColumnIfNotExists(student_parent_associations_normalize, 'emergencyContactStatus', False)
-    addColumnIfNotExists(student_parent_associations_normalize, 'contactPriority', 0)
-    addColumnIfNotExists(student_parent_associations_normalize, 'contactRestrictions', '')
-    addColumnIfNotExists(student_parent_associations_normalize, 'relationDescriptor', '')
+    if student_parent_associations_normalize.empty:
+        return None
+
     get_descriptor_code_value_from_uri(student_parent_associations_normalize, 'relationDescriptor')
 
     parents_normalize = jsonNormalize(
@@ -100,6 +97,9 @@ def contact_person_dim_dataframe(
         errors='ignore'
     )
 
+    if parents_normalize.empty:
+        return None
+
     parents_address_normalize = jsonNormalize(
         parents_content,
         recordPath=[
@@ -114,7 +114,8 @@ def contact_person_dim_dataframe(
             'postalCode',
             'stateAbbreviationDescriptor',
             'streetNumberName',
-            'nameOfCounty'
+            'nameOfCounty',
+            'apartmentRoomSuiteNumber'
         ],
         metaPrefix=None,
         recordPrefix=None,
@@ -160,8 +161,6 @@ def contact_person_dim_dataframe(
         parents_address_normalize['date_now'] = date.today()
         parents_address_normalize['date_now'] = to_datetime_key(parents_address_normalize, 'date_now')
         parents_address_normalize = parents_address_normalize[parents_address_normalize['endDate'] >= parents_address_normalize['date_now']]
-
-    addColumnIfNotExists(parents_address_normalize, 'apartmentRoomSuiteNumber', '')
 
     parents_address_normalize['Address'] = (
         parents_address_normalize['streetNumberName']
@@ -400,14 +399,13 @@ def contact_person_dim_dataframe(
         ],
         recordMeta=[
             'electronicMailAddress',
-            'electronicMailTypeDescriptor'
+            'electronicMailTypeDescriptor',
+            'primaryEmailAddressIndicator'
         ],
         metaPrefix=None,
         recordPrefix=None,
         errors='ignore'
     )
-
-    addColumnIfNotExists(parents_electronicMails_normalize, 'primaryEmailAddressIndicator', False)
 
     parents_electronicMails_normalize = get_descriptor_constant(parents_electronicMails_normalize, 'electronicMailTypeDescriptor')
 
@@ -415,7 +413,10 @@ def contact_person_dim_dataframe(
 
     parents_electronicMails_normalize_personal = (
         parents_electronicMails_normalize[
-            (parents_electronicMails_normalize['electronicMailTypeDescriptor_constantName'].str.contains('Email.Personal', na=False))
+            (
+                parents_electronicMails_normalize['electronicMailTypeDescriptor_constantName'].str.contains('Email.Personal', na=False)
+                | parents_electronicMails_normalize['key_1'].str.contains('personal', na=False)
+            )
         ]
     )
 
@@ -517,9 +518,6 @@ def contact_person_dim_dataframe(
     })
 
     result_data_frame = subset(result_data_frame, columns)
-
-    toCsv(result_data_frame, 'C:/temp/edfi/parquet/', 'contactPersonDim.csv', '')
-
 
     return result_data_frame
 
