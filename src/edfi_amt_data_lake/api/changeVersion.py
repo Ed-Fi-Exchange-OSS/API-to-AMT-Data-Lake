@@ -48,8 +48,10 @@ def get_change_version_values_from_api(school_year="") -> ChangeVersionValues:
 
 def _delete_files() -> None:
     import shutil
+    import time
     path = config("CHANGE_VERSION_FILEPATH")
     shutil.rmtree(path, ignore_errors=True, onerror=None)
+    time.sleep(1)
 
 
 def _update_change_version_file(pathfilename: str, oldestChangeVersion: str, newestChangeVersion: str) -> None:
