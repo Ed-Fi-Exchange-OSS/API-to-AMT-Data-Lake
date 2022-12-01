@@ -7,7 +7,8 @@ name: After Pull Request
 on:
   workflow_run:
     workflows:
-      - "On Pull Request"
+      - "On Pull Request - Dagster"
+      - "On Pull Request - Ed-Fi"
     types:
       - completed
 
