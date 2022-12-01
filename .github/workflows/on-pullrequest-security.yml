@@ -20,8 +20,12 @@ jobs:
     uses: ed-fi-alliance-oss/ed-fi-actions/.github/workflows/repository-scanner.yml@main
 
   dependencies:
-    - name: Dependency Review ("Dependabot on PR")
-      uses: actions/dependency-review-action@a9c83d3af6b9031e20feba03b904645bb23d1dab # v1.0.2
+    name: Dependency Review
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Dependency Review ("Dependabot on PR")
+        uses: actions/dependency-review-action@a9c83d3af6b9031e20feba03b904645bb23d1dab # v1.0.2
 
   code-ql:
     name: Run CodeQL
