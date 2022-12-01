@@ -72,7 +72,7 @@ def epp_dim_dataframe(
         return None
     get_descriptor_code_value_from_uri(result_data_frame, 'educationOrganizationCategoryDescriptor')
 
-    result_data_frame = result_data_frame[result_data_frame['educationOrganizationCategoryDescriptor'].str.contains("Preparation Provider")]
+    result_data_frame = result_data_frame[result_data_frame['educationOrganizationCategoryDescriptor'].str.contains("Preparation Provider", na=False)]
 
     result_data_frame = result_data_frame[[
         "schoolId",
