@@ -58,6 +58,7 @@ jobs:
         poetry run pytest ${{ env.PROJECT }} --junitxml=pytest-junit.xml
 
     - name: Upload Test Results
+      if: always()
       uses: actions/upload-artifact@3cea5372237819ed00197afe530f5a7ea3e805c8 # v3.1.0
       with:
         name: edfi-tests
