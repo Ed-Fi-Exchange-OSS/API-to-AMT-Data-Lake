@@ -42,8 +42,10 @@ def _api_call(url: str, token: str, version: ChangeVersionValues) -> list:
     headers = get_headers(token)
     try:
         while loop:
-            endpoint = f"{url}?limit={LIMIT}&offset={offset}&minChangeVersion={version.oldestChangeVersion}\
-                &maxChangeVersion={version.newestChangeVersion}"
+            endpoint = (
+                    f"{url}?limit={LIMIT}&offset={offset}&minChangeVersion={version.oldestChangeVersion}"
+                    +f"&maxChangeVersion={version.newestChangeVersion}"
+            )
             response = requests.get(endpoint, headers=headers)
             if response.ok:
                 response_data = response.json()
