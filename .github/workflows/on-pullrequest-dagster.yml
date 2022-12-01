@@ -49,12 +49,18 @@ jobs:
       run: poetry run mypy ${{ env.PROJECT }} --junit-xml mypy-junit.xml
 
     - name: Flake8 Linting
+      if: always()
       run: |
         poetry run flake8 ${{ env.PROJECT }} --output-file flake8.txt
+
+    - name: Convert Flake8 File to Xml
+      if: always()
+      run: |
         poetry run flake8_junit flake8.txt flake8.xml
 
     # This needs some work. Stephen's not sure how to setup the tests correctly.
     # - name: Run Unit Tests
+    #   if: always()
     #   run: |
     #     poetry run pytest ${{ env.PROJECT }} --junitxml=pytest-junit.xml
 
