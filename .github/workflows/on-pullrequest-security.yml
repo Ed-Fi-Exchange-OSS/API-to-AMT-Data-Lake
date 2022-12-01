@@ -22,7 +22,6 @@ jobs:
   dependencies:
     name: Dependency Review
     runs-on: ubuntu-latest
-    
     steps:
       - name: Dependency Review ("Dependabot on PR")
         uses: actions/dependency-review-action@a9c83d3af6b9031e20feba03b904645bb23d1dab # v1.0.2
@@ -45,7 +44,7 @@ jobs:
         cache: "poetry"
 
     - name: Install Dependencies
-      run: | 
+      run: |
         # Next line keeps poetry from trying to use the runner's default Python version
         pushd ${{ env.SRC_DIR }} && poetry env use "3.9" && popd
         poetry install
