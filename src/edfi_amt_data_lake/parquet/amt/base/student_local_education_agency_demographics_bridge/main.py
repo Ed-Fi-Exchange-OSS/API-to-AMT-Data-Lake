@@ -20,7 +20,7 @@ from edfi_amt_data_lake.parquet.Common.pandasWrapper import (
     pdMerge,
     renameColumns,
     subset,
-    to_datetime_key
+    to_datetime_key,
 )
 
 EDUCATION_ORGANIZATION_FILTER = 'LocalEducationAgency'
@@ -202,20 +202,20 @@ def student_local_education_agency_demographics_bridge_dataframe(
     if (demographics_data_frame is None or demographics_data_frame.empty):
         return None
     result_data_frame = pdMerge(
-            left=demographics_data_frame,
-            right=student_school_association_normalize,
-            how='inner',
-            leftOn=[
-                'localEducationAgencyReferenceId',
-                'studentReferenceId'
-            ],
-            rightOn=[
-                'localEducationAgencyReferenceId',
-                'studentReferenceId'
-            ],
-            suffixLeft=None,
-            suffixRight=None
-        )
+        left=demographics_data_frame,
+        right=student_school_association_normalize,
+        how='inner',
+        leftOn=[
+            'localEducationAgencyReferenceId',
+            'studentReferenceId'
+        ],
+        rightOn=[
+            'localEducationAgencyReferenceId',
+            'studentReferenceId'
+        ],
+        suffixLeft=None,
+        suffixRight=None
+    )
     # Select needed columns.
     result_data_frame = subset(result_data_frame, columns)
     return result_data_frame
@@ -399,10 +399,10 @@ def get_student_demographic(content, item) -> pd.DataFrame:
         )
     else:
         student_demographic_normalize['DemographicKey'] = (
-	        student_demographic_normalize['prefix']
-	        + ':' + student_demographic_normalize['descriptorCodeValue']
-	    )
-    
+            student_demographic_normalize['prefix']
+            + ':' + student_demographic_normalize['descriptorCodeValue']
+        )
+
     student_demographic_normalize['StudentLocalEducationAgencyKey'] = (
         student_demographic_normalize['StudentKey']
         + '-' + student_demographic_normalize['LocalEducationAgencyId']
