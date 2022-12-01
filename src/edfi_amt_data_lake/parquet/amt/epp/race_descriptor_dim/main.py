@@ -3,8 +3,8 @@
 # The Ed-Fi Alliance licenses this file to you under the Apache License, Version 2.0.
 # See the LICENSE and NOTICES files in the project root for more information.
 
-import pandas as pd
 from decouple import config
+
 from edfi_amt_data_lake.helper.data_frame_generation_result import (
     data_frame_generation_result,
 )
@@ -14,6 +14,7 @@ from edfi_amt_data_lake.parquet.Common.pandasWrapper import (
     jsonNormalize,
     renameColumns,
 )
+
 ENDPOINT_RACE_DESCRIPTOR = 'raceDescriptors'
 RESULT_COLUMNS = [
     "RaceDescriptorKey",
@@ -56,4 +57,3 @@ def race_descriptor_dim(school_year) -> data_frame_generation_result:
         columns=RESULT_COLUMNS,
         school_year=school_year
     )
-    
