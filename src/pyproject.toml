@@ -19,20 +19,21 @@ python-decouple = "^3.6"
 pandas = "^1.4.3"
 fastparquet = "^0.8.2"
 
-[tool.poetry.dev-dependencies]
+[tool.poetry.group.dev.dependencies]
 isort = "^5.0"
-pytest = "^5.2"
-pytest-cov = "^2.10.1"
+pytest-cov = "^4"
 autoflake = "^1.4"
 flake8 = "^5.0.4"
 mypy = "^0.971"
 pre-commit = "^2.8.2"
 black = "^20.8b1"
 pydantic = "^1.10.2"
-
-[tool.poetry.group.dev.dependencies]
 flake8-junit-report = "^2.1.0"
+pytest = "^6.0.0"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
-build-backend = "poetry.core.masonry.api"
+ibuild-backend = "poetry.core.masonry.api"
+
+[tool.pytest.ini_options]
+junit_family = "xunit1"
