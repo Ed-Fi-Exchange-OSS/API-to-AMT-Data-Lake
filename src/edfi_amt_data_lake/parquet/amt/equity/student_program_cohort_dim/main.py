@@ -7,14 +7,17 @@ from datetime import date
 
 from decouple import config
 
+from edfi_amt_data_lake.helper.data_frame_generation_result import (
+    data_frame_generation_result,
+)
 from edfi_amt_data_lake.parquet.Common.functions import getEndpointJson
 from edfi_amt_data_lake.parquet.Common.pandasWrapper import (
+    create_parquet_file,
     get_descriptor_code_value_from_uri,
     get_reference_from_href,
     jsonNormalize,
     pdMerge,
     renameColumns,
-    saveParquetFile,
     subset,
     to_datetime_key,
 )
@@ -25,9 +28,24 @@ ENDPOINT_STUDENT_SCHOOL_ASSOCIATION = 'studentSchoolAssociations'
 ENDPOINT_PROGRAM_TYPE_DESCRIPTOR = 'programTypeDescriptors'
 ENDPOINT_COHORT_TYPE_DESCRIPTOR = 'cohortTypeDescriptors'
 ENDPOINT_GRADE_LEVEL_DESCRIPTOR = 'gradeLevelDescriptors'
+RESULT_COLUMNS = [
+    'StudentProgramCohortKey',
+    'StudentSchoolProgramKey',
+    'StudentSchoolKey',
+    'EntryGradeLevelDescriptor',
+    'CohortTypeDescriptor',
+    'CohortDescription',
+    'ProgramName'
+]
 
 
-def student_program_cohort_dim(school_year) -> None:
+@create_parquet_file
+def student_program_cohort_dim_data_frame(
+    file_name: str,
+    columns: list[str],
+    school_year: int
+):
+    file_name = file_name
     student_cohort_association_content = getEndpointJson(ENDPOINT_STUDENT_COHORT_ASSOCIATION, config('SILVER_DATA_LOCATION'), school_year)
     cohort_content = getEndpointJson(ENDPOINT_COHORT, config('SILVER_DATA_LOCATION'), school_year)
     student_school_association_content = getEndpointJson(ENDPOINT_STUDENT_SCHOOL_ASSOCIATION, config('SILVER_DATA_LOCATION'), school_year)
@@ -78,6 +96,12 @@ def student_program_cohort_dim(school_year) -> None:
             'cohortTypeDescriptor',
             ['educationOrganizationReference', 'educationOrganizationId'],
         ],
+        recordMeta=[
+            'programReference.educationOrganizationId',
+            'programReference.programName',
+            'programReference.programTypeDescriptor',
+            'programReference.link.href',
+        ],
         metaPrefix=None,
         recordPrefix='cohort_',
         errors='ignore'
@@ -105,7 +129,8 @@ def student_program_cohort_dim(school_year) -> None:
         suffixLeft='_student_cohort_association',
         suffixRight='_cohort'
     )
-
+    if student_cohort_association_normalized is None:
+        return None
     # Select needed columns.
     student_cohort_association_normalized = subset(student_cohort_association_normalized, [
         'programEducationOrganizationId',
@@ -275,6 +300,8 @@ def student_program_cohort_dim(school_year) -> None:
         suffixLeft='_discipline_action',
         suffixRight='_student_school_association'
     )
+    if result_data_frame is None:
+        return None
     # Filter by exitWithdrawDate
     result_data_frame = result_data_frame[result_data_frame['exitWithdrawDate'] >= result_data_frame['date_now']]
     result_data_frame['beginDateKey'] = to_datetime_key(result_data_frame, 'beginDate')
@@ -314,15 +341,25 @@ def student_program_cohort_dim(school_year) -> None:
     )
     result_data_frame['cohortTypeDescriptor'] = result_data_frame['cohortTypeDescriptorDescription']
     result_data_frame['entryGradeLevelDescriptor'] = result_data_frame['gradeLevelDescriptorDescription']
+    result_data_frame = renameColumns(
+        result_data_frame,
+        {
+            'studentProgramCohortKey': 'StudentProgramCohortKey',
+            'studentSchoolProgramKey': 'StudentSchoolProgramKey',
+            'studentSchoolKey': 'StudentSchoolKey',
+            'entryGradeLevelDescriptor': 'EntryGradeLevelDescriptor',
+            'cohortTypeDescriptor': 'CohortTypeDescriptor',
+            'cohortDescription': 'CohortDescription',
+            'programName': 'ProgramName'
+        }
+    )
+    result_data_frame = subset(result_data_frame, columns)
+    return result_data_frame
 
-    result_data_frame = subset(result_data_frame, [
-        'studentProgramCohortKey',
-        'studentSchoolProgramKey',
-        'studentSchoolKey',
-        'entryGradeLevelDescriptor',
-        'cohortTypeDescriptor',
-        'cohortDescription',
-        'programName'
-    ])
 
-    saveParquetFile(result_data_frame, f"{config('PARQUET_FILES_LOCATION')}", "equity_StudentProgramCohortDim.parquet", school_year)
+def student_program_cohort_dim(school_year) -> data_frame_generation_result:
+    return student_program_cohort_dim_data_frame(
+        file_name="equity_StudentProgramCohortDim.parquet",
+        columns=RESULT_COLUMNS,
+        school_year=school_year
+    )
