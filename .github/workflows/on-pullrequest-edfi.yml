@@ -58,10 +58,11 @@ jobs:
       run: |
         poetry run flake8_junit flake8.txt flake8.xml
 
-    - name: Run Unit Tests
-      if: always()
-      run: |
-        poetry run pytest ${{ env.PROJECT }} --junitxml=pytest-junit.xml
+    # There are no tests to run, so this would report a failure
+    # - name: Run Unit Tests
+    #   if: always()
+    #   run: |
+    #     poetry run pytest ${{ env.PROJECT }} --junitxml=pytest-junit.xml
 
     - name: Upload Test Results
       if: always()
