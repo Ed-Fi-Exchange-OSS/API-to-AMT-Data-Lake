@@ -42,7 +42,7 @@ jobs:
     - name: Install Dependencies
       run: |
         # Next line keeps poetry from trying to use the runner's default Python version
-        pushd ${{ env.SRC_DIR }} && poetry env use "3.9" && popd
+        poetry env use "3.9"
         poetry install
 
     - name: MyPy Linting
