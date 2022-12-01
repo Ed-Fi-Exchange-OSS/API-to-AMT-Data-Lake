@@ -3,20 +3,32 @@
 # The Ed-Fi Alliance licenses this file to you under the Apache License, Version 2.0.
 # See the LICENSE and NOTICES files in the project root for more information.
 
-import pandas as pd
 from decouple import config
 
+from edfi_amt_data_lake.helper.data_frame_generation_result import (
+    data_frame_generation_result,
+)
 from edfi_amt_data_lake.parquet.Common.functions import getEndpointJson
 from edfi_amt_data_lake.parquet.Common.pandasWrapper import (
+    create_parquet_file,
     jsonNormalize,
     renameColumns,
-    saveParquetFile,
 )
 
 ENDPOINT_SEX_DESCRIPTOR = 'sexDescriptors'
+RESULT_COLUMNS = [
+    "SexDescriptorKey",
+    "CodeValue"
+]
 
 
-def sex_descriptor_dim_dataframe(school_year) -> pd.DataFrame:
+@create_parquet_file
+def sex_descriptor_dim_dataframe(
+    file_name: str,
+    columns: list[str],
+    school_year: int
+):
+    file_name = file_name
     sex_descriptor_content = getEndpointJson(ENDPOINT_SEX_DESCRIPTOR, config('SILVER_DATA_LOCATION'), school_year)
 
     sex_descriptor_normalize = jsonNormalize(
@@ -36,15 +48,13 @@ def sex_descriptor_dim_dataframe(school_year) -> pd.DataFrame:
         'sexDescriptorId': 'SexDescriptorKey',
         'codeValue': 'CodeValue'
     })
-
-    result_data_frame = result_data_frame[[
-        "SexDescriptorKey",
-        "CodeValue"
-    ]]
-
+    result_data_frame = result_data_frame[columns]
     return result_data_frame
 
 
-def sex_descriptor_dim(school_year) -> None:
-    result_data_frame = sex_descriptor_dim_dataframe(school_year)
-    saveParquetFile(result_data_frame, f"{config('PARQUET_FILES_LOCATION')}", "epp_SexDescriptorDim.parquet", school_year)
+def sex_descriptor_dim(school_year) -> data_frame_generation_result:
+    return sex_descriptor_dim_dataframe(
+        file_name="epp_SexDescriptorDim.parquet",
+        columns=RESULT_COLUMNS,
+        school_year=school_year
+    )
