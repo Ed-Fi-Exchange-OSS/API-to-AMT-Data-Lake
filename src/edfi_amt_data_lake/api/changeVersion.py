@@ -46,6 +46,20 @@ def get_change_version_values_from_api(school_year="") -> ChangeVersionValues:
     return changeVersionValues
 
 
+def _delete_files() -> None:
+    import shutil
+    import time
+    path = config("CHANGE_VERSION_FILEPATH")
+    shutil.rmtree(path, ignore_errors=True, onerror=None)
+    time.sleep(1)
+
+
+def _update_change_version_file(pathfilename: str, oldestChangeVersion: str, newestChangeVersion: str) -> None:
+    with open(pathfilename, "w") as outfile:
+        fileLines = [f"{oldestChangeVersion}\n", newestChangeVersion]
+        outfile.writelines(fileLines)
+
+
 def get_change_version_updated(school_year) -> bool:
     school_year_path = f"{school_year}/" if school_year else ""
     path = config("CHANGE_VERSION_FILEPATH") + f"API_TO_AMT/{school_year_path}"
@@ -63,6 +77,13 @@ def get_change_version_updated(school_year) -> bool:
     oldestChangeVersion = ''
     newestChangeVersion = ''
 
+    disable_change_version = config("DISABLE_CHANGE_VERSION", default=False, cast=bool)
+    if disable_change_version:
+        _delete_files()
+        create_file_if_not_exists(pathfilename, path)
+        _update_change_version_file(pathfilename, "0", changeVersionFromAPI.newestChangeVersion)
+        return True
+
     if changeVersionFromFile.newestChangeVersion == 0:
         # First Scenario: Fist time we are saving these values locally.
         oldestChangeVersion = changeVersionFromAPI.oldestChangeVersion
@@ -75,8 +96,6 @@ def get_change_version_updated(school_year) -> bool:
         oldestChangeVersion = changeVersionFromFile.newestChangeVersion
         newestChangeVersion = changeVersionFromAPI.newestChangeVersion
 
-    with open(pathfilename, "w") as outfile:
-        fileLines = [f"{oldestChangeVersion}\n", newestChangeVersion]
-        outfile.writelines(fileLines)
+    _update_change_version_file(pathfilename, oldestChangeVersion, newestChangeVersion)
 
     return True
