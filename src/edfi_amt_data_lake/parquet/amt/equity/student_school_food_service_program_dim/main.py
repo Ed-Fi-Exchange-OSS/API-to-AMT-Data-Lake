@@ -7,13 +7,16 @@ from datetime import date
 
 from decouple import config
 
+from edfi_amt_data_lake.helper.data_frame_generation_result import (
+    data_frame_generation_result,
+)
 from edfi_amt_data_lake.parquet.Common.functions import getEndpointJson
 from edfi_amt_data_lake.parquet.Common.pandasWrapper import (
+    create_parquet_file,
     get_descriptor_code_value_from_uri,
     jsonNormalize,
     pdMerge,
     renameColumns,
-    saveParquetFile,
     subset,
     to_datetime_key,
 )
@@ -22,9 +25,22 @@ ENDPOINT_STUDENT_FOOD_SERVICE_PROGRAM_ASSOCIATION = 'studentSchoolFoodServicePro
 ENDPOINT_STUDENT_SCHOOL_ASSOCIATION = 'studentSchoolAssociations'
 ENDPOINT_PROGRAM_TYPE_DESCRIPTOR = 'programTypeDescriptors'
 ENDPOINT_SCHOOL_FOOD_SERVICE_PROGRAM_SERVICE_DESCRIPTOR = 'schoolFoodServiceProgramServiceDescriptors'
+RESULT_COLUMNS = [
+    'StudentSchoolFoodServiceProgramKey',
+    'StudentSchoolProgramKey',
+    'StudentSchoolKey',
+    'ProgramName',
+    'SchoolFoodServiceProgramServiceDescriptor'
+]
 
 
-def student_school_food_service_program_dim(school_year) -> None:
+@create_parquet_file
+def student_school_food_service_program_dim_frame(
+    file_name: str,
+    columns: list[str],
+    school_year: int
+):
+    file_name = file_name
     studentFoodServiceProgramAssociationContent = getEndpointJson(ENDPOINT_STUDENT_FOOD_SERVICE_PROGRAM_ASSOCIATION, config('SILVER_DATA_LOCATION'), school_year)
     studentSchoolAssociationsContent = getEndpointJson(ENDPOINT_STUDENT_SCHOOL_ASSOCIATION, config('SILVER_DATA_LOCATION'), school_year)
     programTypeDescriptorContent = getEndpointJson(ENDPOINT_PROGRAM_TYPE_DESCRIPTOR, config('SILVER_DATA_LOCATION'), school_year)
@@ -43,6 +59,7 @@ def student_school_food_service_program_dim(school_year) -> None:
             'schoolFoodServiceProgramServiceDescriptor',
             ['educationOrganizationReference', 'educationOrganizationId']
         ],
+        recordMeta=['schoolFoodServiceProgramServiceDescriptor'],
         metaPrefix=None,
         recordPrefix='schoolFoodServiceProgramServices_',
         errors='ignore'
@@ -171,7 +188,7 @@ def student_school_food_service_program_dim(school_year) -> None:
     })
 
     # studentFoodServiceProgramAssociationContent - studentSchoolAssociations
-    resultDataFrame = pdMerge(
+    result_data_frame = pdMerge(
         left=studentSchoolAssociationNormalized,
         right=studentFoodServiceProgramAssociationNormalized,
         how='inner',
@@ -180,51 +197,60 @@ def student_school_food_service_program_dim(school_year) -> None:
         suffixLeft='_studentSchoolAssociation',
         suffixRight='_studentFoodServiceProgramAssociation'
     )
-    resultDataFrame['exitWithdrawDate'] = to_datetime_key(resultDataFrame, 'exitWithdrawDate')
-    resultDataFrame['date_now'] = date.today()
-    resultDataFrame['date_now'] = to_datetime_key(resultDataFrame, 'date_now')
-    resultDataFrame = resultDataFrame[resultDataFrame['exitWithdrawDate'] >= resultDataFrame['date_now']]
+    if result_data_frame is None:
+        return None
+    result_data_frame['exitWithdrawDate'] = to_datetime_key(result_data_frame, 'exitWithdrawDate')
+    result_data_frame['date_now'] = date.today()
+    result_data_frame['date_now'] = to_datetime_key(result_data_frame, 'date_now')
+    result_data_frame = result_data_frame[result_data_frame['exitWithdrawDate'] >= result_data_frame['date_now']]
 
-    resultDataFrame['studentUniqueId'] = resultDataFrame['studentUniqueId'].astype(str)
-    resultDataFrame['schoolId'] = resultDataFrame['schoolId'].astype(str)
-    resultDataFrame['educationOrganizationId'] = resultDataFrame['educationOrganizationId'].astype(str)
-    resultDataFrame['programEducationOrganizationId'] = resultDataFrame['programEducationOrganizationId'].astype(str)
-    resultDataFrame['schoolFoodServiceProgramServiceDescriptorId'] = resultDataFrame['schoolFoodServiceProgramServiceDescriptorId'].astype(str)
-    resultDataFrame['programTypeDescriptorId'] = resultDataFrame['programTypeDescriptorId'].astype(str)
-    resultDataFrame['beginDate'] = to_datetime_key(resultDataFrame, 'beginDate').astype(str)
+    result_data_frame['studentUniqueId'] = result_data_frame['studentUniqueId'].astype(str)
+    result_data_frame['schoolId'] = result_data_frame['schoolId'].astype(str)
+    result_data_frame['educationOrganizationId'] = result_data_frame['educationOrganizationId'].astype(str)
+    result_data_frame['programEducationOrganizationId'] = result_data_frame['programEducationOrganizationId'].astype(str)
+    result_data_frame['schoolFoodServiceProgramServiceDescriptorId'] = result_data_frame['schoolFoodServiceProgramServiceDescriptorId'].astype(str)
+    result_data_frame['programTypeDescriptorId'] = result_data_frame['programTypeDescriptorId'].astype(str)
+    result_data_frame['beginDate'] = to_datetime_key(result_data_frame, 'beginDate').astype(str)
 
-    resultDataFrame['StudentSchoolFoodServiceProgramKey'] = (
-        resultDataFrame['studentUniqueId']
-        + '-' + resultDataFrame['schoolId']
-        + '-' + resultDataFrame['programName']
-        + '-' + resultDataFrame['programTypeDescriptorId']
-        + '-' + resultDataFrame['educationOrganizationId']
-        + '-' + resultDataFrame['programEducationOrganizationId']
-        + '-' + resultDataFrame['beginDate']
-        + '-' + resultDataFrame['schoolFoodServiceProgramServiceDescriptorId']
+    result_data_frame['StudentSchoolFoodServiceProgramKey'] = (
+        result_data_frame['studentUniqueId']
+        + '-' + result_data_frame['schoolId']
+        + '-' + result_data_frame['programName']
+        + '-' + result_data_frame['programTypeDescriptorId']
+        + '-' + result_data_frame['educationOrganizationId']
+        + '-' + result_data_frame['programEducationOrganizationId']
+        + '-' + result_data_frame['beginDate']
+        + '-' + result_data_frame['schoolFoodServiceProgramServiceDescriptorId']
     )
 
-    resultDataFrame['StudentSchoolProgramKey'] = (
-        resultDataFrame['studentUniqueId']
-        + '-' + resultDataFrame['schoolId']
-        + '-' + resultDataFrame['programName']
-        + '-' + resultDataFrame['programTypeDescriptorId']
-        + '-' + resultDataFrame['educationOrganizationId']
-        + '-' + resultDataFrame['programEducationOrganizationId']
-        + '-' + resultDataFrame['beginDate']
+    result_data_frame['StudentSchoolProgramKey'] = (
+        result_data_frame['studentUniqueId']
+        + '-' + result_data_frame['schoolId']
+        + '-' + result_data_frame['programName']
+        + '-' + result_data_frame['programTypeDescriptorId']
+        + '-' + result_data_frame['educationOrganizationId']
+        + '-' + result_data_frame['programEducationOrganizationId']
+        + '-' + result_data_frame['beginDate']
     )
-    resultDataFrame['StudentSchoolKey'] = (
-        resultDataFrame['studentUniqueId']
-        + '-' + resultDataFrame['schoolId']
+    result_data_frame['StudentSchoolKey'] = (
+        result_data_frame['studentUniqueId']
+        + '-' + result_data_frame['schoolId']
     )
-
+    result_data_frame = renameColumns(
+        result_data_frame,
+        {
+            'programName': 'ProgramName',
+            'schoolFoodServiceProgramServiceDescriptor': 'SchoolFoodServiceProgramServiceDescriptor'
+        }
+    )
     # Select needed columns.
-    resultDataFrame = subset(resultDataFrame, [
-        'StudentSchoolFoodServiceProgramKey',
-        'StudentSchoolProgramKey',
-        'StudentSchoolKey',
-        'programName',
-        'schoolFoodServiceProgramServiceDescriptor'
-    ])
+    result_data_frame = subset(result_data_frame, columns)
+    return result_data_frame
 
-    saveParquetFile(resultDataFrame, f"{config('PARQUET_FILES_LOCATION')}", "equity_StudentSchoolFoodServiceProgramDim.parquet", school_year)
+
+def student_school_food_service_program_dim(school_year) -> data_frame_generation_result:
+    return student_school_food_service_program_dim_frame(
+        file_name="equity_StudentSchoolFoodServiceProgramDim.parquet",
+        columns=RESULT_COLUMNS,
+        school_year=school_year
+    )
