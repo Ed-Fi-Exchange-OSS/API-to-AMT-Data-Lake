@@ -23,7 +23,7 @@ jobs:
         with:
           artifact: dagster-tests
           name: Dagster Data Lake Test Results
-          path: "*.xml"
+          path: "**/*.xml"
           reporter: java-junit
           fail-on-error: false
 
@@ -32,6 +32,6 @@ jobs:
         with:
           artifact: edfi-tests
           name: Ed-Fi Data Lake Test Results
-          path: "*.xml"
+          path: "**/*.xml"
           reporter: java-junit
           fail-on-error: false
