@@ -7,14 +7,17 @@ from datetime import date
 
 from decouple import config
 
+from edfi_amt_data_lake.helper.data_frame_generation_result import (
+    data_frame_generation_result,
+)
 from edfi_amt_data_lake.parquet.Common.functions import getEndpointJson
 from edfi_amt_data_lake.parquet.Common.pandasWrapper import (
     addColumnIfNotExists,
+    create_parquet_file,
     get_descriptor_code_value_from_uri,
     jsonNormalize,
     pdMerge,
     renameColumns,
-    saveParquetFile,
     subset,
     to_datetime_key,
 )
@@ -22,9 +25,24 @@ from edfi_amt_data_lake.parquet.Common.pandasWrapper import (
 ENDPOINT_DISCIPLINE_ACTIONS = 'disciplineActions'
 ENDPOINT_DISCIPLINE_DESCRIPTOR = 'disciplineDescriptors'
 ENDPOINT_STUDENT_SCHOOL_ASSOCIATION = 'studentschoolAssociations'
+RESULT_COLUMNS = [
+    'StudentDisciplineActionKey',
+    'StudentSchoolKey',
+    'DisciplineDateKey',
+    'StudentKey',
+    'SchoolKey',
+    'DisciplineActionDescription',
+    'UserKey'
+]
 
 
-def student_discipline_action_dim(school_year) -> None:
+@create_parquet_file
+def student_discipline_action_dim_data_frame(
+    file_name: str,
+    columns: list[str],
+    school_year: int
+):
+    file_name = file_name
     discipline_action_content = getEndpointJson(ENDPOINT_DISCIPLINE_ACTIONS, config('SILVER_DATA_LOCATION'), school_year)
     discipline_descriptor_content = getEndpointJson(ENDPOINT_DISCIPLINE_DESCRIPTOR, config('SILVER_DATA_LOCATION'), school_year)
     student_school_association_content = getEndpointJson(ENDPOINT_STUDENT_SCHOOL_ASSOCIATION, config('SILVER_DATA_LOCATION'), school_year)
@@ -39,6 +57,7 @@ def student_discipline_action_dim(school_year) -> None:
             'disciplineDate',
             ['studentReference', 'studentUniqueId']
         ],
+        recordMeta=['disciplineDescriptor'],
         metaPrefix=None,
         recordPrefix='disciplines_',
         errors='ignore'
@@ -53,6 +72,10 @@ def student_discipline_action_dim(school_year) -> None:
             'disciplineActionIdentifier',
             'disciplineDate',
             ['studentReference', 'studentUniqueId']
+        ],
+        recordMeta=[
+            'staffReference.staffUniqueId',
+            'staffReference.link.href'
         ],
         metaPrefix=None,
         recordPrefix='staffs_',
@@ -164,6 +187,8 @@ def student_discipline_action_dim(school_year) -> None:
         suffixLeft='_discipline_action',
         suffixRight='_student_school_association'
     )
+    if result_data_frame is None:
+        return None
     # Filter by exitWithdrawDate
     result_data_frame = result_data_frame[result_data_frame['exitWithdrawDate'] >= result_data_frame['date_now']]
     # Cast as String to concat columns and create keys.
@@ -186,15 +211,26 @@ def student_discipline_action_dim(school_year) -> None:
         + '-'
         + result_data_frame['schoolKey']
     )
+    result_data_frame = renameColumns(
+        result_data_frame,
+        {
+            'studentDisciplineActionKey': 'StudentDisciplineActionKey',
+            'studentSchoolKey': 'StudentSchoolKey',
+            'disciplineDateKey': 'DisciplineDateKey',
+            'studentKey': 'StudentKey',
+            'schoolKey': 'SchoolKey',
+            'disciplineActionDescription': 'DisciplineActionDescription',
+            'userKey': 'UserKey'
+        }
+    )
     # Select needed columns.
-    result_data_frame = subset(result_data_frame, [
-        'studentDisciplineActionKey',
-        'studentSchoolKey',
-        'disciplineDateKey',
-        'studentKey',
-        'schoolKey',
-        'disciplineActionDescription',
-        'userKey'
-    ])
+    result_data_frame = subset(result_data_frame, columns)
+    return result_data_frame
 
-    saveParquetFile(result_data_frame, f"{config('PARQUET_FILES_LOCATION')}", "equity_StudentDisciplineActionDim.parquet", school_year)
+
+def student_discipline_action_dim(school_year) -> data_frame_generation_result:
+    return student_discipline_action_dim_data_frame(
+        file_name="equity_StudentDisciplineActionDim.parquet",
+        columns=RESULT_COLUMNS,
+        school_year=school_year
+    )
