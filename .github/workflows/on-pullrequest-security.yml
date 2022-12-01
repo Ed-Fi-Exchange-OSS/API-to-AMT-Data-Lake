@@ -24,7 +24,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Dependency Review ("Dependabot on PR")
-        uses: actions/dependency-review-action@a9c83d3af6b9031e20feba03b904645bb23d1dab # v1.0.2
+        uses: actions/dependency-review-action@0efb1d1d84fc9633afcdaad14c485cbbc90ef46c  # v2.5.1
         with:
             allow-ghsas: GHSA-w596-4wvx-j9j6  # this refers a potential attack via Subversion; ignoring since we only use Git.
 
