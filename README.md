@@ -71,24 +71,28 @@ PARQUET_FILES_LOCATION=C:\\temp\\edfi\\parquet\\
 
 4-)  cd ../src/dagster_data_lake
 
-5-) 
-    * Linux: 
-    mkdir ~/dagster_home 
-    export DAGSTER_HOME=~"/dagster_home" 
-    dagster instance info
-    cp -R dagster.yaml ~/dagster_home/
+5-)
+    * Continue with the next steps for Linux:
+        -------------------------------------
+        mkdir ~/dagster_home
+        export DAGSTER_HOME=~"/dagster_home"
+        dagster instance info
+        cp -R dagster.yaml ~/dagster_home/
+        -------------------------------------
 
-    * Windows -> Poweshell:
-    mkdir ~/dagster_home 
-    $env:DAGSTER_HOME = ($home + '\dagster_home')
-    dagster instance info
-    cp -R dagster.yaml ~/dagster_home/
+    * Continue with the next steps for Windows:
+        -------------------------------------
+        mkdir ~/dagster_home
+        $env:DAGSTER_HOME = ($home + '\dagster_home')
+        dagster instance info
+        cp -R dagster.yaml ~/dagster_home/
+        -------------------------------------
 
 6-) dagit -w dagster/workspace.yaml
 ```
 ## Logs
 
-The log can be found in the same directory or it can also be found:
+The log can be found in the same directory or inside the dagster home folder
 ```sh
 
 1-) /API-to-AMT-Data-Lake/src/dagster_data_lake/api_to_amt.log
