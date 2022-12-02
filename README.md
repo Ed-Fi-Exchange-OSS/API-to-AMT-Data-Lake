@@ -87,15 +87,15 @@ PARQUET_FILES_LOCATION=C:\\temp\\edfi\\parquet\\
 6-) dagit -w dagster/workspace.yaml
 ```
 ## Logs
-To view the logs you must go to the folder dagster_home/ inside this folder is the storage folder which has the logs for execution, then this folder where you will find the folder computer_logs, inside the logs.
+
+The log can be found in the same directory or it can also be found:
 ```sh
-/dagster_home/storage/df31759540dc28f75a20f443a19b1148/computer_logs/
+
+1-) /API-to-AMT-Data-Lake/src/dagster_data_lake/api_to_amt.log
+
+2-) /dagster_home/storage/xxxxxxxx-folder-xxxxxxxx/compute_logs
 ```
----------------------------------------------
-The log file can also be found in this same directory.
-```sh
-/API-to-AMT-Data-Lake/src/dagster_data_lake/
-```
+
 ---------------------------------------------
 
 ## Extra Steps
