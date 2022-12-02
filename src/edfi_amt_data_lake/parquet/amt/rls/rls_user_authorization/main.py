@@ -5,21 +5,19 @@
 
 from datetime import date
 
-import pandas as pd
 from decouple import config
 
 from edfi_amt_data_lake.parquet.Common.descriptor_mapping import get_descriptor_constant
 from edfi_amt_data_lake.parquet.Common.functions import getEndpointJson
 from edfi_amt_data_lake.parquet.Common.pandasWrapper import (
     addColumnIfNotExists,
-    get_reference_from_href,
     create_parquet_file,
+    get_reference_from_href,
     jsonNormalize,
     pdMerge,
     renameColumns,
     subset,
     to_datetime_key,
-    toCsv
 )
 
 ENDPOINT_STAFF_EDORG_ASSIGNMENT_ASSOCIATION = 'staffEducationOrganizationAssignmentAssociations'
@@ -33,6 +31,7 @@ RESULT_COLUMNS = [
     'SchoolPermission',
     'DistrictId'
 ]
+
 
 @create_parquet_file
 def rls_user_authorization_dataframe(
@@ -51,6 +50,7 @@ def rls_user_authorization_dataframe(
         meta=[
             'studentReference.studentUniqueId',
             'staffReference.staffUniqueId',
+            'staffReference.link.href',
             'staffClassificationDescriptor',
             'educationOrganizationReference.link.href',
             'educationOrganizationReference.educationOrganizationId',
@@ -107,7 +107,7 @@ def rls_user_authorization_dataframe(
         'educationOrganizationId',
         'staffReferenceId',
     ])
-    toCsv(staff_edorg_assignment_association_normalize, 'C:/temp/edfi/parquet/', 'staff_edorg_assignment_association_normalize.csv', '')
+
     ############################
     # staff-section
     ############################
@@ -138,7 +138,7 @@ def rls_user_authorization_dataframe(
         'staffReference.link.href',
         'staffReferenceId',
     )
-    toCsv(staff_section_association_normalize, 'C:/temp/edfi/parquet/', 'staff_section_association_normalize.csv', '')
+
     # Select needed columns.
     staff_section_association_normalize = subset(staff_section_association_normalize, [
         'sectionReferenceId',
@@ -149,7 +149,7 @@ def rls_user_authorization_dataframe(
         'sectionReference.sectionIdentifier',
         'sectionReference.sessionName'
     ]).drop_duplicates()
-    toCsv(staff_edorg_assignment_association_normalize, 'C:/temp/edfi/parquet/', 'staff_edorg_assignment_association_normalize.csv', '')
+
     ############################
     # Section -> EdOrg = Section
     ############################
@@ -162,6 +162,7 @@ def rls_user_authorization_dataframe(
         suffixLeft=None,
         suffixRight=None
     )
+
     result_section_data_frame['sectionReference.schoolKey'] = result_section_data_frame['sectionReference.schoolId'].astype('Int64').astype(str)
     result_section_data_frame['sectionReference.schoolYear'] = result_section_data_frame['sectionReference.schoolYear'].astype('Int64').astype(str)
     result_section_data_frame['sectionKey'] = (
@@ -237,7 +238,7 @@ def rls_user_authorization_dataframe(
         }
     )
     result_data_frame = subset(result_section_data_frame, columns).drop_duplicates()
-    toCsv(result_data_frame, 'C:/temp/edfi/parquet/', 'rls_UserAuthorization.csv', '')
+
     return result_data_frame
 
 
