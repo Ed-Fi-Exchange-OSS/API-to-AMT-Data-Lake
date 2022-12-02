@@ -12,13 +12,13 @@ from edfi_amt_data_lake.parquet.Common.descriptor_mapping import get_descriptor_
 from edfi_amt_data_lake.parquet.Common.functions import getEndpointJson
 from edfi_amt_data_lake.parquet.Common.pandasWrapper import (
     addColumnIfNotExists,
+    create_parquet_file,
     get_reference_from_href,
     jsonNormalize,
     pd_concat,
     pdMerge,
     renameColumns,
     replace_null,
-    saveParquetFile,
     subset,
     to_datetime_key,
 )
@@ -28,9 +28,19 @@ ENDPOINT_STUDENT_SCHOOL_ASSOCIATION = 'studentSchoolAssociations'
 ENDPOINT_SCHOOL = 'schools'
 ENDPOINT_STUDENT_SECTION_ASSOCIATION = 'studentSectionAssociations'
 ENDPOINT_STAFF_SECTION_ASSOCIATION = 'staffSectionAssociations'
+RESULT_COLUMNS = [
+    'UserKey',
+    'StudentKey'
+]
 
 
-def rls_user_student_data_authorization_dataframe(school_year) -> pd.DataFrame:
+@create_parquet_file
+def rls_user_student_data_authorization_dataframe(
+    file_name: str,
+    columns: list[str],
+    school_year: int
+):
+    file_name = file_name
     staff_edorg_assignment_association_content = getEndpointJson(ENDPOINT_STAFF_EDORG_ASSIGNMENT_ASSOCIATION, config('SILVER_DATA_LOCATION'), school_year)
     student_school_association_content = getEndpointJson(ENDPOINT_STUDENT_SCHOOL_ASSOCIATION, config('SILVER_DATA_LOCATION'), school_year)
     school_content = getEndpointJson(ENDPOINT_SCHOOL, config('SILVER_DATA_LOCATION'), school_year)
@@ -47,7 +57,7 @@ def rls_user_student_data_authorization_dataframe(school_year) -> pd.DataFrame:
             'staffReference.staffUniqueId',
             'staffClassificationDescriptor',
             'educationOrganizationReference.link.href',
-            'educationOrganizationReference.educationOrganizationId'
+            'educationOrganizationReference.educationOrganizationId',
             'endDate'
         ],
         metaPrefix=None,
@@ -75,7 +85,7 @@ def rls_user_student_data_authorization_dataframe(school_year) -> pd.DataFrame:
         'staffReferenceId'
     )
     staff_edorg_assignment_association_normalize = renameColumns(staff_edorg_assignment_association_normalize, {
-        'staffReference.staffUniqueId': 'userKey',
+        'staffReference.staffUniqueId': 'UserKey',
         'educationOrganizationReference.educationOrganizationId': 'educationOrganizationId'
     })
     # Dates to validate endDate.
@@ -89,7 +99,7 @@ def rls_user_student_data_authorization_dataframe(school_year) -> pd.DataFrame:
     )
     # Select needed columns.
     staff_edorg_assignment_association_normalize = subset(staff_edorg_assignment_association_normalize, [
-        'userKey',
+        'UserKey',
         'date_now',
         'endDateKey',
         'edOrgReferenceId',
@@ -139,7 +149,8 @@ def rls_user_student_data_authorization_dataframe(school_year) -> pd.DataFrame:
         meta=[
             'studentReference.studentUniqueId',
             'schoolReference.link.href',
-            'exitWithdrawDate'
+            'exitWithdrawDate',
+            'schoolReference.schoolId'
         ],
         metaPrefix=None,
         recordPrefix=None,
@@ -156,13 +167,13 @@ def rls_user_student_data_authorization_dataframe(school_year) -> pd.DataFrame:
         to_datetime_key(student_school_association_normalize, "exitWithdrawDate")
     )
     student_school_association_normalize = renameColumns(student_school_association_normalize, {
-        'studentReference.studentUniqueId': 'studentKey',
+        'studentReference.studentUniqueId': 'StudentKey',
         'schoolReference.schoolId': 'schoolKey'
     })
     # Select needed columns.
     student_school_association_normalize = subset(student_school_association_normalize, [
         'schoolReferenceId',
-        'studentKey',
+        'StudentKey',
         'exitWithdrawDateKey',
         'schoolKey',
     ])
@@ -173,7 +184,7 @@ def rls_user_student_data_authorization_dataframe(school_year) -> pd.DataFrame:
         student_section_association_content,
         recordPath=None,
         meta=[
-            'studentReference.link.href'
+            'studentReference.link.href',
             'studentReference.studentUniqueId',
             'sectionReference.schoolId',
             'endDate'
@@ -196,13 +207,16 @@ def rls_user_student_data_authorization_dataframe(school_year) -> pd.DataFrame:
     student_section_association_normalize['sectionEndDateKey'] = (
         to_datetime_key(student_section_association_normalize, 'endDate')
     )
-    student_section_association_normalize = renameColumns(student_section_association_normalize, {
-        'studentReference.studentUniqueId': 'studentKey',
-        'sectionReference.schoolId': 'schoolKey',
-    })
+    student_section_association_normalize = renameColumns(
+        student_section_association_normalize, 
+        {
+            'studentReference.studentUniqueId': 'StudentKey',
+            'sectionReference.schoolId': 'schoolKey',
+        }
+    )
     # Select needed columns.
     student_section_association_normalize = subset(student_section_association_normalize, [
-        'studentKey',
+        'StudentKey',
         'schoolKey',
         'sectionEndDateKey',
         'sectionReferenceId'
@@ -264,22 +278,25 @@ def rls_user_student_data_authorization_dataframe(school_year) -> pd.DataFrame:
         suffixLeft='district_',
         suffixRight="school_"
     )
-    result_district_data_frame = (
-        result_district_data_frame[
-            (result_district_data_frame['staffClassificationDescriptor_constantName'].str.contains('AuthorizationScope.District'))
-        ]
-    )
-    result_district_data_frame = (
-        result_district_data_frame[result_district_data_frame['endDateKey'] >= result_district_data_frame['date_now']]
-    )
-    result_district_data_frame = (
-        result_district_data_frame[result_district_data_frame['exitWithdrawDateKey'] >= result_district_data_frame['date_now']]
-    )
-    # Select needed columns.
-    result_district_data_frame = subset(result_district_data_frame, [
-        'userKey',
-        'studentKey'
-    ]).drop_duplicates()
+    if not result_district_data_frame is None:
+        result_district_data_frame = (
+            result_district_data_frame[
+                (result_district_data_frame['staffClassificationDescriptor_constantName'].str.contains('AuthorizationScope.District'))
+            ]
+        )
+        result_district_data_frame = (
+            result_district_data_frame[result_district_data_frame['endDateKey'] >= result_district_data_frame['date_now']]
+        )
+        result_district_data_frame = (
+            result_district_data_frame[result_district_data_frame['exitWithdrawDateKey'] >= result_district_data_frame['date_now']]
+        )
+        # Select needed columns.
+        result_district_data_frame = subset(result_district_data_frame, [
+            'UserKey',
+            'StudentKey'
+        ]).drop_duplicates()
+    else:
+        result_district_data_frame = pd.DataFrame(columns=columns)
     ############################
     # School -> EdOrg = School
     ############################
@@ -301,22 +318,25 @@ def rls_user_student_data_authorization_dataframe(school_year) -> pd.DataFrame:
         suffixLeft=None,
         suffixRight=None
     )
-    result_school_data_frame = (
-        result_school_data_frame[
-            (result_school_data_frame['staffClassificationDescriptor_constantName'].str.contains('AuthorizationScope.School'))
-        ]
-    )
-    result_school_data_frame = (
-        result_school_data_frame[result_school_data_frame['endDateKey'] >= result_school_data_frame['date_now']]
-    )
-    result_school_data_frame = (
-        result_school_data_frame[result_school_data_frame['exitWithdrawDateKey'] >= result_school_data_frame['date_now']]
-    )
-    # Select needed columns.
-    result_school_data_frame = subset(result_school_data_frame, [
-        'userKey',
-        'studentKey'
-    ]).drop_duplicates()
+    if result_school_data_frame is None:
+        result_school_data_frame = (
+            result_school_data_frame[
+                (result_school_data_frame['staffClassificationDescriptor_constantName'].str.contains('AuthorizationScope.School'))
+            ]
+        )
+        result_school_data_frame = (
+            result_school_data_frame[result_school_data_frame['endDateKey'] >= result_school_data_frame['date_now']]
+        )
+        result_school_data_frame = (
+            result_school_data_frame[result_school_data_frame['exitWithdrawDateKey'] >= result_school_data_frame['date_now']]
+        )
+        # Select needed columns.
+        result_school_data_frame = subset(result_school_data_frame, [
+            'UserKey',
+            'StudentKey'
+        ]).drop_duplicates()
+    else:
+        result_school_data_frame = pd.DataFrame(columns=columns)
     ############################
     # Section -> EdOrg = Section
     ############################
@@ -350,31 +370,34 @@ def rls_user_student_data_authorization_dataframe(school_year) -> pd.DataFrame:
         how='inner',
         leftOn=[
             'schoolKey',
-            'studentKey'
+            'StudentKey'
         ],
         rightOn=[
             'schoolKey',
-            'studentKey'
+            'StudentKey'
         ],
         suffixLeft=None,
         suffixRight=None
     )
-    result_section_data_frame = (
-        result_section_data_frame[
-            (result_section_data_frame['staffClassificationDescriptor_constantName'].str.contains('AuthorizationScope.Section'))
-        ]
-    )
-    result_section_data_frame = (
-        result_section_data_frame[result_section_data_frame['sectionEndDateKey'] >= result_section_data_frame['date_now']]
-    )
-    result_section_data_frame = (
-        result_section_data_frame[result_section_data_frame['exitWithdrawDateKey'] >= result_section_data_frame['date_now']]
-    )
-    # Select needed columns.
-    result_section_data_frame = subset(result_section_data_frame, [
-        'userKey',
-        'studentKey'
-    ]).drop_duplicates()
+    if not result_district_data_frame is None:
+        result_section_data_frame = (
+            result_section_data_frame[
+                (result_section_data_frame['staffClassificationDescriptor_constantName'].str.contains('AuthorizationScope.Section'))
+            ]
+        )
+        result_section_data_frame = (
+            result_section_data_frame[result_section_data_frame['sectionEndDateKey'] >= result_section_data_frame['date_now']]
+        )
+        result_section_data_frame = (
+            result_section_data_frame[result_section_data_frame['exitWithdrawDateKey'] >= result_section_data_frame['date_now']]
+        )
+        # Select needed columns.
+        result_section_data_frame = subset(result_section_data_frame, [
+            'UserKey',
+            'StudentKey'
+        ]).drop_duplicates()
+    else: 
+        result_section_data_frame = pd.DataFrame(columns=columns)
     ############################
     # CONCAT RESULTS
     ############################
@@ -386,13 +409,13 @@ def rls_user_student_data_authorization_dataframe(school_year) -> pd.DataFrame:
         ],
     )
     # Select needed columns.
-    result_data_frame = subset(result_data_frame, [
-        'userKey',
-        'studentKey'
-    ]).drop_duplicates()
+    result_data_frame = subset(result_data_frame, columns).drop_duplicates()
     return result_data_frame
 
 
 def rls_user_student_data_authorization(school_year) -> None:
-    result_data_frame = rls_user_student_data_authorization_dataframe(school_year)
-    saveParquetFile(result_data_frame, f"{config('PARQUET_FILES_LOCATION')}", "rls_UserStudentDataAuthorization.parquet", school_year)
+    return rls_user_student_data_authorization_dataframe(
+        file_name="rls_UserStudentDataAuthorization.parquet",
+        columns=RESULT_COLUMNS,
+        school_year=school_year
+    )
