@@ -7,17 +7,21 @@ from datetime import date
 
 from decouple import config
 
+from edfi_amt_data_lake.helper.data_frame_generation_result import (
+    data_frame_generation_result,
+)
 from edfi_amt_data_lake.parquet.Common.descriptor_mapping import get_descriptor_constant
 from edfi_amt_data_lake.parquet.Common.functions import getEndpointJson
 from edfi_amt_data_lake.parquet.Common.pandasWrapper import (
+    add_dataframe_column,
     addColumnIfNotExists,
+    create_parquet_file,
     crossTab,
     get_descriptor_code_value_from_uri,
     jsonNormalize,
     pdMerge,
     renameColumns,
     replace_null,
-    saveParquetFile,
     subset,
     to_datetime_key,
 )
@@ -30,9 +34,36 @@ ENDPOINT_STUDENT_SECTION_ASSOCIATION = 'studentSectionAssociations'
 ENDPOINT_STUDENT_SCHOOL_ATTENDANCE_EVENTS = 'studentSchoolAttendanceEvents'
 ENDPOINT_STUDENT_SECTION_ATTENDANCE_EVENTS = 'studentSectionAttendanceEvents'
 IS_INSTRUCTIONAL_DAY = 'CalendarEvent.InstructionalDay'
+RESULT_COLUMNS = [
+    'StudentKey',
+    'SchoolKey',
+    'DateKey',
+    'IsInstructionalDay',
+    'IsEnrolled',
+    'IsPresentSchool',
+    'IsAbsentFromSchoolExcused',
+    'IsAbsentFromSchoolUnexcused',
+    'IsTardyToSchool',
+    'IsPresentHomeroom',
+    'IsAbsentFromHomeroomExcused',
+    'IsAbsentFromHomeroomUnexcused',
+    'IsTardyToHomeroom',
+    'IsPresentAnyClass',
+    'IsAbsentFromAnyClassExcused',
+    'IsAbsentFromAnyClassUnexcused',
+    'IsTardyToAnyClass',
+    'CountByDayOfStateOffenses',
+    'CountByDayOfConductOffenses'
+]
 
 
-def student_early_warning_fact(school_year) -> None:
+@create_parquet_file
+def student_early_warning_fact_data_frame(
+    file_name: str,
+    columns: list[str],
+    school_year: int
+):
+    file_name = file_name
     calendarDatesContent = getEndpointJson(ENDPOINT_CALENDAR_DATES, config('SILVER_DATA_LOCATION'), school_year)
     disciplineIncidentContent = getEndpointJson(ENDPOINT_DISCIPLINE_INCIDENTS, config('SILVER_DATA_LOCATION'), school_year)
     studentDisciplineIncidentBehaviorAssociationsContent = getEndpointJson(ENDPOINT_STUDENT_DISCIPLINE_BEHAVIOR_ASSOCIATION, config('SILVER_DATA_LOCATION'), school_year)
@@ -47,7 +78,12 @@ def student_early_warning_fact(school_year) -> None:
     studentSchoolAssociationNormalized = jsonNormalize(
         studentSchoolAssociationsContent,
         recordPath=None,
-        meta=['schoolReference.schoolId', 'studentReference.studentUniqueId', 'entryDate', 'exitWithdrawDate'],
+        meta=[
+            'schoolReference.schoolId',
+            'studentReference.studentUniqueId',
+            'entryDate',
+            'exitWithdrawDate'
+        ],
         metaPrefix=None,
         recordPrefix='calendarEvents_',
         errors='ignore'
@@ -72,16 +108,25 @@ def student_early_warning_fact(school_year) -> None:
     calendarDatesNormalized = jsonNormalize(
         calendarDatesContent,
         recordPath=['calendarEvents'],
-        meta=['date', ['calendarReference', 'schoolId'], ['calendarReference', 'schoolYear']],
+        meta=[
+            'date',
+            ['calendarReference', 'schoolId'],
+            ['calendarReference', 'schoolYear']
+        ],
+        recordMeta=[
+            'calendarEventDescriptor'
+        ],
         metaPrefix=None,
         recordPrefix='calendarEvents_',
         errors='ignore'
     )
 
     calendarDatesNormalized = get_descriptor_constant(calendarDatesNormalized, 'calendarEvents_calendarEventDescriptor')
-    calendarDatesNormalized.loc[calendarDatesNormalized['calendarEvents_calendarEventDescriptor_constantName'] == IS_INSTRUCTIONAL_DAY, 'IsInstructionalDay'] = '1'
-    calendarDatesNormalized.loc[calendarDatesNormalized['calendarEvents_calendarEventDescriptor_constantName'] != IS_INSTRUCTIONAL_DAY, 'IsInstructionalDay'] = '0'
 
+    if not calendarDatesNormalized.empty:
+        calendarDatesNormalized.loc[calendarDatesNormalized['calendarEvents_calendarEventDescriptor_constantName'] == IS_INSTRUCTIONAL_DAY, 'IsInstructionalDay'] = '1'
+        calendarDatesNormalized.loc[calendarDatesNormalized['calendarEvents_calendarEventDescriptor_constantName'] != IS_INSTRUCTIONAL_DAY, 'IsInstructionalDay'] = '0'
+    replace_null(calendarDatesNormalized, 'IsInstructionalDay', '0')
     # Select needed columns.
     calendarDatesNormalized = subset(calendarDatesNormalized, [
         'IsInstructionalDay',
@@ -107,7 +152,8 @@ def student_early_warning_fact(school_year) -> None:
         suffixLeft='_studentSchoolAssociation',
         suffixRight='_calendarDates'
     )
-
+    if resultDataFrame is None:
+        return None
     resultDataFrame['exitWithdrawDateKey'] = to_datetime_key(resultDataFrame, 'exitWithdrawDate')
     resultDataFrame['dateKey'] = to_datetime_key(resultDataFrame, 'date')
     resultDataFrame['entryDateKey'] = to_datetime_key(resultDataFrame, 'entryDate')
@@ -170,7 +216,8 @@ def student_early_warning_fact(school_year) -> None:
         suffixLeft='_studentSchoolAssociation',
         suffixRight='_studentSchoolAttendanceEvents'
     )
-
+    if resultDataFrame is None:
+        return None
     ####################################################################################
     # By Section
     ####################################################################################
@@ -189,7 +236,8 @@ def student_early_warning_fact(school_year) -> None:
             'sectionReference.sessionName',
             'studentReference.studentUniqueId',
             'endDate',
-            'homeroomIndicator'],
+            'homeroomIndicator'
+        ],
         metaPrefix=None,
         recordPrefix=None,
         errors='ignore'
@@ -230,7 +278,8 @@ def student_early_warning_fact(school_year) -> None:
             'sectionReference.sessionName',
             'studentReference.studentUniqueId',
             'eventDate',
-            'attendanceEventCategoryDescriptor'
+            'attendanceEventCategoryDescriptor',
+            'educationalEnvironmentDescriptor'
         ],
         metaPrefix=None,
         recordPrefix=None,
@@ -336,14 +385,30 @@ def student_early_warning_fact(school_year) -> None:
     # Subset homeroom values
     ############################
     studentSectionHomeroomDataFrame = studentSectionAttendanceEventsNormalized[studentSectionAttendanceEventsNormalized['homeroomIndicator']]
-
+    studentSectionHomeroomDataFrame = add_dataframe_column(
+        studentSectionHomeroomDataFrame,
+        [
+            'localCourseCode',
+            'schoolId',
+            'schoolYear',
+            'sectionIdentifier',
+            'sessionName',
+            'studentUniqueId',
+            'eventDate',
+            'endDate',
+            'homeroomIndicator',
+            'IsPresentHomeroom',
+            'IsAbsentFromHomeroomExcused',
+            'IsAbsentFromHomeroomUnexcused',
+            'IsTardyToHomeroom'
+        ]
+    )
     studentSectionHomeroomDataFrame = renameColumns(studentSectionHomeroomDataFrame, {
         'IsPresentAnyClass': 'IsPresentHomeroom',
         'IsAbsentFromAnyClassExcused': 'IsAbsentFromHomeroomExcused',
         'IsAbsentFromAnyClassUnexcused': 'IsAbsentFromHomeroomUnexcused',
         'IsTardyToAnyClass': 'IsTardyToHomeroom'
     })
-
     ############################
     # Add Homeroom columns
     ############################
@@ -565,26 +630,13 @@ def student_early_warning_fact(school_year) -> None:
     })
 
     # Select needed columns.
-    resultDataFrame = subset(resultDataFrame, [
-        'StudentKey',
-        'SchoolKey',
-        'DateKey',
-        'IsInstructionalDay',
-        'IsEnrolled',
-        'IsPresentSchool',
-        'IsAbsentFromSchoolExcused',
-        'IsAbsentFromSchoolUnexcused',
-        'IsTardyToSchool',
-        'IsPresentHomeroom',
-        'IsAbsentFromHomeroomExcused',
-        'IsAbsentFromHomeroomUnexcused',
-        'IsTardyToHomeroom',
-        'IsPresentAnyClass',
-        'IsAbsentFromAnyClassExcused',
-        'IsAbsentFromAnyClassUnexcused',
-        'IsTardyToAnyClass',
-        'CountByDayOfStateOffenses',
-        'CountByDayOfConductOffenses'
-    ])
+    resultDataFrame = subset(resultDataFrame, columns)
+    return resultDataFrame
 
-    saveParquetFile(resultDataFrame, f"{config('PARQUET_FILES_LOCATION')}", "ews_StudentEarlyWarningFactDim.parquet", school_year)
+
+def student_early_warning_fact(school_year) -> data_frame_generation_result:
+    return student_early_warning_fact_data_frame(
+        file_name="ews_StudentEarlyWarningFactDim.parquet",
+        columns=RESULT_COLUMNS,
+        school_year=school_year
+    )
