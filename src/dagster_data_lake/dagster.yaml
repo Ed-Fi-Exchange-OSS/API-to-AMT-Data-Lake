@@ -1,0 +1,7 @@
+python_logs:
+  dagster_handler_config:
+    handlers:
+      handler:
+        class: logging.FileHandler
+        filename: "api_to_amt.log"
+        mode: "a"
