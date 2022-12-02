@@ -1,0 +1,7 @@
+python_logs:
+  dagster_handler_config:
+    handlers:
+      myHandler:
+        class: logging.FileHandler
+        filename: "dagster_logs.log"
+        mode: "a"

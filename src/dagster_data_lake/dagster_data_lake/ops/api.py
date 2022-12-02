@@ -1,5 +1,4 @@
-# SPDX-License-Identifier: Apache-2.0
-# Licensed to the Ed-Fi Alliance under one or more agreements.
+# SPDX-License-Identifier: Apache-2.0 Licensed to the Ed-Fi Alliance under one or more agreements.
 # The Ed-Fi Alliance licenses this file to you under the Apache License, Version 2.0.
 # See the LICENSE and NOTICES files in the project root for more information.
 
@@ -11,8 +10,16 @@ from edfi_amt_data_lake.helper.helper import get_school_year
 from edfi_amt_data_lake.parquet.amt_parquet import generate_amt_parquet
 
 
+from dagster import get_dagster_logger
+
+
 @op
 def get_api_data() -> None:
+    parquet_logger = get_dagster_logger()
+    parquet_logger.info("INFO: Starting to get API data")
+    parquet_logger.debug("DEBUG: Starting to get API data")
+    parquet_logger.error("ERROR: Starting to get API data")
+
     for school_year in get_school_year():
         if get_change_version_updated(school_year):
             api_async(school_year)
