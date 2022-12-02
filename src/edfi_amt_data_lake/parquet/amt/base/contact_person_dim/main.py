@@ -451,12 +451,12 @@ def contact_person_dim_dataframe(
 
     # Parent Email - Work Email - Primary Email Address - Work
     result_data_frame["PrimaryEmailAddress"] = result_data_frame.apply(
-        lambda r: ('Work') if r["primaryEmailAddressIndicator"] else 'Not specified', axis=1
+        lambda r: ('Work') if r["primaryEmailAddressIndicator"] is True else 'Not specified', axis=1
     )
 
     # Parent Email - Work Email - Primary Email Address - Personal
     result_data_frame["PrimaryEmailAddress"] = result_data_frame.apply(
-        lambda r: ('Personal') if r["primaryEmailAddressIndicator_parents_mails_personal"] else 'Not specified', axis=1
+        lambda r: ('Personal') if r["primaryEmailAddressIndicator_parents_mails_personal"] is True else 'Not specified', axis=1
     )
 
     result_data_frame = subset(result_data_frame, [
