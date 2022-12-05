@@ -5,27 +5,40 @@
 
 from datetime import date
 
-import pandas as pd
 from decouple import config
 
 from edfi_amt_data_lake.parquet.Common.descriptor_mapping import get_descriptor_constant
 from edfi_amt_data_lake.parquet.Common.functions import getEndpointJson
 from edfi_amt_data_lake.parquet.Common.pandasWrapper import (
     addColumnIfNotExists,
+    create_parquet_file,
     get_reference_from_href,
     jsonNormalize,
     pdMerge,
     renameColumns,
-    saveParquetFile,
     subset,
     to_datetime_key,
 )
 
 ENDPOINT_STAFF_EDORG_ASSIGNMENT_ASSOCIATION = 'staffEducationOrganizationAssignmentAssociations'
 ENDPOINT_STAFF_SECTION_ASSOCIATION = 'staffSectionAssociations'
+RESULT_COLUMNS = [
+    'UserKey',
+    'UserScope',
+    'StudentPermission',
+    'SectionPermission',
+    'SectionKeyPermission',
+    'SchoolPermission',
+    'DistrictId'
+]
 
 
-def rls_user_authorization_dataframe(school_year) -> pd.DataFrame:
+@create_parquet_file
+def rls_user_authorization_dataframe(
+    file_name: str,
+    columns: list[str],
+    school_year: int
+):
     staff_edorg_assignment_association_content = getEndpointJson(ENDPOINT_STAFF_EDORG_ASSIGNMENT_ASSOCIATION, config('SILVER_DATA_LOCATION'), school_year)
     staff_section_association_content = getEndpointJson(ENDPOINT_STAFF_SECTION_ASSOCIATION, config('SILVER_DATA_LOCATION'), school_year)
     ############################
@@ -37,23 +50,28 @@ def rls_user_authorization_dataframe(school_year) -> pd.DataFrame:
         meta=[
             'studentReference.studentUniqueId',
             'staffReference.staffUniqueId',
+            'staffReference.link.href',
             'staffClassificationDescriptor',
             'educationOrganizationReference.link.href',
-            'educationOrganizationReference.educationOrganizationId'
+            'educationOrganizationReference.educationOrganizationId',
             'endDate'
         ],
         metaPrefix=None,
         recordPrefix=None,
         errors='ignore'
     )
+
+    if staff_edorg_assignment_association_normalize.empty:
+        return None
+
     staff_edorg_assignment_association_normalize = (
         get_descriptor_constant(staff_edorg_assignment_association_normalize, 'staffClassificationDescriptor')
     )
     staff_edorg_assignment_association_normalize = (
         staff_edorg_assignment_association_normalize[
-            (staff_edorg_assignment_association_normalize['staffClassificationDescriptor_constantName'].str.contains('AuthorizationScope.District'))
-            | (staff_edorg_assignment_association_normalize['staffClassificationDescriptor_constantName'].str.contains('AuthorizationScope.School'))
-            | (staff_edorg_assignment_association_normalize['staffClassificationDescriptor_constantName'].str.contains('AuthorizationScope.Section'))
+            (staff_edorg_assignment_association_normalize['staffClassificationDescriptor_constantName'].str.contains('AuthorizationScope.District', na=False))
+            | (staff_edorg_assignment_association_normalize['staffClassificationDescriptor_constantName'].str.contains('AuthorizationScope.School', na=False))
+            | (staff_edorg_assignment_association_normalize['staffClassificationDescriptor_constantName'].str.contains('AuthorizationScope.Section', na=False))
         ]
     )
     get_reference_from_href(
@@ -67,7 +85,7 @@ def rls_user_authorization_dataframe(school_year) -> pd.DataFrame:
         'staffReferenceId'
     )
     staff_edorg_assignment_association_normalize = renameColumns(staff_edorg_assignment_association_normalize, {
-        'staffReference.staffUniqueId': 'userKey',
+        'staffReference.staffUniqueId': 'UserKey',
         'educationOrganizationReference.educationOrganizationId': 'educationOrganizationId'
     })
     # Dates to validate endDate.
@@ -81,7 +99,7 @@ def rls_user_authorization_dataframe(school_year) -> pd.DataFrame:
     )
     # Select needed columns.
     staff_edorg_assignment_association_normalize = subset(staff_edorg_assignment_association_normalize, [
-        'userKey',
+        'UserKey',
         'date_now',
         'endDateKey',
         'edOrgReferenceId',
@@ -89,6 +107,7 @@ def rls_user_authorization_dataframe(school_year) -> pd.DataFrame:
         'educationOrganizationId',
         'staffReferenceId',
     ])
+
     ############################
     # staff-section
     ############################
@@ -99,6 +118,11 @@ def rls_user_authorization_dataframe(school_year) -> pd.DataFrame:
             'id',
             'sectionReference.link.href',
             'staffReference.link.href',
+            'sectionReference.schoolId',
+            'sectionReference.localCourseCode',
+            'sectionReference.schoolYear',
+            'sectionReference.sectionIdentifier',
+            'sectionReference.sessionName'
         ],
         metaPrefix=None,
         recordPrefix=None,
@@ -114,6 +138,7 @@ def rls_user_authorization_dataframe(school_year) -> pd.DataFrame:
         'staffReference.link.href',
         'staffReferenceId',
     )
+
     # Select needed columns.
     staff_section_association_normalize = subset(staff_section_association_normalize, [
         'sectionReferenceId',
@@ -124,6 +149,7 @@ def rls_user_authorization_dataframe(school_year) -> pd.DataFrame:
         'sectionReference.sectionIdentifier',
         'sectionReference.sessionName'
     ]).drop_duplicates()
+
     ############################
     # Section -> EdOrg = Section
     ############################
@@ -136,6 +162,7 @@ def rls_user_authorization_dataframe(school_year) -> pd.DataFrame:
         suffixLeft=None,
         suffixRight=None
     )
+
     result_section_data_frame['sectionReference.schoolKey'] = result_section_data_frame['sectionReference.schoolId'].astype('Int64').astype(str)
     result_section_data_frame['sectionReference.schoolYear'] = result_section_data_frame['sectionReference.schoolYear'].astype('Int64').astype(str)
     result_section_data_frame['sectionKey'] = (
@@ -148,9 +175,9 @@ def rls_user_authorization_dataframe(school_year) -> pd.DataFrame:
     result_section_data_frame = (
         result_section_data_frame[
             (
-                result_section_data_frame['staffClassificationDescriptor_constantName'].str.contains('AuthorizationScope.District')
-                | result_section_data_frame['staffClassificationDescriptor_constantName'].str.contains('AuthorizationScope.School')
-                | result_section_data_frame['staffClassificationDescriptor_constantName'].str.contains('AuthorizationScope.Section')
+                result_section_data_frame['staffClassificationDescriptor_constantName'].str.contains('AuthorizationScope.District', na=False)
+                | result_section_data_frame['staffClassificationDescriptor_constantName'].str.contains('AuthorizationScope.School', na=False)
+                | result_section_data_frame['staffClassificationDescriptor_constantName'].str.contains('AuthorizationScope.Section', na=False)
             )
         ]
     )
@@ -158,70 +185,66 @@ def rls_user_authorization_dataframe(school_year) -> pd.DataFrame:
     # Section permission
     result_section_data_frame.loc[
         (
-            result_section_data_frame['staffClassificationDescriptor_constantName'].str.contains('AuthorizationScope.District')
-            | result_section_data_frame['staffClassificationDescriptor_constantName'].str.contains('AuthorizationScope.School')
+            result_section_data_frame['staffClassificationDescriptor_constantName'].str.contains('AuthorizationScope.District', na=False)
+            | result_section_data_frame['staffClassificationDescriptor_constantName'].str.contains('AuthorizationScope.School', na=False)
         )
-        , 'sectionPermission'
+        , 'SectionPermission'
     ] = 'ALL'
     result_section_data_frame.loc[
         (
-            result_section_data_frame['staffClassificationDescriptor_constantName'].str.contains('AuthorizationScope.Section')
+            result_section_data_frame['staffClassificationDescriptor_constantName'].str.contains('AuthorizationScope.Section', na=False)
         )
-        , 'sectionPermission'
+        , 'SectionPermission'
     ] = result_section_data_frame['sectionReferenceId']
     # Section key permission
     result_section_data_frame.loc[
         (
-            result_section_data_frame['staffClassificationDescriptor_constantName'].str.contains('AuthorizationScope.District')
-            | result_section_data_frame['staffClassificationDescriptor_constantName'].str.contains('AuthorizationScope.School')
+            result_section_data_frame['staffClassificationDescriptor_constantName'].str.contains('AuthorizationScope.District', na=False)
+            | result_section_data_frame['staffClassificationDescriptor_constantName'].str.contains('AuthorizationScope.School', na=False)
         )
-        , 'sectionKeyPermission'
+        , 'SectionKeyPermission'
     ] = 'ALL'
     result_section_data_frame.loc[
         (
-            result_section_data_frame['staffClassificationDescriptor_constantName'].str.contains('AuthorizationScope.Section')
+            result_section_data_frame['staffClassificationDescriptor_constantName'].str.contains('AuthorizationScope.Section', na=False)
         )
-        , 'sectionKeyPermission'
+        , 'SectionKeyPermission'
     ] = result_section_data_frame['sectionKey']
     # School
     result_section_data_frame.loc[
         (
-            result_section_data_frame['staffClassificationDescriptor_constantName'].str.contains('AuthorizationScope.District')
+            result_section_data_frame['staffClassificationDescriptor_constantName'].str.contains('AuthorizationScope.District', na=False)
         )
-        , 'schoolPermission'
+        , 'SchoolPermission'
     ] = 'ALL'
     result_section_data_frame.loc[
         (
-            result_section_data_frame['staffClassificationDescriptor_constantName'].str.contains('AuthorizationScope.Section')
-            | result_section_data_frame['staffClassificationDescriptor_constantName'].str.contains('AuthorizationScope.School')
+            result_section_data_frame['staffClassificationDescriptor_constantName'].str.contains('AuthorizationScope.Section', na=False)
+            | result_section_data_frame['staffClassificationDescriptor_constantName'].str.contains('AuthorizationScope.School', na=False)
         )
-        , 'schoolPermission'
+        , 'SchoolPermission'
     ] = result_section_data_frame['educationOrganizationId'].astype(str)
-    # districtId
+    # DistrictId
     result_section_data_frame.loc[
         (
-            result_section_data_frame['staffClassificationDescriptor_constantName'].str.contains('AuthorizationScope.District')
+            result_section_data_frame['staffClassificationDescriptor_constantName'].str.contains('AuthorizationScope.District', na=False)
         )
-        , 'districtId'
+        , 'DistrictId'
     ] = result_section_data_frame['educationOrganizationId'].astype(str)
-    result_section_data_frame['studentPermission'] = 'ALL'
+    result_section_data_frame['StudentPermission'] = 'ALL'
     result_section_data_frame = renameColumns(
         result_section_data_frame, {
-            'staffClassificationDescriptor_constantName': 'userScope'
+            'staffClassificationDescriptor_constantName': 'UserScope'
         }
     )
-    result_data_frame = subset(result_section_data_frame, [
-        'userKey',
-        'userScope',
-        'studentPermission',
-        'sectionPermission',
-        'sectionKeyPermission',
-        'schoolPermission',
-        'districtId'
-    ]).drop_duplicates()
+    result_data_frame = subset(result_section_data_frame, columns).drop_duplicates()
+
     return result_data_frame
 
 
 def rls_user_authorization(school_year) -> None:
-    result_data_frame = rls_user_authorization_dataframe(school_year)
-    saveParquetFile(result_data_frame, f"{config('PARQUET_FILES_LOCATION')}", "rls_UserAuthorization.parquet", school_year)
+    return rls_user_authorization_dataframe(
+        file_name="rls_UserAuthorization.parquet",
+        columns=RESULT_COLUMNS,
+        school_year=school_year
+    )
