@@ -5,6 +5,7 @@
 
 import os
 import traceback
+from typing import Any
 
 import pandas as pd
 from dagster import get_dagster_logger
@@ -143,7 +144,7 @@ def to_datetime(data=pd.DataFrame, column=str):
     return pd.to_datetime(data[column], errors='ignore')
 
 
-def replace_null(data=pd.DataFrame, column=str, replace_value: any = None):
+def replace_null(data=pd.DataFrame, column=str, replace_value: Any = None):
     if not (column in data):
         data[column] = replace_value
     data.loc[data[column].isnull(), column] = replace_value
@@ -192,14 +193,14 @@ def add_dataframe_column(data=pd.DataFrame, columns=[str]):
     ])
 
 
-def copy_value_by_column(data: pd.DataFrame, column: str, replace_value: any):
+def copy_value_by_column(data: pd.DataFrame, column: str, replace_value: Any):
     if not (column in data):
         data[column] = replace_value
     data.loc[data[column].isnull(), column] = replace_value
     return data[column]
 
 
-def create_parquet_file(func) -> data_frame_generation_result:
+def create_parquet_file(func) -> Any:
     def inner(file_name, columns, school_year):
         parquet_logger = get_dagster_logger()
         file_path = os.path.join(

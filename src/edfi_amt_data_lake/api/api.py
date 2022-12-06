@@ -4,6 +4,8 @@
 # See the LICENSE and NOTICES files in the project root for more information.
 
 
+from typing import Any
+
 import requests
 from decouple import config
 
@@ -22,7 +24,7 @@ LIMIT = API_LIMIT if API_LIMIT else 500
 
 
 # Get the newest and oldest change version values
-def _get_change_version_values(school_year: any) -> ChangeVersionValues:
+def _get_change_version_values(school_year: Any) -> ChangeVersionValues:
     school_year_path = f"{school_year}/" if school_year else ""
     path_filename = f"{config('CHANGE_VERSION_FILEPATH')}/API_TO_AMT/{school_year_path}{config('CHANGE_VERSION_FILENAME')}"
     with open(path_filename, "r") as outfile:
@@ -59,7 +61,7 @@ def _api_call(url: str, token: str, version: ChangeVersionValues) -> list:
 
 
 # Get JSON from API endpoint and save to file
-def api_async(school_year: any = None) -> None:
+def api_async(school_year: Any = None) -> None:
     import os
     from multiprocessing import Pool
     token = get_token()
@@ -67,15 +69,15 @@ def api_async(school_year: any = None) -> None:
     os_cpu = config("OS_CPU", cast=int) if config("OS_CPU") else os.cpu_count()
     with Pool(processes=os_cpu) as pool:
         for endpoint in get_endpoint():
-            url = get_url(endpoint[PATH], school_year)
+            url = get_url(endpoint[PATH], f"{school_year}")
             url_name = JSONFile(url.split("/")[-1])
             data_async = pool.apply_async(_api_call, args=(url, token, version))
-            save_file(url_name, version.newestChangeVersion, data_async.get(), school_year)
+            save_file(url_name, version.newestChangeVersion, data_async.get(), f"{school_year}")
 
             # Deletes endpoint
-            deletes_endpoint = get_url(endpoint[PATH], school_year, True)
+            deletes_endpoint = get_url(endpoint[PATH], f"{school_year}", True)
             data_deletes_response_async = pool.apply_async(_api_call, args=(deletes_endpoint, token, version))
-            save_file(url_name, f"deletes_{version.newestChangeVersion}", data_deletes_response_async.get(), school_year)
+            save_file(url_name, f"deletes_{version.newestChangeVersion}", data_deletes_response_async.get(), f"{school_year}")
     return None
 
 

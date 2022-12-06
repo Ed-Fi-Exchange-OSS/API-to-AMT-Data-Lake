@@ -6,6 +6,7 @@
 from datetime import date
 
 from decouple import config
+from pandas import DataFrame
 
 from edfi_amt_data_lake.parquet.Common.functions import getEndpointJson
 from edfi_amt_data_lake.parquet.Common.pandasWrapper import (
@@ -24,7 +25,7 @@ ENDPOINT_ASSESSMENT_REPORTING_METHOD_DESCRIPTOR = "assessmentReportingMethodDesc
 ENDPOINT_PERFORMANCE_LEVEL_DESCRIPTOR = "performanceLevelDescriptors"
 
 
-def student_assessment_fact_dataframe(school_year) -> None:
+def student_assessment_fact_dataframe(school_year) -> DataFrame:
     silverDataLocation = config("SILVER_DATA_LOCATION")
     student_assessment_json = getEndpointJson(ENDPOINT_STUDENT_ASSESSSMENTS, silverDataLocation, school_year)
     student_school_association_json = getEndpointJson(ENDPOINT_STUDENT_SCHOOL_ASSOCIATION, silverDataLocation, school_year)

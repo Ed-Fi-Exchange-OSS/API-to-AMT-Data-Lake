@@ -165,7 +165,7 @@ def student_school_demographics_bridge_data_frame(
             suffixLeft=None,
             suffixRight=None
         )
-        if not (result_data_frame is None and result_data_frame.empty):
+        if not (result_data_frame is None and result_data_frame == ""):
             result_data_frame['StudentSchoolKey'] = (
                 result_data_frame['StudentKey'].astype(str)
                 + '-' + result_data_frame['SchoolKey'].astype(str)

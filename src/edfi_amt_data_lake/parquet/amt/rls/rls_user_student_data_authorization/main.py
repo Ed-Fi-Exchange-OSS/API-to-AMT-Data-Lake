@@ -208,7 +208,7 @@ def rls_user_student_data_authorization_dataframe(
         to_datetime_key(student_section_association_normalize, 'endDate')
     )
     student_section_association_normalize = renameColumns(
-        student_section_association_normalize, 
+        student_section_association_normalize,
         {
             'studentReference.studentUniqueId': 'StudentKey',
             'sectionReference.schoolId': 'schoolKey',
@@ -278,7 +278,7 @@ def rls_user_student_data_authorization_dataframe(
         suffixLeft='district_',
         suffixRight="school_"
     )
-    if not result_district_data_frame is None:
+    if not (result_district_data_frame is None):
         result_district_data_frame = (
             result_district_data_frame[
                 (result_district_data_frame['staffClassificationDescriptor_constantName'].str.contains('AuthorizationScope.District'))
@@ -318,7 +318,8 @@ def rls_user_student_data_authorization_dataframe(
         suffixLeft=None,
         suffixRight=None
     )
-    if result_school_data_frame is None:
+
+    if not (result_school_data_frame is None):
         result_school_data_frame = (
             result_school_data_frame[
                 (result_school_data_frame['staffClassificationDescriptor_constantName'].str.contains('AuthorizationScope.School'))
@@ -379,7 +380,7 @@ def rls_user_student_data_authorization_dataframe(
         suffixLeft=None,
         suffixRight=None
     )
-    if not result_district_data_frame is None:
+    if not (result_district_data_frame is None):
         result_section_data_frame = (
             result_section_data_frame[
                 (result_section_data_frame['staffClassificationDescriptor_constantName'].str.contains('AuthorizationScope.Section'))
@@ -396,7 +397,7 @@ def rls_user_student_data_authorization_dataframe(
             'UserKey',
             'StudentKey'
         ]).drop_duplicates()
-    else: 
+    else:
         result_section_data_frame = pd.DataFrame(columns=columns)
     ############################
     # CONCAT RESULTS
