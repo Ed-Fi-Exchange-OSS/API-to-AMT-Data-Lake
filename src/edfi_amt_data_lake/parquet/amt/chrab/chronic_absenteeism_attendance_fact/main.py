@@ -7,7 +7,9 @@ from datetime import date
 
 import pandas as pd
 from decouple import config
-
+from edfi_amt_data_lake.helper.data_frame_generation_result import (
+    data_frame_generation_result,
+)
 from edfi_amt_data_lake.parquet.Common.descriptor_mapping import get_descriptor_constant
 from edfi_amt_data_lake.parquet.Common.functions import getEndpointJson
 from edfi_amt_data_lake.parquet.Common.pandasWrapper import (
@@ -417,7 +419,7 @@ def chronic_absenteeism_attendance_fact_dataframe(
     ]
 
 
-def chronic_absenteeism_attendance_fact(school_year) -> None:
+def chronic_absenteeism_attendance_fact(school_year) -> data_frame_generation_result:
     return chronic_absenteeism_attendance_fact_dataframe(
         file_name="chrab_chronicAbsenteeismAttendanceFact.parquet",
         columns=RESULT_COLUMNS,

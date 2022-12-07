@@ -114,6 +114,8 @@ def fromDict(jsonContent, orient="index") -> pd.DataFrame:
 
 
 def subset(data=pd.DataFrame, columns=[str]) -> pd.DataFrame:
+    if data is None:
+        create_empty_data_frame([columns])
     return data[columns]
 
 

@@ -14,6 +14,9 @@ from edfi_amt_data_lake.parquet.amt.equity.student_program_cohort_dim.main impor
 from edfi_amt_data_lake.parquet.amt.equity.student_school_food_service_program_dim.main import (
     student_school_food_service_program_dim,
 )
+from edfi_amt_data_lake.parquet.amt.equity.student_history_dim.main import (
+    student_history_dim,
+)
 
 
 def equity_collection(school_year) -> None:
@@ -21,3 +24,4 @@ def equity_collection(school_year) -> None:
     student_program_cohort_dim(school_year)
     feeder_school_dim(school_year)
     student_school_food_service_program_dim(school_year)
+    student_history_dim(school_year)

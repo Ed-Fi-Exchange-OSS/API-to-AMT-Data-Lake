@@ -40,7 +40,7 @@ def student_school_dim_data_frame(
     file_name: str,
     columns: list[str],
     school_year: int
-) -> pd.DataFrame:
+):
     file_name = file_name
 
     result_data_frame = all_student_school_dim(school_year=school_year).data_frame
