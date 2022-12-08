@@ -5,6 +5,7 @@
 
 import json
 import os
+from typing import Any
 
 from dagster import get_dagster_logger
 from dagster.utils import file_relative_path
@@ -31,7 +32,7 @@ def get_endpoint() -> list:
 
 
 # Create a function to save JSON into a file in the json directory.
-def save_file(json_file: JSONFile, json_file_sufix: any, data: any, school_year: str) -> None:
+def save_file(json_file: JSONFile, json_file_sufix: Any, data: Any, school_year: str) -> None:
     parquet_logger = get_dagster_logger()
     if data:
         json_location = get_path(config('SILVER_DATA_LOCATION'), school_year)
@@ -43,6 +44,7 @@ def save_file(json_file: JSONFile, json_file_sufix: any, data: any, school_year:
             json.dump(data, file, indent=4)
             file_size = os.path.getsize(file_path) / 1000000
             parquet_logger.info(f"File {json_file.name}({json_file_sufix}) saved with {file_size} MB")
+    return None
 
 
 # Create a function to get endpoint url.

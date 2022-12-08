@@ -27,4 +27,4 @@ def get_token() -> str:
         return response.json()["access_token"]
 
     else:
-        return None
+        return "Not able to get the token"

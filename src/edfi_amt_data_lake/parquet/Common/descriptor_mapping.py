@@ -20,8 +20,8 @@ def get_descriptor_constant(data=pd.DataFrame, column=str):
             data = pd.DataFrame()
             data[f"{column}_descriptor"] = ""
             data[f"{column}_codeValue"] = ""
-            data[f"{column}_constantName"] = "" 
-            return data  
+            data[f"{column}_constantName"] = ""
+            return data
         ############################
         # descriptor_mapping
         ############################
@@ -54,8 +54,8 @@ def get_descriptor_constant(data=pd.DataFrame, column=str):
         ):
             data[f"{column}_descriptor"] = ""
             data[f"{column}_codeValue"] = ""
-            data[f"{column}_constantName"] = "" 
-            return data  
+            data[f"{column}_constantName"] = ""
+            return data
         ############################
         # Join to get descriptor constant
         ############################
