@@ -67,8 +67,8 @@ cd API-to-AMT-Data-Lake/src
 poetry install
 source  $(poetry env info --path)/bin/activate
 cd ../src/dagster_data_lake
-mkdir ~/dagster_home 
-export DAGSTER_HOME=~"/dagster_home" 
+mkdir ~/dagster_home
+export DAGSTER_HOME=~"/dagster_home"
 dagster instance info
 cp -R dagster.yaml ~/dagster_home/
 dagit -w workspace.yaml
@@ -81,7 +81,7 @@ cd API-to-AMT-Data-Lake/src
 poetry install
 & (join-path (poetry env info --path) "\Scripts\activate.ps1")
 cd ../src/dagster_data_lake
-mkdir ~/dagster_home 
+mkdir ~/dagster_home
 $env:DAGSTER_HOME = ($home + '\dagster_home')
 dagster instance info
 cp -R dagster.yaml ~/dagster_home/
