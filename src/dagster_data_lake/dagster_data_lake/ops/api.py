@@ -3,7 +3,9 @@
 # The Ed-Fi Alliance licenses this file to you under the Apache License, Version 2.0.
 # See the LICENSE and NOTICES files in the project root for more information.
 
-from dagster import op
+import traceback
+
+from dagster import get_dagster_logger, op
 
 from edfi_amt_data_lake.api.api import api_async
 from edfi_amt_data_lake.api.changeVersion import get_change_version_updated
@@ -13,14 +15,25 @@ from edfi_amt_data_lake.parquet.amt_parquet import generate_amt_parquet
 
 @op
 def get_api_data() -> bool:
-    for school_year in get_school_year():
-        if get_change_version_updated(school_year):
-            api_async(school_year)
-    return True
+    logger = get_dagster_logger()
+    try:
+        for school_year in get_school_year():
+            if get_change_version_updated(school_year):
+                api_async(school_year)
+            return True
+    except Exception as ex:
+        logger.error(f"An unhandled exception occured: {ex}, Traceback: {traceback.format_exc()}")
+    return False
 
 
 @op
-def generate_parquet(api_result_sucess) -> None:
-    if api_result_sucess:
-        for school_year in get_school_year():
-            generate_amt_parquet(school_year)
+def generate_parquet(api_result_sucess) -> bool:
+    logger = get_dagster_logger()
+    try:
+        if api_result_sucess:
+            for school_year in get_school_year():
+                generate_amt_parquet(school_year)
+        return True
+    except Exception as ex:
+        logger.error(f"An unhandled exception occured: {ex}, Traceback: {traceback.format_exc()}")
+    return False
