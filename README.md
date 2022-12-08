@@ -60,36 +60,34 @@ PARQUET_FILES_LOCATION=C:\\temp\\edfi\\parquet\\
 
 **PARQUET_FILES_LOCATION:** The location where the data in its final structure will be stored.
 
-####  Continue with the next steps:
+#### Continue with the next steps for Linux:
 
 ```sh
-1-) cd API-to-AMT-Data-Lake/src
-
-2-) poetry install
-
-3-) source $(poetry env info --path)/bin/activate
-
-4-)  cd ../src/dagster_data_lake
-
-5-)
-    * Continue with the next steps for Linux:
-        -------------------------------------
-        mkdir ~/dagster_home
-        export DAGSTER_HOME=~"/dagster_home"
-        dagster instance info
-        cp -R dagster.yaml ~/dagster_home/
-        -------------------------------------
-
-    * Continue with the next steps for Windows:
-        -------------------------------------
-        mkdir ~/dagster_home
-        $env:DAGSTER_HOME = ($home + '\dagster_home')
-        dagster instance info
-        cp -R dagster.yaml ~/dagster_home/
-        -------------------------------------
-
-6-) dagit -w dagster/workspace.yaml
+cd API-to-AMT-Data-Lake/src
+poetry install
+source  $(poetry env info --path)/bin/activate
+cd ../src/dagster_data_lake
+mkdir ~/dagster_home 
+export DAGSTER_HOME=~"/dagster_home" 
+dagster instance info
+cp -R dagster.yaml ~/dagster_home/
+dagit -w workspace.yaml
 ```
+
+#### Continue with the next steps for Windows:
+
+```sh
+cd API-to-AMT-Data-Lake/src
+poetry install
+& (join-path (poetry env info --path) "\Scripts\activate.ps1")
+cd ../src/dagster_data_lake
+mkdir ~/dagster_home 
+$env:DAGSTER_HOME = ($home + '\dagster_home')
+dagster instance info
+cp -R dagster.yaml ~/dagster_home/
+dagit -w workspace.yaml
+```
+
 ## Logs
 
 The log can be found in the same directory or inside the dagster home folder
