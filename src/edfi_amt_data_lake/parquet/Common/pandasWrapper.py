@@ -154,7 +154,7 @@ def replace_null(data=pd.DataFrame, column=str, replace_value: Any = None):
     data.loc[data[column].isnull(), column] = replace_value
 
 
-def replace_null_empty(data=pd.DataFrame, column=str, replace_value: any = None):
+def replace_null_empty(data=pd.DataFrame, column=str, replace_value: Any = None):
     replace_value = '' if replace_value is None else replace_value
     if not (column in data):
         data[column] = replace_value
