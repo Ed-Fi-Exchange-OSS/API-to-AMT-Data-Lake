@@ -7,10 +7,10 @@ import pandas as pd
 
 from edfi_amt_data_lake.helper.helper import get_descriptor_mapping_config
 from edfi_amt_data_lake.parquet.Common.pandasWrapper import (
+    add_dataframe_column,
     jsonNormalize,
     pdMerge,
     renameColumns,
-    add_dataframe_column
 )
 
 
@@ -25,9 +25,9 @@ def get_descriptor_constant(data=pd.DataFrame, column=str):
                     f"{column}_descriptor",
                     f"{column}_codeValue",
                     f"{column}_constantName"
-                ]            
-            )   
-            return data  
+                ]
+            )
+            return data
         ############################
         # descriptor_mapping
         ############################
@@ -64,9 +64,9 @@ def get_descriptor_constant(data=pd.DataFrame, column=str):
                     f"{column}_descriptor",
                     f"{column}_codeValue",
                     f"{column}_constantName"
-                ]            
-            )   
-            return data         
+                ]
+            )
+            return data
         ############################
         # Join to get descriptor constant
         ############################
@@ -92,6 +92,6 @@ def get_descriptor_constant(data=pd.DataFrame, column=str):
                 f"{column}_descriptor",
                 f"{column}_codeValue",
                 f"{column}_constantName"
-            ]            
-        )        
+            ]
+        )
     return data

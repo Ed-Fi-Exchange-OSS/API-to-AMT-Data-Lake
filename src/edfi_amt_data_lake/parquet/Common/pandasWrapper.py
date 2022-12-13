@@ -7,7 +7,6 @@ import os
 import traceback
 from typing import Any
 
-import numpy as np
 import pandas as pd
 from dagster import get_dagster_logger
 from decouple import config
@@ -104,7 +103,7 @@ def get_meta_columns(columns=[]):
 
 def create_empty_data_frame(columns=[], index=[]):
     if index != []:
-        return pd.DataFrame(columns=columns, index=index)    
+        return pd.DataFrame(columns=columns, index=index)
     return pd.DataFrame(columns=columns)
 
 
@@ -118,7 +117,7 @@ def fromDict(jsonContent, orient="index") -> pd.DataFrame:
 
 def subset(data=pd.DataFrame, columns=[str], index=[]) -> pd.DataFrame:
     if data is None:
-        return create_empty_data_frame([columns],index)
+        return create_empty_data_frame([columns], index)
     return data[columns]
 
 
@@ -142,7 +141,7 @@ def addColumnIfNotExists(data=pd.DataFrame, column=str, default_value='') -> pd.
 
 
 def to_datetime_key(data=pd.DataFrame, column=str):
-    return (data[column].astype(str).str.replace('-','')).str[:8]
+    return (data[column].astype(str).str.replace('-', '')).str[:8]
 
 
 def to_datetime(data=pd.DataFrame, column=str):
@@ -159,7 +158,7 @@ def replace_null_empty(data=pd.DataFrame, column=str, replace_value: any = None)
     replace_value = '' if replace_value is None else replace_value
     if not (column in data):
         data[column] = replace_value
-    data[column] = data[column].replace('',replace_value,regex = True)
+    data[column] = data[column].replace('', replace_value, regex=True)
     data.loc[data[column].isnull(), column] = replace_value
 
 

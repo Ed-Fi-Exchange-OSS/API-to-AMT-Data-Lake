@@ -8,14 +8,14 @@ from edfi_amt_data_lake.parquet.amt.equity.feeder_school_dim.main import (
 from edfi_amt_data_lake.parquet.amt.equity.student_discipline_action_dim.main import (
     student_discipline_action_dim,
 )
+from edfi_amt_data_lake.parquet.amt.equity.student_history_dim.main import (
+    student_history_dim,
+)
 from edfi_amt_data_lake.parquet.amt.equity.student_program_cohort_dim.main import (
     student_program_cohort_dim,
 )
 from edfi_amt_data_lake.parquet.amt.equity.student_school_food_service_program_dim.main import (
     student_school_food_service_program_dim,
-)
-from edfi_amt_data_lake.parquet.amt.equity.student_history_dim.main import (
-    student_history_dim,
 )
 
 
