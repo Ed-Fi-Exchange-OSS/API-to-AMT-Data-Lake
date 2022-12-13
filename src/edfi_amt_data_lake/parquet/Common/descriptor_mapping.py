@@ -7,6 +7,7 @@ import pandas as pd
 
 from edfi_amt_data_lake.helper.helper import get_descriptor_mapping_config
 from edfi_amt_data_lake.parquet.Common.pandasWrapper import (
+    add_dataframe_column,
     jsonNormalize,
     pdMerge,
     renameColumns,
@@ -18,9 +19,14 @@ def get_descriptor_constant(data=pd.DataFrame, column=str):
         descriptor_mapping_content = get_descriptor_mapping_config()
         if descriptor_mapping_content is None:
             data = pd.DataFrame()
-            data[f"{column}_descriptor"] = ""
-            data[f"{column}_codeValue"] = ""
-            data[f"{column}_constantName"] = ""
+            add_dataframe_column(
+                data,
+                [
+                    f"{column}_descriptor",
+                    f"{column}_codeValue",
+                    f"{column}_constantName"
+                ]
+            )
             return data
         ############################
         # descriptor_mapping
@@ -52,9 +58,14 @@ def get_descriptor_constant(data=pd.DataFrame, column=str):
                 and f"{column}_descriptor" in data
             )
         ):
-            data[f"{column}_descriptor"] = ""
-            data[f"{column}_codeValue"] = ""
-            data[f"{column}_constantName"] = ""
+            add_dataframe_column(
+                data,
+                [
+                    f"{column}_descriptor",
+                    f"{column}_codeValue",
+                    f"{column}_constantName"
+                ]
+            )
             return data
         ############################
         # Join to get descriptor constant
@@ -75,7 +86,12 @@ def get_descriptor_constant(data=pd.DataFrame, column=str):
             suffixRight='_data'
         )
     else:
-        data[f"{column}_descriptor"] = ""
-        data[f"{column}_codeValue"] = ""
-        data[f"{column}_constantName"] = ""
+        add_dataframe_column(
+            data,
+            [
+                f"{column}_descriptor",
+                f"{column}_codeValue",
+                f"{column}_constantName"
+            ]
+        )
     return data

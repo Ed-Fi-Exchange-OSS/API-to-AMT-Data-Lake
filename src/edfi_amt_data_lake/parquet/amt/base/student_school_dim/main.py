@@ -3,7 +3,6 @@
 # The Ed-Fi Alliance licenses this file to you under the Apache License, Version 2.0.
 # See the LICENSE and NOTICES files in the project root for more information.
 
-import pandas as pd
 
 from edfi_amt_data_lake.helper.data_frame_generation_result import (
     data_frame_generation_result,
@@ -40,7 +39,7 @@ def student_school_dim_data_frame(
     file_name: str,
     columns: list[str],
     school_year: int
-) -> pd.DataFrame:
+):
     file_name = file_name
 
     result_data_frame = all_student_school_dim(school_year=school_year).data_frame
