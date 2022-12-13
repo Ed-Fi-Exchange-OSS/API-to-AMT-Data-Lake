@@ -4,7 +4,7 @@
 # See the LICENSE and NOTICES files in the project root for more information.
 
 from datetime import date
-
+import pandas as pd
 from decouple import config
 from edfi_amt_data_lake.helper.data_frame_generation_result import (
     data_frame_generation_result,
@@ -31,18 +31,28 @@ from edfi_amt_data_lake.parquet.Common.descriptor_mapping import get_descriptor_
 from edfi_amt_data_lake.parquet.Common.functions import getEndpointJson
 from edfi_amt_data_lake.parquet.Common.pandasWrapper import (
     create_empty_data_frame,
+    create_parquet_file,
     get_descriptor_code_value_from_uri,
     jsonNormalize,
     pdMerge,
     renameColumns,
     replace_null,
-    toCsv,
+    replace_null_empty,
     subset,
     to_datetime_key,
 )
-
 ENDPOINT_STUDENT_GRADES_ASSOCIATION = 'grades'
 ENDPOINT_SCHOOL = 'schools'
+RESULT_COLUMNS = [
+    'StudentKey'
+    ,'StudentSchoolKey'
+    ,'GradeSummary'
+    ,'CurrentSchoolKey'
+    ,'AttendanceRate'
+    ,'ReferralsAndSuspensions'
+    ,'EnrollmentHistory'
+]
+
 
 @create_parquet_file
 def student_history_dim_data_frame(
@@ -50,6 +60,7 @@ def student_history_dim_data_frame(
     columns: list[str],
     school_year: int
 ):
+    file_name = file_name
     student_grades_association_content = getEndpointJson(ENDPOINT_STUDENT_GRADES_ASSOCIATION, config('SILVER_DATA_LOCATION'), school_year)
     chronic_absenteeism_attendance_fact_view = chronic_absenteeism_attendance_fact(school_year).data_frame
     school_dim_view = school_dim(school_year).data_frame
@@ -57,6 +68,8 @@ def student_history_dim_data_frame(
     student_section_dim_view = student_section_dim(school_year).data_frame
     student_enrollment_dim_view = all_student_school_dim(school_year).data_frame
     student_discipline_dim_view = student_discipline_action_dim(school_year).data_frame
+    if student_school_dim_view is None or student_enrollment_dim_view is None:
+         return None
     ############################
     # Student Enrollment
     ############################
@@ -73,76 +86,114 @@ def student_history_dim_data_frame(
         student_enrollment_dim_view,
         [
             'StudentSchoolKey',
+            'StudentKey',
             'IsEnrolled',
             'ExitWithdrawDate',
             'SchoolName'
         ]
     )    
-    student_enrollment_dim_view['ExitWithdrawDateKey'] = student_enrollment_dim_view['ExitWithdrawDate']
-    student_enrollment_dim_view = replace_null(
-        student_enrollment_dim_view,
-        'ExitWithdrawDate',
-        '2099-12-31'
-    )
-    student_enrollment_dim_view['ExitWithdrawDateKey'] = to_datetime_key(student_enrollment_dim_view, 'ExitWithdrawDateKey')
-    student_enrollment_dim_view['schoolEnrollmentDate'] = (
+    student_enrollment_dim_view['ExitWithdrawDateKey'] = to_datetime_key(student_enrollment_dim_view, 'ExitWithdrawDate')
+    student_enrollment_dim_view['EnrollmentHistory'] = (
         student_enrollment_dim_view['SchoolName'] + ' ' + student_enrollment_dim_view['ExitWithdrawDate']
         if (len(student_enrollment_dim_view['ExitWithdrawDate']) >= 6) else student_enrollment_dim_view['SchoolName']
-    )    
+    )
+    student_enrollment_dim_view = student_enrollment_dim_view.drop_duplicates()
     student_enrollment_dim_view.sort_values(by=[
-            'StudentSchoolKey',
+            'StudentKey',
             'IsEnrolled',
             'ExitWithdrawDateKey',
-            'schoolEnrollmentDate'
+            'EnrollmentHistory'
         ], inplace=True,
         ascending=False
     )
     student_enrollment_dim_view = (
         student_enrollment_dim_view.groupby(
-            ['StudentSchoolKey'], 
-            as_index=False).agg(EnrollmentHistory={'schoolEnrollmentDate': '\n '.join}
-        )
+                ['StudentKey'], 
+                as_index=False,
+                group_keys=True
+            ).agg({'EnrollmentHistory': ' \n'.join})
     )
     student_enrollment_dim_view = subset(
         student_enrollment_dim_view,
         [
-            'StudentSchoolKey',
+            'StudentKey',
             'EnrollmentHistory'
         ]
     )
     ############################
     # Attendance History
     ############################
-    attendance_history = (
-        chronic_absenteeism_attendance_fact_view.groupby(
-            'StudentSchoolKey'
-        ).agg(
-            DaysEnrolled=('StudentSchoolKey', 'count'), 
-            DaysAbsent=('ReportedAsAbsentFromHomeRoom', 'sum')
-        )
+    chronic_absenteeism_attendance_fact_view = subset(
+        chronic_absenteeism_attendance_fact_view,
+        [
+            'StudentSchoolKey',
+            'ReportedAsAbsentFromHomeRoom'
+        ]
     )
+    attendance_history = None
+    if not chronic_absenteeism_attendance_fact_view.empty:
+        attendance_history = (
+            chronic_absenteeism_attendance_fact_view.groupby(
+                ['StudentSchoolKey'], 
+                as_index=False,
+                group_keys=False
+            ).apply(lambda s: pd.Series({ 
+                'DaysEnrolled': s.size, 
+                'DaysAbsent': s['ReportedAsAbsentFromHomeRoom'].sum(), 
+            }))
+        )
+        attendance_history.reset_index()
+        replace_null_empty(attendance_history, 'DaysEnrolled', 1)
+        replace_null_empty(attendance_history, 'DaysAbsent', 0)
+        attendance_history['AttendanceRate'] = (
+            100 
+            * ( 
+                attendance_history['DaysEnrolled'].astype(int)
+                - attendance_history['DaysAbsent'].astype(int)
+            ) 
+            / attendance_history['DaysEnrolled'].astype(int) 
+        ).astype(int)
     attendance_history = subset(
         attendance_history,
         [
             'StudentSchoolKey',
-            'DaysEnrolled',
-            'DaysAbsent'
+            'AttendanceRate'
         ]
-    )
+    ).reset_index()
+    replace_null_empty(attendance_history, 'AttendanceRate', 100)
+    attendance_history['AttendanceRate'] = attendance_history['AttendanceRate'].astype(str)
+    attendance_history=attendance_history.set_index(['StudentSchoolKey'])
     ############################
     # Discipline Action
     ############################
-    discipline_action = (
-        student_discipline_dim_view.groupby(['StudentSchoolKey']).agg(
-            ReferralsAndSuspensions=('StudentSchoolKey', 'count')
-        )
+    student_discipline_dim_view = subset(
+        student_discipline_dim_view,
+        [
+            'StudentSchoolKey'
+        ]
     )
+    discipline_action = student_discipline_dim_view
+    if not student_discipline_dim_view.empty:
+        discipline_action = (
+            student_discipline_dim_view.groupby(
+                ['StudentSchoolKey'],
+                as_index=False,
+                group_keys=False
+            ).apply(lambda s: pd.Series({ 
+            'ReferralsAndSuspensions': s.size
+            }))
+        )
+    else:
+        discipline_action = create_empty_data_frame(
+            ['StudentSchoolKey','ReferralsAndSuspensions'],
+            index=['StudentSchoolKey']
+        )
     discipline_action = subset(
         discipline_action,
         [
             'StudentSchoolKey',
             'ReferralsAndSuspensions'
-        ]
+        ]        
     )
     ############################
     # Student Grades Summary
@@ -151,6 +202,7 @@ def student_history_dim_data_frame(
         student_grades_association_content,
         recordPath=None,
         meta=[
+            'studentSectionAssociationReference.beginDate',
             'studentSectionAssociationReference.localCourseCode',
             'studentSectionAssociationReference.schoolYear',
             'studentSectionAssociationReference.sectionIdentifier',
@@ -172,11 +224,12 @@ def student_history_dim_data_frame(
             'studentSectionAssociationReference.schoolId': 'SchoolKey'
         }
     )
-    # Get Descriptor
-    get_descriptor_code_value_from_uri(
-        student_grades_association_normalized,
-        'gradeTypeDescriptor'
-    )
+    student_grades_association_normalized['StudentSectionStartDateKey'] = (
+        to_datetime_key(
+            student_grades_association_normalized,
+            'studentSectionAssociationReference.beginDate'
+        )
+    )    
     student_grades_association_normalized['StudentSchoolKey'] = (
         student_grades_association_normalized['StudentKey'].astype(str)
         + '-' + student_grades_association_normalized['SchoolKey'].astype(str)
@@ -188,13 +241,15 @@ def student_history_dim_data_frame(
         + '-' + student_grades_association_normalized['studentSectionAssociationReference.schoolYear'].astype(str)
         + '-' + student_grades_association_normalized['studentSectionAssociationReference.sectionIdentifier'].astype(str)
         + '-' + student_grades_association_normalized['studentSectionAssociationReference.sessionName'].astype(str)
+        + '-' + student_grades_association_normalized['StudentSectionStartDateKey']
     )
     student_grades_association_normalized = subset(
         student_grades_association_normalized,
         [
             'StudentSectionKey',
             'gradeTypeDescriptor',
-            'numericGradeEarned'
+            'numericGradeEarned',
+            'StudentSectionStartDateKey'
         ]
     )
     student_section_dim_view = subset(
@@ -216,23 +271,24 @@ def student_history_dim_data_frame(
         suffixRight=None
     )
     if not (student_grades_association_normalized is None):
+        student_grades_association_normalized=get_descriptor_constant(student_grades_association_normalized, 'gradeTypeDescriptor')
+        student_grades_association_normalized['gradeTypeDescriptor_constantName'].str.contains('GradeType.Semester', na=False)
         student_grades_association_normalized['GradeSummary'] = (
                 student_grades_association_normalized['CourseTitle']
-                + ' ' + student_grades_association_normalized['numericGradeEarned']
+                + ': ' + student_grades_association_normalized['numericGradeEarned'].astype(str)
             )
+        student_grades_association_normalized.sort_values(by=[
+                'StudentSchoolKey',
+                'StudentSectionStartDateKey'
+            ], inplace=True,
+            ascending=False
+        )
         student_grades_association_normalized = (
             student_grades_association_normalized.groupby(
                 ['StudentSchoolKey'], 
-                as_index=False).agg({'courseGrade': '\n '.join}
+                as_index=False,
+                group_keys=True).agg({'GradeSummary': '\n '.join}
             )
-        )
-        student_grades_association_normalized = get_descriptor_constant(student_grades_association_normalized, 'gradeTypeDescriptor')
-        student_grades_association_normalized = (
-            student_grades_association_normalized[
-                student_grades_association_normalized[
-                    "gradeTypeDescriptor_constantName"
-                ].str.contains('GradeType.Semester', na=False)
-            ]
         )
         student_grades_association_normalized = subset(
             student_grades_association_normalized,
@@ -248,53 +304,75 @@ def student_history_dim_data_frame(
 
         )    
     ############################
+    # Student School
+    ############################
+    student_school_dim_view['CurrentSchoolKey'] = student_school_dim_view['SchoolKey']
+    student_school_dim_view = subset(
+        student_school_dim_view,
+        [
+            'StudentKey',
+            'StudentSchoolKey',
+            'CurrentSchoolKey'
+        ]
+    )
+    ############################
     # Student enrollment
     ############################
     result_data_frame = pdMerge(
-        left=student_school_dim,
+        left=student_school_dim_view,
         right=student_enrollment_dim_view,
         how='inner',
-        leftOn=['StudentSchoolKey'],
-        rightOn=['StudentSchoolKey'],
+        leftOn=['StudentKey'],
+        rightOn=['StudentKey'],
         suffixLeft=None,
         suffixRight=None
     )
     if result_data_frame is None:
         return None
-    result_data_frame = pdMerge(
-        left=student_school_dim,
-        right=attendance_history,
-        how='left',
-        leftOn=['StudentSchoolKey'],
-        rightOn=['StudentSchoolKey'],
-        suffixLeft=None,
-        suffixRight=None
+    if not (attendance_history is None and attendance_history.empty):
+        result_data_frame = pdMerge(
+            left=result_data_frame,
+            right=attendance_history,
+            how='left',
+            leftOn=['StudentSchoolKey'],
+            rightOn=['StudentSchoolKey'],
+            suffixLeft=None,
+            suffixRight='attendance_history_'
+        )
+    replace_null(result_data_frame, 'AttendanceRate', '100')
+    if not (discipline_action is None and discipline_action.empty):
+        result_data_frame = pdMerge(
+            left=result_data_frame,
+            right=discipline_action,
+            how='left',
+            leftOn=['StudentSchoolKey'],
+            rightOn=['StudentSchoolKey'],
+            suffixLeft=None,
+            suffixRight='discipline_action_'
+        )
+    replace_null_empty(result_data_frame, 'ReferralsAndSuspensions', 0)
+    if not (discipline_action is None and discipline_action.empty):
+        result_data_frame = pdMerge(
+            left=result_data_frame,
+            right=student_grades_association_normalized,
+            how='left',
+            leftOn=['StudentSchoolKey'],
+            rightOn=['StudentSchoolKey'],
+            suffixLeft=None,
+            suffixRight='student_grades_association_normalized_'
+        ).reset_index()
+    replace_null(result_data_frame, 'GradeSummary', '')
+    result_data_frame = subset(
+        result_data_frame,
+        columns
     )
-    result_data_frame = pdMerge(
-        left=student_school_dim,
-        right=discipline_action,
-        how='left',
-        leftOn=['StudentSchoolKey'],
-        rightOn=['StudentSchoolKey'],
-        suffixLeft=None,
-        suffixRight=None
-    )
-    result_data_frame = pdMerge(
-        left=student_school_dim,
-        right=student_grades_association_normalized,
-        how='left',
-        leftOn=['StudentSchoolKey'],
-        rightOn=['StudentSchoolKey'],
-        suffixLeft=None,
-        suffixRight=None
-    )
-    toCsv(result_data_frame, f"{config('PARQUET_FILES_LOCATION')}", "equity_StudentHistoryDim.csv", school_year)
     return result_data_frame
+
 
 def student_history_dim(school_year) -> data_frame_generation_result:
     return student_history_dim_data_frame(
         file_name="equity_StudentHistoryDim.parquet",
-        columns=[],#RESULT_COLUMNS,
+        columns=RESULT_COLUMNS,
         school_year=school_year
     )    
 

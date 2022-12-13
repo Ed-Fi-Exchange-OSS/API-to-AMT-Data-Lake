@@ -76,18 +76,19 @@ def get_path(path: str, school_year: str):
 
 
 def delete_files_by_extension(path: str, extension_list: list[str]) -> None:
-    parquet_logger = get_dagster_logger()
-    parquet_logger.info('Delete parquet files')
-    files_to_delete = os.listdir(path)
-    count_deleted_files = 0
-    for file in files_to_delete:
-        for extension in extension_list:
-            if file.endswith(f"{extension}"):
-                file_to_remove = os.path.join(path, file)
-                os.remove(file_to_remove)
-                parquet_logger.debug(f'Deleted file: {file_to_remove}')
-                count_deleted_files += 1
-    parquet_logger.info(f'Deleted files: {count_deleted_files}')
+    if os.path.exists(path):
+        parquet_logger = get_dagster_logger()
+        parquet_logger.info('Delete parquet files')
+        files_to_delete = os.listdir(path)
+        count_deleted_files = 0
+        for file in files_to_delete:
+            for extension in extension_list:
+                if file.endswith(f"{extension}"):
+                    file_to_remove = os.path.join(path, file)
+                    os.remove(file_to_remove)
+                    parquet_logger.debug(f'Deleted file: {file_to_remove}')
+                    count_deleted_files += 1
+        parquet_logger.info(f'Deleted files: {count_deleted_files}')
 
 
 def clean_parquet_folder(school_year: str) -> None:
