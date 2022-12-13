@@ -333,7 +333,7 @@ def student_history_dim_data_frame(
     )
     if result_data_frame is None:
         return None
-    if not (attendance_history is None and attendance_history.empty):
+    if not (attendance_history is None or attendance_history.empty):
         result_data_frame = pdMerge(
             left=result_data_frame,
             right=attendance_history,
@@ -344,7 +344,7 @@ def student_history_dim_data_frame(
             suffixRight='attendance_history_'
         )
     replace_null(result_data_frame, 'AttendanceRate', '100')
-    if not (discipline_action is None and discipline_action.empty):
+    if not (discipline_action is None or discipline_action.empty):
         result_data_frame = pdMerge(
             left=result_data_frame,
             right=discipline_action,
@@ -355,7 +355,7 @@ def student_history_dim_data_frame(
             suffixRight='discipline_action_'
         )
     replace_null_empty(result_data_frame, 'ReferralsAndSuspensions', 0)
-    if not (discipline_action is None and discipline_action.empty):
+    if not (discipline_action is None or discipline_action.empty):
         result_data_frame = pdMerge(
             left=result_data_frame,
             right=student_grades_association_normalized,
