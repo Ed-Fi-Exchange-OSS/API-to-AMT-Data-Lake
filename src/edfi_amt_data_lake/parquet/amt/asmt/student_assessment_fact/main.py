@@ -141,6 +141,8 @@ def student_assessment_fact_dataframe(
         recordPrefix=None,
         errors="ignore",
     )
+    if student_assessment_content is None or student_assessment_content.empty:
+        return None
     ############################
     # Student Objective Assessment
     ############################
@@ -286,8 +288,6 @@ def student_assessment_fact_dataframe(
         suffixLeft=None,
         suffixRight=None
     )
-    if student_assessment_content is None or student_assessment_content.empty:
-        return None
     ############################
     # Merge: Student Assessments - Score Results
     ############################
@@ -415,6 +415,9 @@ def student_assessment_fact_dataframe(
         'schoolReference.schoolId',
         'exitWithdrawDate'
     ])
+    data_frame = data_frame[data_frame['assessmentReference.assessmentIdentifier'] != '']
+    if data_frame is None or data_frame.empty:
+        return None
     # Add concatenated columns
     data_frame['StudentAssessmentFactKey'] = (
         data_frame['assessmentReference.assessmentIdentifier'] + '-'
