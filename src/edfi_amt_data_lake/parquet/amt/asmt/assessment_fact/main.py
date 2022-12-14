@@ -52,7 +52,7 @@ def assessment_fact_data_frame(
     file_name: str,
     columns: list[str],
     school_year: int
-) -> None:
+):
     file_name = file_name
     silverDataLocation = config('SILVER_DATA_LOCATION')
     assessmentsContent = getEndpointJson(ENDPOINT_ASSESSSMENTS, silverDataLocation, school_year)
