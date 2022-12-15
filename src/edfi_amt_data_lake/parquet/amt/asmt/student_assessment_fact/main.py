@@ -7,25 +7,55 @@ from datetime import date
 
 from decouple import config
 from pandas import DataFrame
-
+from edfi_amt_data_lake.helper.data_frame_generation_result import (
+    data_frame_generation_result,
+)
 from edfi_amt_data_lake.parquet.Common.functions import getEndpointJson
 from edfi_amt_data_lake.parquet.Common.pandasWrapper import (
+    create_parquet_file,
     get_descriptor_code_value_from_uri,
     jsonNormalize,
     pdMerge,
     renameColumns,
-    saveParquetFile,
     subset,
     to_datetime_key,
 )
-
 ENDPOINT_STUDENT_ASSESSSMENTS = "studentAssessments"
 ENDPOINT_STUDENT_SCHOOL_ASSOCIATION = "studentSchoolAssociations"
 ENDPOINT_ASSESSMENT_REPORTING_METHOD_DESCRIPTOR = "assessmentReportingMethodDescriptors"
 ENDPOINT_PERFORMANCE_LEVEL_DESCRIPTOR = "performanceLevelDescriptors"
+RESULT_COLUMNS = [
+    'StudentAssessmentFactKey',
+    'StudentAssessmentKey',
+    'StudentObjectiveAssessmentKey',
+    'ObjectiveAssessmentKey',
+    'AssessmentKey',
+    'AssessmentIdentifier',
+    'Namespace',
+    'StudentAssessmentIdentifier',
+    'StudentKey',
+    'StudentSchoolKey',
+    'SchoolKey',
+    'AdministrationDate',
+    'AssessedGradeLevel',
+    'StudentScore',
+    'ResultDataType',
+    'ReportingMethod',
+    'PerformanceResult',
+    'StudentAssessmentScore',
+    'StudentAssessmentResultDataType',
+    'StudentAssessmentReportingMethod',
+    'StudentAssessmentPerformanceResult'
+]
 
 
-def student_assessment_fact_dataframe(school_year) -> DataFrame:
+@create_parquet_file
+def student_assessment_fact_dataframe(
+    file_name: str,
+    columns: list[str],
+    school_year: int
+):
+    file_name = file_name
     silverDataLocation = config("SILVER_DATA_LOCATION")
     student_assessment_json = getEndpointJson(ENDPOINT_STUDENT_ASSESSSMENTS, silverDataLocation, school_year)
     student_school_association_json = getEndpointJson(ENDPOINT_STUDENT_SCHOOL_ASSOCIATION, silverDataLocation, school_year)
@@ -111,6 +141,8 @@ def student_assessment_fact_dataframe(school_year) -> DataFrame:
         recordPrefix=None,
         errors="ignore",
     )
+    if student_assessment_content is None or student_assessment_content.empty:
+        return None
     ############################
     # Student Objective Assessment
     ############################
@@ -383,6 +415,9 @@ def student_assessment_fact_dataframe(school_year) -> DataFrame:
         'schoolReference.schoolId',
         'exitWithdrawDate'
     ])
+    data_frame = data_frame[data_frame['assessmentReference.assessmentIdentifier'] != '']
+    if data_frame is None or data_frame.empty:
+        return None
     # Add concatenated columns
     data_frame['StudentAssessmentFactKey'] = (
         data_frame['assessmentReference.assessmentIdentifier'] + '-'
@@ -447,32 +482,13 @@ def student_assessment_fact_dataframe(school_year) -> DataFrame:
     data_frame["StudentAssessmentReportingMethod"] = data_frame['assessmentReportingMethodDescriptor']
     data_frame["StudentAssessmentPerformanceResult"] = data_frame['performanceLevelDescriptor']
     # Result dataframe
-    data_frame = data_frame[[
-        'StudentAssessmentFactKey',
-        'StudentAssessmentKey',
-        'StudentObjectiveAssessmentKey',
-        'ObjectiveAssessmentKey',
-        'AssessmentKey',
-        'AssessmentIdentifier',
-        'Namespace',
-        'StudentAssessmentIdentifier',
-        'StudentKey',
-        'StudentSchoolKey',
-        'SchoolKey',
-        'AdministrationDate',
-        'AssessedGradeLevel',
-        'StudentScore',
-        'ResultDataType',
-        'ReportingMethod',
-        'PerformanceResult',
-        'StudentAssessmentScore',
-        'StudentAssessmentResultDataType',
-        'StudentAssessmentReportingMethod',
-        'StudentAssessmentPerformanceResult'
-    ]]
+    data_frame = data_frame[columns]
     return data_frame
 
 
-def student_assessment_fact(school_year) -> None:
-    result_data_frame = student_assessment_fact_dataframe(school_year)
-    saveParquetFile(result_data_frame, f"{config('PARQUET_FILES_LOCATION')}", "asmt_student_assessment_fact.parquet", school_year)
+def student_assessment_fact(school_year) -> data_frame_generation_result:
+    return student_assessment_fact_dataframe(
+        file_name="asmt_student_assessment_fact.parquet",
+        columns=RESULT_COLUMNS,
+        school_year=school_year
+    )
