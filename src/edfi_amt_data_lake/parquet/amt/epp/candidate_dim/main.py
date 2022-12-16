@@ -3,18 +3,21 @@
 # The Ed-Fi Alliance licenses this file to you under the Apache License, Version 2.0.
 # See the LICENSE and NOTICES files in the project root for more information.
 
-
 from decouple import config
 
+from edfi_amt_data_lake.helper.data_frame_generation_result import (
+    data_frame_generation_result,
+)
 from edfi_amt_data_lake.parquet.Common.functions import getEndpointJson
 from edfi_amt_data_lake.parquet.Common.pandasWrapper import (
     addColumnIfNotExists,
+    create_empty_data_frame,
+    create_parquet_file,
     get_descriptor_code_value_from_uri,
     jsonNormalize,
     pdMerge,
     renameColumns,
     replace_null,
-    saveParquetFile,
 )
 
 ENDPOINT_CANDIDATES = 'candidates'
@@ -25,9 +28,34 @@ ENDPOINT_CANDIDATE_EDUCATOR_PREPARATION_PROGRAM_ASSOCIATIONS = 'candidateEducato
 
 ENDPOINT_RACES_DESCRIPTOR = 'raceDescriptors'
 ENDPOINT_SEX_DESCRIPTOR = 'sexDescriptors'
+RESULT_COLUMNS = [
+    'CandidateKey'
+    , 'FirstName'
+    , 'LastSurname'
+    , 'SexDescriptorKey'
+    , 'SexDescriptor'
+    , 'RaceDescriptorKey'
+    , 'RaceDescriptor'
+    , 'HispanicLatinoEthnicity'
+    , 'EconomicDisadvantaged'
+    , 'Cohort'
+    , 'ProgramComplete'
+    , 'StudentKey'
+    , 'ProgramName'
+    , 'BeginDate'
+    , 'EducationOrganizationId'
+    , 'PersonId'
+    , 'CohortYearTermDescription'
+]
 
 
-def candidate_dim(school_year) -> None:
+@create_parquet_file
+def candidate_dim_data_frame(
+    file_name: str,
+    columns: list[str],
+    school_year: int
+):
+    print("asdfasfasfsdafasdfasdfsf")
     candidates_content = getEndpointJson(
         ENDPOINT_CANDIDATES, config('SILVER_DATA_LOCATION'), school_year
     )
@@ -63,6 +91,7 @@ def candidate_dim(school_year) -> None:
         recordPrefix='races_',
         errors='ignore'
     )
+
     races_descriptor_normalized["namespace_codevalue"] = races_descriptor_normalized['namespace'] + '#' + races_descriptor_normalized['codeValue']
 
     sex_descriptor_normalized = jsonNormalize(
@@ -97,11 +126,17 @@ def candidate_dim(school_year) -> None:
         errors='ignore'
     )
 
+    if candidates_normalized.empty:
+        return create_empty_data_frame(columns)
+
     candidates_races_normalized = jsonNormalize(
         candidates_content,
         recordPath=['races'],
         meta=[
             'candidateIdentifier'
+        ],
+        recordMeta=[
+            'raceDescriptor'
         ],
         metaPrefix=None,
         recordPrefix='candidates_races_',
@@ -175,6 +210,10 @@ def candidate_dim(school_year) -> None:
         meta=[
             ['candidateReference', 'candidateIdentifier'],
             ['educatorPreparationProgramReference', 'programName']],
+        recordMeta=[
+            'schoolYearTypeReference.schoolYear',
+            'schoolYearTypeReference.cohortYearTypeDescriptor'
+        ],
         metaPrefix=None,
         recordPrefix='candidate_educator_preparation_program_',
         errors='ignore'
@@ -190,8 +229,6 @@ def candidate_dim(school_year) -> None:
         suffixLeft=None,
         suffixRight='_person'
     )
-
-    candidates_normalized['candidate_prep_program'] = '|'
 
     result_data_frame = pdMerge(
         left=candidates_normalized,
@@ -321,26 +358,15 @@ def candidate_dim(school_year) -> None:
     result_data_frame['RaceDescriptorKey'] = result_data_frame['RaceDescriptorKey'].astype(str)
     result_data_frame['Cohort'] = result_data_frame['Cohort'].astype(str)
 
-    result_data_frame = result_data_frame.groupby([
-        'CandidateKey'
-        , 'FirstName'
-        , 'LastSurname'
-        , 'SexDescriptorKey'
-        , 'SexDescriptor'
-        , 'RaceDescriptorKey'
-        , 'RaceDescriptor'
-        , 'HispanicLatinoEthnicity'
-        , 'EconomicDisadvantaged'
-        , 'Cohort'
-        , 'ProgramComplete'
-        , 'StudentKey'
-        , 'ProgramName'
-        , 'BeginDate'
-        , 'EducationOrganizationId'
-        , 'PersonId'
-        , 'CohortYearTermDescription'
-    ], sort=False)['IssuanceDate'].min()
+    result_data_frame = result_data_frame.groupby(columns, sort=False)['IssuanceDate'].min()
 
     result_data_frame = result_data_frame.to_frame()
+    return result_data_frame
 
-    saveParquetFile(result_data_frame, f"{config('PARQUET_FILES_LOCATION')}", "epp_CandidateDim.parquet", school_year)
+
+def candidate_dim(school_year) -> data_frame_generation_result:
+    return candidate_dim_data_frame(
+        file_name="epp_CandidateDim.parquet",
+        columns=RESULT_COLUMNS,
+        school_year=school_year
+    )
