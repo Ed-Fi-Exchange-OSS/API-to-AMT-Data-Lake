@@ -6,7 +6,7 @@
 from datetime import date
 
 from decouple import config
-from pandas import DataFrame
+
 from edfi_amt_data_lake.helper.data_frame_generation_result import (
     data_frame_generation_result,
 )
@@ -20,6 +20,7 @@ from edfi_amt_data_lake.parquet.Common.pandasWrapper import (
     subset,
     to_datetime_key,
 )
+
 ENDPOINT_STUDENT_ASSESSSMENTS = "studentAssessments"
 ENDPOINT_STUDENT_SCHOOL_ASSOCIATION = "studentSchoolAssociations"
 ENDPOINT_ASSESSMENT_REPORTING_METHOD_DESCRIPTOR = "assessmentReportingMethodDescriptors"
