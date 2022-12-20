@@ -192,10 +192,11 @@ def student_section_grade_fact_data_frame(
     })
 
     result_data_frame = (
-        result_data_frame[(result_data_frame['gradeTypeDescriptor_constantName'].str.contains('GradeType.GradingPeriod')) | (result_data_frame['gradeTypeDescriptor_constantName'].str.contains('GradeType.Semester')) | (result_data_frame['gradeTypeDescriptor_constantName'].str.contains('GradeType.Final'))]
+        result_data_frame[(result_data_frame['gradeTypeDescriptor_constantName'].str.contains('GradeType.GradingPeriod', na=False)) | (result_data_frame['gradeTypeDescriptor_constantName'].str.contains('GradeType.Semester', na=False)) | (result_data_frame['gradeTypeDescriptor_constantName'].str.contains('GradeType.Final', na=False))]
     )
     # Reorder columns to match AMT
     result_data_frame = result_data_frame[columns]
+
     return result_data_frame
 
 
