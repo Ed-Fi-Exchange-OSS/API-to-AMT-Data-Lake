@@ -9,24 +9,40 @@ from edfi_amt_data_lake.parquet.Common.descriptor_mapping import get_descriptor_
 from edfi_amt_data_lake.parquet.Common.functions import getEndpointJson
 from edfi_amt_data_lake.parquet.Common.pandasWrapper import (
     addColumnIfNotExists,
+    create_parquet_file,
     createDataFrame,
     get_descriptor_code_value_from_uri,
     jsonNormalize,
     pdMerge,
     renameColumns,
-    saveParquetFile,
     subset,
     toDateTime,
 )
 
+RESULT_COLUMNS = [
+    'StudentKey',
+    'SchoolKey',
+    'GradingPeriodKey',
+    'StudentSectionKey',
+    'SectionKey',
+    'NumericGradeEarned',
+    'LetterGradeEarned',
+    'GradeType'
+
+]
 ENDPOINT_GRADES = 'grades'
 GRANDINGPERIODS_GRADES = 'gradingPeriods'
 
 
-def student_section_grade_fact(school_year) -> None:
+@create_parquet_file
+def student_section_grade_fact_data_frame(
+    file_name: str,
+    columns: list[str],
+    school_year: int
+):
     gradesContent = getEndpointJson(ENDPOINT_GRADES, config('SILVER_DATA_LOCATION'), school_year)
     gradingPeriodsContent = getEndpointJson(GRANDINGPERIODS_GRADES, config('SILVER_DATA_LOCATION'), school_year)
-
+    file_name = file_name
     letterGradeTranslation = createDataFrame(
         data=[
             ['A', 95],
@@ -39,23 +55,43 @@ def student_section_grade_fact(school_year) -> None:
 
     gradesContentNormalized = jsonNormalize(
         gradesContent,
-        None,
-        None,
-        None,
-        None,
-        'ignore'
+        recordPath=None,
+        meta=[
+            'gradingPeriodReference.gradingPeriodDescriptor',
+            'gradingPeriodReference.periodSequence',
+            'gradingPeriodReference.schoolId',
+            'gradingPeriodReference.schoolYear',
+            'letterGradeEarned',
+            'numericGradeEarned',
+            'studentSectionAssociationReference.studentUniqueId',
+            'studentSectionAssociationReference.schoolId',
+            'studentSectionAssociationReference.beginDate',
+            'studentSectionAssociationReference.localCourseCode',
+            'studentSectionAssociationReference.schoolYear',
+            'studentSectionAssociationReference.sectionIdentifier',
+            'studentSectionAssociationReference.sessionName',
+            'gradeTypeDescriptor'
+        ],
+        metaPrefix=None,
+        recordPrefix=None,
+        errors='ignore'
     )
 
     gradingPeriodsContentNormalized = jsonNormalize(
         gradingPeriodsContent,
-        None,
-        None,
-        None,
-        None,
-        'ignore'
+        recordPath=None,
+        meta=[
+            'gradingPeriodDescriptor',
+            'periodSequence',
+            'schoolReference.schoolId',
+            'schoolYearTypeReference.schoolYear'
+        ],
+        metaPrefix=None,
+        recordPrefix=None,
+        errors='ignore'
     )
 
-    restultDataFrame = pdMerge(
+    result_data_frame = pdMerge(
         left=gradesContentNormalized,
         right=gradingPeriodsContentNormalized,
         how='left',
@@ -74,11 +110,12 @@ def student_section_grade_fact(school_year) -> None:
         suffixLeft='',
         suffixRight='_gradingPeriods'
     )
+    # if result_data_frame is None:
+    #     return None
+    addColumnIfNotExists(result_data_frame, 'letterGradeEarned')
 
-    addColumnIfNotExists(restultDataFrame, 'letterGradeEarned')
-
-    restultDataFrame = pdMerge(
-        left=restultDataFrame,
+    result_data_frame = pdMerge(
+        left=result_data_frame,
         right=letterGradeTranslation,
         how='left',
         leftOn=['letterGradeEarned'],
@@ -87,10 +124,10 @@ def student_section_grade_fact(school_year) -> None:
         suffixRight=None
     )
 
-    restultDataFrame.numericGradeEarned[restultDataFrame.numericGradeEarned == 0] = restultDataFrame.NumericGradeEarnedJoin
+    result_data_frame.numericGradeEarned[result_data_frame.numericGradeEarned == 0] = result_data_frame.NumericGradeEarnedJoin
 
     # Keep the fields I actually need.
-    restultDataFrame = subset(restultDataFrame, [
+    result_data_frame = subset(result_data_frame, [
         'studentSectionAssociationReference.studentUniqueId',
         'studentSectionAssociationReference.schoolId',
         'gradingPeriodReference.gradingPeriodDescriptor',
@@ -103,50 +140,50 @@ def student_section_grade_fact(school_year) -> None:
         'letterGradeEarned',
         'gradeTypeDescriptor'
     ])
-    restultDataFrame = get_descriptor_constant(restultDataFrame, 'gradeTypeDescriptor')
+    result_data_frame = get_descriptor_constant(result_data_frame, 'gradeTypeDescriptor')
     # Formatting begin date that will be used as part of the keys later
-    restultDataFrame['studentSectionAssociationReference.beginDate'] = toDateTime(restultDataFrame['studentSectionAssociationReference.beginDate'])
-    restultDataFrame['studentSectionAssociationReference.beginDate'] = restultDataFrame['studentSectionAssociationReference.beginDate'].dt.strftime('%Y%m%d')
+    result_data_frame['studentSectionAssociationReference.beginDate'] = toDateTime(result_data_frame['studentSectionAssociationReference.beginDate'])
+    result_data_frame['studentSectionAssociationReference.beginDate'] = result_data_frame['studentSectionAssociationReference.beginDate'].dt.strftime('%Y%m%d')
 
     # # Removes namespace from Grading Period Descriptor
-    get_descriptor_code_value_from_uri(restultDataFrame, 'gradingPeriodReference.gradingPeriodDescriptor')
+    get_descriptor_code_value_from_uri(result_data_frame, 'gradingPeriodReference.gradingPeriodDescriptor')
 
     # Removes namespace from Grade Type Descriptor
-    get_descriptor_code_value_from_uri(restultDataFrame, 'gradeTypeDescriptor')
+    get_descriptor_code_value_from_uri(result_data_frame, 'gradeTypeDescriptor')
 
     # Converting some fields to str as preparation for the parquet file.
-    restultDataFrame['studentSectionAssociationReference.schoolId'] = restultDataFrame['studentSectionAssociationReference.schoolId'].astype(str)
-    restultDataFrame['studentSectionAssociationReference.schoolYear'] = restultDataFrame['studentSectionAssociationReference.schoolYear'].astype(str)
+    result_data_frame['studentSectionAssociationReference.schoolId'] = result_data_frame['studentSectionAssociationReference.schoolId'].astype(str)
+    result_data_frame['studentSectionAssociationReference.schoolYear'] = result_data_frame['studentSectionAssociationReference.schoolYear'].astype(str)
 
     # Creates concatanation for GradingPeriodKey field
-    restultDataFrame['GradingPeriodKey'] = (
-        restultDataFrame['gradingPeriodReference.gradingPeriodDescriptor']
-        + '-' + restultDataFrame['studentSectionAssociationReference.schoolId']
-        + '-' + restultDataFrame['studentSectionAssociationReference.beginDate']
+    result_data_frame['GradingPeriodKey'] = (
+        result_data_frame['gradingPeriodReference.gradingPeriodDescriptor']
+        + '-' + result_data_frame['studentSectionAssociationReference.schoolId']
+        + '-' + result_data_frame['studentSectionAssociationReference.beginDate']
     )
 
     # Creates concatanation for StudentSectionKey field
-    restultDataFrame['StudentSectionKey'] = (
-        restultDataFrame['studentSectionAssociationReference.studentUniqueId']
-        + '-' + restultDataFrame['studentSectionAssociationReference.schoolId']
-        + '-' + restultDataFrame['studentSectionAssociationReference.localCourseCode']
-        + '-' + restultDataFrame['studentSectionAssociationReference.schoolYear']
-        + '-' + restultDataFrame['studentSectionAssociationReference.sectionIdentifier']
-        + '-' + restultDataFrame['studentSectionAssociationReference.sessionName']
-        + '-' + restultDataFrame['studentSectionAssociationReference.beginDate']
+    result_data_frame['StudentSectionKey'] = (
+        result_data_frame['studentSectionAssociationReference.studentUniqueId']
+        + '-' + result_data_frame['studentSectionAssociationReference.schoolId']
+        + '-' + result_data_frame['studentSectionAssociationReference.localCourseCode']
+        + '-' + result_data_frame['studentSectionAssociationReference.schoolYear']
+        + '-' + result_data_frame['studentSectionAssociationReference.sectionIdentifier']
+        + '-' + result_data_frame['studentSectionAssociationReference.sessionName']
+        + '-' + result_data_frame['studentSectionAssociationReference.beginDate']
     )
 
     # Creates concatanation for SectionKey field
-    restultDataFrame['SectionKey'] = (
-        restultDataFrame['studentSectionAssociationReference.schoolId']
-        + '-' + restultDataFrame['studentSectionAssociationReference.localCourseCode']
-        + '-' + restultDataFrame['studentSectionAssociationReference.schoolYear']
-        + '-' + restultDataFrame['studentSectionAssociationReference.sectionIdentifier']
-        + '-' + restultDataFrame['studentSectionAssociationReference.sessionName']
+    result_data_frame['SectionKey'] = (
+        result_data_frame['studentSectionAssociationReference.schoolId']
+        + '-' + result_data_frame['studentSectionAssociationReference.localCourseCode']
+        + '-' + result_data_frame['studentSectionAssociationReference.schoolYear']
+        + '-' + result_data_frame['studentSectionAssociationReference.sectionIdentifier']
+        + '-' + result_data_frame['studentSectionAssociationReference.sessionName']
     )
 
     # Rename columns to match AMT
-    restultDataFrame = renameColumns(restultDataFrame, {
+    result_data_frame = renameColumns(result_data_frame, {
         'studentSectionAssociationReference.studentUniqueId': 'StudentKey',
         'studentSectionAssociationReference.schoolId': 'SchoolKey',
         'numericGradeEarned': 'NumericGradeEarned',
@@ -154,19 +191,18 @@ def student_section_grade_fact(school_year) -> None:
         'gradeTypeDescriptor': 'GradeType'
     })
 
-    restultDataFrame = (
-        restultDataFrame[(restultDataFrame['gradeTypeDescriptor_constantName'].str.contains('GradeType.GradingPeriod')) | (restultDataFrame['gradeTypeDescriptor_constantName'].str.contains('GradeType.Semester')) | (restultDataFrame['gradeTypeDescriptor_constantName'].str.contains('GradeType.Final'))]
+    result_data_frame = (
+        result_data_frame[(result_data_frame['gradeTypeDescriptor_constantName'].str.contains('GradeType.GradingPeriod', na=False)) | (result_data_frame['gradeTypeDescriptor_constantName'].str.contains('GradeType.Semester', na=False)) | (result_data_frame['gradeTypeDescriptor_constantName'].str.contains('GradeType.Final', na=False))]
     )
     # Reorder columns to match AMT
-    restultDataFrame = restultDataFrame[[
-        'StudentKey',
-        'SchoolKey',
-        'GradingPeriodKey',
-        'StudentSectionKey',
-        'SectionKey',
-        'NumericGradeEarned',
-        'LetterGradeEarned',
-        'GradeType'
-    ]]
+    result_data_frame = result_data_frame[columns]
 
-    saveParquetFile(restultDataFrame, f"{config('PARQUET_FILES_LOCATION')}", "ews_studentSectionGradeFact.parquet", school_year)
+    return result_data_frame
+
+
+def student_section_grade_fact(school_year: int):
+    return student_section_grade_fact_data_frame(
+        file_name="ews_studentSectionGradeFact.parquet",
+        columns=RESULT_COLUMNS,
+        school_year=school_year
+    )
