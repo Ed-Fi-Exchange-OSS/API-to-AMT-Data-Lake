@@ -55,7 +55,6 @@ def candidate_dim_data_frame(
     columns: list[str],
     school_year: int
 ):
-    print("asdfasfasfsdafasdfasdfsf")
     candidates_content = getEndpointJson(
         ENDPOINT_CANDIDATES, config('SILVER_DATA_LOCATION'), school_year
     )
