@@ -6,15 +6,19 @@
 import pandas as pd
 from decouple import config
 
+from edfi_amt_data_lake.helper.data_frame_generation_result import (
+    data_frame_generation_result,
+)
 from edfi_amt_data_lake.parquet.Common.functions import getEndpointJson
 from edfi_amt_data_lake.parquet.Common.pandasWrapper import (
     addColumnIfNotExists,
+    create_empty_data_frame,
+    create_parquet_file,
     get_reference_from_href,
     jsonNormalize,
     pdMerge,
     renameColumns,
     replace_null,
-    saveParquetFile,
     subset,
     to_datetime_key,
 )
@@ -25,9 +29,26 @@ ENDPOINT_SURVEY_QUESTION = 'surveyQuestions'
 ENDPOINT_SURVEY_RESPONSE = 'surveyResponses'
 ENDPOINT_SURVEY_QUESTION_RESPONSE = 'surveyQuestionResponses'
 ENDPOINT_SURVEY_RESPONSE_PERSON_TARGET_ASSOCIATION = 'surveyResponsePersonTargetAssociations'
+RESULT_COLUMNS = [
+    'CandidateSurveyKey',
+    'CandidateKey',
+    'SurveyTitle',
+    'SurveySectionTitle',
+    'ResponseDateKey',
+    'QuestionCode',
+    'QuestionText',
+    'NumericResponse',
+    'TextResponse'
+]
 
 
-def candidate_survey_dim_dataframe(school_year) -> pd.DataFrame:
+@create_parquet_file
+def candidate_survey_dim_dataframe(
+    file_name: str,
+    columns: list[str],
+    school_year: int
+) -> pd.DataFrame:
+    file_name = file_name
     candidate_content = getEndpointJson(ENDPOINT_CANDIDATE, config('SILVER_DATA_LOCATION'), school_year)
     survey_content = getEndpointJson(ENDPOINT_SURVEY, config('SILVER_DATA_LOCATION'), school_year)
     survey_question_content = getEndpointJson(ENDPOINT_SURVEY_QUESTION, config('SILVER_DATA_LOCATION'), school_year)
@@ -77,6 +98,10 @@ def candidate_survey_dim_dataframe(school_year) -> pd.DataFrame:
         recordPrefix=None,
         errors='ignore'
     )
+
+    if survey_question_normalize.empty:
+        return create_empty_data_frame(columns)
+
     get_reference_from_href(survey_question_normalize, 'id', 'surveyQuestionReferenceId')
     get_reference_from_href(survey_question_normalize, 'surveyReference.link.href', 'surveyReferenceId')
     survey_question_normalize = renameColumns(survey_question_normalize, {
@@ -134,6 +159,10 @@ def candidate_survey_dim_dataframe(school_year) -> pd.DataFrame:
         recordPath='surveyQuestionMatrixElementResponses',
         meta=[
             'id'
+        ],
+        recordMeta=[
+            'numericResponse',
+            'textResponse'
         ],
         metaPrefix=None,
         recordPrefix='values_',
@@ -335,6 +364,7 @@ def candidate_survey_dim_dataframe(school_year) -> pd.DataFrame:
         + '-' + result_data_frame['personId']
     )
     result_data_frame['candidateKey'] = result_data_frame['candidateIdentifier']
+
     result_data_frame = renameColumns(result_data_frame, {
         'candidateSurveyKey': 'CandidateSurveyKey'
         , 'candidateKey': 'CandidateKey'
@@ -346,20 +376,13 @@ def candidate_survey_dim_dataframe(school_year) -> pd.DataFrame:
         , 'numericResponse': 'NumericResponse'
         , 'textResponse': 'TextResponse'
     })
-    result_data_frame = subset(result_data_frame, [
-        'CandidateSurveyKey'
-        , 'CandidateKey'
-        , 'SurveyTitle'
-        , 'SurveySectionTitle'
-        , 'ResponseDateKey'
-        , 'QuestionCode'
-        , 'QuestionText'
-        , 'NumericResponse'
-        , 'TextResponse'
-    ])
-    return result_data_frame
+
+    return result_data_frame[columns]
 
 
-def candidate_survey_dim(school_year) -> None:
-    result_data_frame = candidate_survey_dim_dataframe(school_year)
-    saveParquetFile(result_data_frame, f"{config('PARQUET_FILES_LOCATION')}", "epp_CandidateSurveyDim.parquet", school_year)
+def candidate_survey_dim(school_year) -> data_frame_generation_result:
+    return candidate_survey_dim_dataframe(
+        file_name="candidateSurveyDim.parquet",
+        columns=RESULT_COLUMNS,
+        school_year=school_year
+    )
