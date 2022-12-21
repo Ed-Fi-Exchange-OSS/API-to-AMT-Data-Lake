@@ -6,15 +6,19 @@
 import pandas as pd
 from decouple import config
 
+from edfi_amt_data_lake.helper.data_frame_generation_result import (
+    data_frame_generation_result,
+)
 from edfi_amt_data_lake.parquet.Common.functions import getEndpointJson
 from edfi_amt_data_lake.parquet.Common.pandasWrapper import (
+    create_empty_data_frame,
+    create_parquet_file,
     get_descriptor_code_value_from_uri,
     get_reference_from_href,
     jsonNormalize,
     pdMerge,
     renameColumns,
     replace_null,
-    saveParquetFile,
     subset,
     to_datetime_key,
 )
@@ -23,9 +27,25 @@ ENDPOINT_AID_TYPE_DESCRIPTOR = 'aidTypeDescriptors'
 ENDPOINT_CANDIDATE = 'candidates'
 ENDPOINT_FINANCIAL_AIDS = 'financialAids'
 ENDPOINT_STUDENT = 'students'
+RESULT_COLUMNS = [
+    'CandidateAidKey',
+    'CandidateKey',
+    'BeginDate',
+    'EndDate',
+    'AidConditionDescription',
+    'AidType',
+    'AidAmount',
+    'PellGrantRecipient'
+]
 
 
-def epp_financial_aid_fact_dataframe(school_year) -> pd.DataFrame:
+@create_parquet_file
+def epp_financial_aid_fact_dataframe(
+    file_name: str,
+    columns: list[str],
+    school_year: int
+) -> pd.DataFrame:
+    file_name = file_name
     aid_type_descriptor_content = getEndpointJson(ENDPOINT_AID_TYPE_DESCRIPTOR, config('SILVER_DATA_LOCATION'), school_year)
     candidate_content = getEndpointJson(ENDPOINT_CANDIDATE, config('SILVER_DATA_LOCATION'), school_year)
     financial_aids_content = getEndpointJson(ENDPOINT_FINANCIAL_AIDS, config('SILVER_DATA_LOCATION'), school_year)
@@ -51,6 +71,10 @@ def epp_financial_aid_fact_dataframe(school_year) -> pd.DataFrame:
         recordPrefix=None,
         errors='ignore'
     )
+
+    if financial_aids_normalize.empty:
+        return create_empty_data_frame(columns)
+
     get_reference_from_href(
         financial_aids_normalize,
         'studentReference.link.href',
@@ -228,19 +252,13 @@ def epp_financial_aid_fact_dataframe(school_year) -> pd.DataFrame:
         , 'aidAmount': 'AidAmount'
         , 'pellGrantRecipient': 'PellGrantRecipient'
     })
-    result_data_frame = subset(result_data_frame, [
-        'CandidateAidKey'
-        , 'CandidateKey'
-        , 'BeginDate'
-        , 'EndDate'
-        , 'AidConditionDescription'
-        , 'AidType'
-        , 'AidAmount'
-        , 'PellGrantRecipient'
-    ])
-    return result_data_frame
+
+    return result_data_frame[columns]
 
 
-def epp_financial_aid_fact(school_year) -> None:
-    result_data_frame = epp_financial_aid_fact_dataframe(school_year)
-    saveParquetFile(result_data_frame, f"{config('PARQUET_FILES_LOCATION')}", "epp_FinancialAidFact.parquet", school_year)
+def epp_financial_aid_fact(school_year) -> data_frame_generation_result:
+    return epp_financial_aid_fact_dataframe(
+        file_name="epp_FinancialAidFact.parquet",
+        columns=RESULT_COLUMNS,
+        school_year=school_year
+    )
