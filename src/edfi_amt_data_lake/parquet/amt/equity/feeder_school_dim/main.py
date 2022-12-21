@@ -7,21 +7,35 @@ from datetime import date
 
 from decouple import config
 
+from edfi_amt_data_lake.helper.data_frame_generation_result import (
+    data_frame_generation_result,
+)
 from edfi_amt_data_lake.parquet.Common.functions import getEndpointJson
 from edfi_amt_data_lake.parquet.Common.pandasWrapper import (
+    create_parquet_file,
     jsonNormalize,
     pdMerge,
     renameColumns,
-    saveParquetFile,
     subset,
     to_datetime_key,
 )
 
 ENDPOINT_STUDENT_FEEDER_SCHOOL_ASSOCIATION = 'feederSchoolAssociations'
 ENDPOINT_SCHOOL = 'schools'
+RESULT_COLUMNS = [
+    'feederSchoolUniqueKey',
+    'schoolKey',
+    'feederSchoolKey',
+    'feederSchoolName'
+]
 
 
-def feeder_school_dim(school_year) -> None:
+@create_parquet_file
+def feeder_school_dim_data_frame(
+    file_name: str,
+    columns: list[str],
+    school_year: int
+):
     feeder_school_association_content = getEndpointJson(ENDPOINT_STUDENT_FEEDER_SCHOOL_ASSOCIATION, config('SILVER_DATA_LOCATION'), school_year)
     school_content = getEndpointJson(ENDPOINT_SCHOOL, config('SILVER_DATA_LOCATION'), school_year)
 
@@ -37,6 +51,9 @@ def feeder_school_dim(school_year) -> None:
         recordPrefix='schoolFoodServiceProgramServices_',
         errors='ignore'
     )
+
+    if feeder_school_association_normalized.empty:
+        return None
 
     if 'endDate' in feeder_school_association_normalized:
         feeder_school_association_normalized['endDate'] = to_datetime_key(feeder_school_association_normalized, 'endDate')
@@ -98,12 +115,12 @@ def feeder_school_dim(school_year) -> None:
         + '-' + result_data_frame['feederSchoolKey']
     )
 
-    # Select needed columns.
-    result_data_frame = subset(result_data_frame, [
-        'feederSchoolUniqueKey',
-        'schoolKey',
-        'feederSchoolKey',
-        'feederSchoolName'
-    ])
+    return subset(result_data_frame, columns)
 
-    saveParquetFile(result_data_frame, f"{config('PARQUET_FILES_LOCATION')}", "equity_FeederSchoolDim.parquet", school_year)
+
+def feeder_school_dim(school_year) -> data_frame_generation_result:
+    return feeder_school_dim_data_frame(
+        file_name="equity_FeederSchoolDim.parquet",
+        columns=RESULT_COLUMNS,
+        school_year=school_year
+    )
