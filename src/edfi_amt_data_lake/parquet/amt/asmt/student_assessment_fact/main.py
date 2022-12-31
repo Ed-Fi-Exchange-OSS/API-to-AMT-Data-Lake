@@ -446,7 +446,7 @@ def student_assessment_fact_dataframe(
     data_frame['StudentSchoolKey'] = (
         data_frame['studentReference.studentUniqueId'] + '-'
         + data_frame['schoolReference.schoolId'].astype(str)
-    )
+    ).astype(str)
     data_frame['StudentObjectiveAssessmentKey'] = (
         data_frame['studentReference.studentUniqueId'] + '-'
         + data_frame['objectiveAssessmentReference.identificationCode'] + '-'
@@ -489,7 +489,7 @@ def student_assessment_fact_dataframe(
 
 def student_assessment_fact(school_year) -> data_frame_generation_result:
     return student_assessment_fact_dataframe(
-        file_name="asmt_student_assessment_fact.parquet",
+        file_name="asmt_StudentAssessmentFact.parquet",
         columns=RESULT_COLUMNS,
         school_year=school_year
     )
