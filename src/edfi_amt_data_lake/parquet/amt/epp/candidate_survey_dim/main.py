@@ -289,7 +289,7 @@ def candidate_survey_dim_dataframe(
             'personReference.link.href',
         ],
         metaPrefix=None,
-        recordPrefix="response_",
+        recordPrefix='response_',
         errors='ignore'
     )
     get_reference_from_href(survey_response_person_target_association_normalize, 'surveyResponseReference.link.href', 'surveyResponseReferenceId')
@@ -352,6 +352,8 @@ def candidate_survey_dim_dataframe(
     replace_null(result_data_frame, 'candidateIdentifier', '')
     replace_null(result_data_frame, 'numericResponse', '0')
     replace_null(result_data_frame, 'textResponse', '')
+
+    result_data_frame['numericResponse'] = result_data_frame['numericResponse'].astype(str)
     result_data_frame['surveyIdentifier'] = result_data_frame['surveyIdentifier'].astype(str)
     result_data_frame['questionCode'] = result_data_frame['questionCode'].astype(str)
     result_data_frame['surveyResponseIdentifier'] = result_data_frame['surveyResponseIdentifier'].astype(str)
@@ -382,7 +384,7 @@ def candidate_survey_dim_dataframe(
 
 def candidate_survey_dim(school_year) -> data_frame_generation_result:
     return candidate_survey_dim_dataframe(
-        file_name="candidateSurveyDim.parquet",
+        file_name='epp_candidateSurveyDim.parquet',
         columns=RESULT_COLUMNS,
         school_year=school_year
     )

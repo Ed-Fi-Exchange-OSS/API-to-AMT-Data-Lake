@@ -185,6 +185,10 @@ def evaluation_element_rating_dim_dataframe(
     result_data_frame['evaluationObjectiveRatingReference.evaluationDate'] = (
         result_data_frame['evaluationObjectiveRatingReference.evaluationDate'].str[:10]
     )
+
+    result_data_frame['termDescriptorId'] = result_data_frame['termDescriptorId'].astype(str)
+    result_data_frame['schoolYear'] = result_data_frame['schoolYear'].astype(str)
+
     result_data_frame = renameColumns(result_data_frame, {
         'candidateIdentifier': 'CandidateKey',
         'evaluationObjectiveRatingReference.evaluationDate': 'EvaluationDate',
