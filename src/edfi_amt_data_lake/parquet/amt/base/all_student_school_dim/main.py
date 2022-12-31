@@ -429,7 +429,7 @@ def all_student_school_dim_data_frame_base(
         result_data_frame.apply(
             lambda x: x['hispanicLatinoEthnicity'] if x['hispanicLatinoEthnicity'] != '' else x['hispanicLatinoEthnicity_districtEdOrg'], axis=1
         )
-    )
+    ).astype(int)
 
     result_data_frame['IsHispanic'] = result_data_frame['IsHispanic'].apply(
         lambda x: False if x == '' else x
@@ -524,7 +524,7 @@ def all_student_school_dim_data_frame_base(
     result_data_frame['StudentSchoolKey'] = (
         result_data_frame['StudentKey'] + '-'
         + result_data_frame['SchoolKey'].astype(str)
-    )
+    ).astype(str)
 
     result_data_frame['SchoolYear'] = result_data_frame['SchoolYear'].apply(
         lambda x: 'Unknown' if x == '' else str(x)
@@ -583,7 +583,7 @@ def all_student_school_dim_data_frame(
 
 def all_student_school_dim(school_year) -> data_frame_generation_result:
     return all_student_school_dim_data_frame(
-        file_name="allStudentSchoolDim.parquet",
+        file_name="asmt_StudentAssessmentFact.parquet",
         columns=RESULT_COLUMNS,
         school_year=school_year
     )

@@ -232,6 +232,7 @@ def staff_section_dim_dataframe(
 
     result_data_frame["highlyQualifiedTeacher"] = result_data_frame["highlyQualifiedTeacher"].astype(int)
     result_data_frame["hispanicLatinoEthnicity"] = result_data_frame["hispanicLatinoEthnicity"].astype(int)
+    result_data_frame['sectionReference.schoolId'] = result_data_frame['sectionReference.schoolId'].astype(str)
 
     result_data_frame = renameColumns(result_data_frame, {
         'staffReference.staffUniqueId': 'UserKey',

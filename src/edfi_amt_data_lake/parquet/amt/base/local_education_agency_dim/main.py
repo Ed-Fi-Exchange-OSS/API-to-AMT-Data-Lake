@@ -65,6 +65,10 @@ def local_education_agency_dataframe(
         recordPrefix=None,
         errors='ignore'
     )
+
+    local_education_agency_normalize['localEducationAgencyId'] = local_education_agency_normalize['localEducationAgencyId'].astype(str)
+    local_education_agency_normalize['parentLocalEducationAgencyReference.localEducationAgencyId'] = local_education_agency_normalize['parentLocalEducationAgencyReference.localEducationAgencyId'].astype(str)
+
     replace_null(local_education_agency_normalize, 'charterStatusDescriptor', '')
     replace_null(local_education_agency_normalize, 'parentLocalEducationAgencyReference.localEducationAgencyId', '')
     get_descriptor_code_value_from_uri(
@@ -117,6 +121,11 @@ def local_education_agency_dataframe(
         recordPrefix=None,
         errors='ignore'
     )
+
+    state_education_agency_normalize['stateEducationAgencyId'] = state_education_agency_normalize['stateEducationAgencyId'].astype(str)
+    replace_null(state_education_agency_normalize, 'nameOfInstitution', '')
+    replace_null(state_education_agency_normalize, 'stateEducationAgencyId', '')
+
     state_education_agency_normalize = renameColumns(state_education_agency_normalize, {
         'id': 'stateEducationAgencyReferenceId',
         'nameOfInstitution': 'localEducationAgencyStateEducationAgencyName',
@@ -143,6 +152,9 @@ def local_education_agency_dataframe(
         recordPrefix=None,
         errors='ignore'
     )
+
+    education_service_center_normalize['educationServiceCenterId'] = education_service_center_normalize['educationServiceCenterId'].astype(str)
+
     education_service_center_normalize = renameColumns(education_service_center_normalize, {
         'id': 'educationServiceCenterReferenceId',
         'nameOfInstitution': 'localEducationAgencyServiceCenterName',
@@ -196,7 +208,7 @@ def local_education_agency_dataframe(
 
 def local_education_agency_dim(school_year) -> data_frame_generation_result:
     return local_education_agency_dataframe(
-        file_name="localEducationAgencyDim.parquet",
+        file_name='localEducationAgencyDim.parquet',
         columns=RESULT_COLUMNS,
         school_year=school_year
     )

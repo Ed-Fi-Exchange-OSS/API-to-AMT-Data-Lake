@@ -34,7 +34,8 @@ RESULT_COLUMNS = [
     'ProgramName',
     'StudentKey',
     'SchoolKey',
-    'StudentSchoolKey'
+    'StudentSchoolKey',
+    'EducationOrganizationKey'
 ]
 
 
@@ -211,6 +212,14 @@ def student_program_dim_frame(
         data_frame['studentReference.studentUniqueId'].astype(str) + '-'
         + data_frame['schoolReference.schoolId'].astype(str)
     )
+
+    data_frame['EducationOrganizationKey'] = (
+        data_frame['educationOrganizationReference.educationOrganizationId_prev_left'].astype(str)
+    )
+
+    data_frame['schoolReference.schoolId'] = data_frame['schoolReference.schoolId'].astype(str)
+    data_frame['programReference.educationOrganizationId'] = data_frame['programReference.educationOrganizationId'].astype(str)
+
     data_frame = renameColumns(data_frame, {
         'beginDate': 'BeginDateKey',
         'programReference.educationOrganizationId': 'EducationOrganizationId',

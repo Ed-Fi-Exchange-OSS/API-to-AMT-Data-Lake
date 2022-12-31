@@ -45,6 +45,10 @@ def student_school_dim_data_frame(
     result_data_frame = all_student_school_dim(school_year=school_year).data_frame
     if result_data_frame is None:
         return None
+
+    result_data_frame['SchoolKey'] = result_data_frame['SchoolKey'].astype(str)
+    result_data_frame['IsHispanic'] = result_data_frame['IsHispanic'].astype(int)
+
     result_data_frame = result_data_frame[result_data_frame['IsEnrolled'] == 1]
     return result_data_frame[
         columns
