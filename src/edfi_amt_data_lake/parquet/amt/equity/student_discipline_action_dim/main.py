@@ -20,6 +20,7 @@ from edfi_amt_data_lake.parquet.Common.pandasWrapper import (
     renameColumns,
     subset,
     to_datetime_key,
+    replace_null
 )
 
 ENDPOINT_DISCIPLINE_ACTIONS = 'disciplineActions'
@@ -108,6 +109,9 @@ def student_discipline_action_dim_data_frame(
         'studentReference.studentUniqueId',
         'staffs_staffReference.staffUniqueId'
     ])
+
+    replace_null(discipline_action_normalized, 'staffs_staffReference.staffUniqueId', '')
+
     discipline_action_normalized = renameColumns(discipline_action_normalized, {
         'disciplines_disciplineDescriptor': 'disciplineDescriptorCodeValue',
         'studentReference.studentUniqueId': 'studentUniqueId',

@@ -152,7 +152,8 @@ def student_history_dim_data_frame(
                 - attendance_history['DaysAbsent'].astype(int)
             )
             / attendance_history['DaysEnrolled'].astype(int)
-        ).astype(int)
+        ).astype(float)
+
     attendance_history = subset(
         attendance_history,
         [
@@ -160,6 +161,10 @@ def student_history_dim_data_frame(
             'AttendanceRate'
         ]
     ).reset_index()
+
+    if attendance_history is None:
+        return None
+
     replace_null_empty(attendance_history, 'AttendanceRate', 100)
     attendance_history['AttendanceRate'] = attendance_history['AttendanceRate'].astype(str)
     attendance_history = attendance_history.set_index(['StudentSchoolKey'])
@@ -310,7 +315,8 @@ def student_history_dim_data_frame(
     ############################
     # Student School
     ############################
-    student_school_dim_view['CurrentSchoolKey'] = student_school_dim_view['SchoolKey']
+
+    student_school_dim_view['CurrentSchoolKey'] = student_school_dim_view['SchoolKey'].astype(str)
     student_school_dim_view = subset(
         student_school_dim_view,
         [
