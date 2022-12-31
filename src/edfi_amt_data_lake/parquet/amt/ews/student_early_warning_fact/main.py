@@ -126,6 +126,9 @@ def student_early_warning_fact_data_frame(
     if not calendar_dates_normalized.empty:
         calendar_dates_normalized.loc[calendar_dates_normalized['calendarEvents_calendarEventDescriptor_constantName'] == IS_INSTRUCTIONAL_DAY, 'IsInstructionalDay'] = '1'
         calendar_dates_normalized.loc[calendar_dates_normalized['calendarEvents_calendarEventDescriptor_constantName'] != IS_INSTRUCTIONAL_DAY, 'IsInstructionalDay'] = '0'
+
+    calendar_dates_normalized['IsInstructionalDay'] = calendar_dates_normalized['IsInstructionalDay'].astype(int)
+
     replace_null(calendar_dates_normalized, 'IsInstructionalDay', '0')
     # Select needed columns.
     calendar_dates_normalized = subset(calendar_dates_normalized, [
@@ -591,6 +594,7 @@ def student_early_warning_fact_data_frame(
         suffixRight='_disciplineDataFrame'
     )
 
+    result_data_frame['schoolId'] = result_data_frame['schoolId'].astype(str)
     result_data_frame['studentUniqueId'] = result_data_frame['studentUniqueId'].astype(str)
     result_data_frame['DateKey'] = to_datetime_key(result_data_frame, 'date')
     result_data_frame['IsEnrolled'] = 1
@@ -636,7 +640,7 @@ def student_early_warning_fact_data_frame(
 
 def student_early_warning_fact(school_year) -> data_frame_generation_result:
     return student_early_warning_fact_data_frame(
-        file_name="ews_StudentEarlyWarningFactDim.parquet",
+        file_name="ews_StudentEarlyWarningFact.parquet",
         columns=RESULT_COLUMNS,
         school_year=school_year
     )
