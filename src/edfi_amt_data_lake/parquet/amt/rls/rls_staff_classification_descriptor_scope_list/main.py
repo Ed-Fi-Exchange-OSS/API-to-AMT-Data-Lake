@@ -29,9 +29,9 @@ def rls_staff_classification_descriptor_scope_list_dataframe(school_year) -> pd.
 
     result_data_frame = (
         descriptor_mapping_normalized[
-            (descriptor_mapping_normalized['constantName'].str.contains('AuthorizationScope.District'))
-            | (descriptor_mapping_normalized['constantName'].str.contains('AuthorizationScope.School'))
-            | (descriptor_mapping_normalized['constantName'].str.contains('AuthorizationScope.Section'))
+            (descriptor_mapping_normalized['constantName'].str.contains('AuthorizationScope.District', na=False))
+            | (descriptor_mapping_normalized['constantName'].str.contains('AuthorizationScope.School', na=False))
+            | (descriptor_mapping_normalized['constantName'].str.contains('AuthorizationScope.Section', na=False))
         ]
     )
 
