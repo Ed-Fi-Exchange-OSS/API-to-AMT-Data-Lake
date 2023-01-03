@@ -379,6 +379,8 @@ def chronic_absenteeism_attendance_fact_dataframe(
             'date'
         ]).max().reset_index()
 
+    result_data_frame['schoolReference.schoolId'] = result_data_frame['schoolReference.schoolId'].astype(str)
+
     result_data_frame = renameColumns(result_data_frame, {
         'schoolReference.schoolId': 'SchoolKey',
         'studentReference.studentUniqueId': 'StudentKey',
