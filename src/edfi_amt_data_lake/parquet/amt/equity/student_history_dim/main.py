@@ -5,7 +5,6 @@
 
 import pandas as pd
 from decouple import config
-
 from edfi_amt_data_lake.helper.data_frame_generation_result import (
     data_frame_generation_result,
 )
@@ -371,6 +370,7 @@ def student_history_dim_data_frame(
             suffixLeft=None,
             suffixRight='student_grades_association_normalized_'
         ).reset_index()
+    result_data_frame['AttendanceRate'] = result_data_frame['AttendanceRate'].astype(float)
     replace_null(result_data_frame, 'GradeSummary', '')
     result_data_frame = subset(
         result_data_frame,
