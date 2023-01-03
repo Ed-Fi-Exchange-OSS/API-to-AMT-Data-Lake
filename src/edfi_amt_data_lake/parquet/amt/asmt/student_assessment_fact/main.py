@@ -473,6 +473,7 @@ def student_assessment_fact_dataframe(
         'assessmentReportingMethodDescriptor_student_objective_scoreResults': 'ReportingMethod',
         'performanceLevelDescriptor_student_objective_performanceLevels': 'PerformanceResult'
     })
+    data_frame['SchoolKey'] = data_frame['SchoolKey'].astype(str)
     # Result columns
     data_frame.loc[data_frame['StudentScore'] == '', 'StudentScore'] = data_frame['result']
     data_frame.loc[data_frame['ResultDataType'] == '', 'ResultDataType'] = data_frame['resultDatatypeTypeDescriptor']
