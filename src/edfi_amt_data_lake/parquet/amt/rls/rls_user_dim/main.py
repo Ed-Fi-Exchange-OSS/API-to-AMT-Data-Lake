@@ -92,7 +92,7 @@ def rls_user_dim_dataframe(
 
 def rls_user_dim(school_year) -> None:
     return rls_user_dim_dataframe(
-        file_name="rls_user_dim.parquet",
+        file_name="rls_userDim.parquet",
         columns=RESULT_COLUMNS,
         school_year=school_year
     )

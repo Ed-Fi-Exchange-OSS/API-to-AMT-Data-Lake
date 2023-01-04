@@ -13,6 +13,7 @@ from edfi_amt_data_lake.parquet.Common.pandasWrapper import (
     jsonNormalize,
     renameColumns,
     subset,
+    to_datetime,
 )
 
 ENDPOINT_SECTION_ASSOCIATION = 'studentSectionAssociations'
@@ -21,7 +22,9 @@ RESULT_COLUMNS = [
     'SchoolKey',
     'SectionId',
     'BeginDate',
-    'EndDate'
+    'EndDate',
+    'BeginDateKey',
+    'EndDateKey',
 ]
 
 
@@ -50,11 +53,18 @@ def rls_student_data_authorization_dataframe(
         recordPrefix=None,
         errors='ignore'
     )
+
+    student_section_association_normalize['BeginDate'] = to_datetime(student_section_association_normalize, 'beginDate')
+    student_section_association_normalize['EndDate'] = to_datetime(student_section_association_normalize, 'endDate')
+
+    student_section_association_normalize['BeginDateKey'] = student_section_association_normalize['BeginDate'].dt.strftime('%Y%m%d')
+    student_section_association_normalize['EndDateKey'] = student_section_association_normalize['EndDate'].dt.strftime('%Y%m%d')
+
     student_section_association_normalize = renameColumns(student_section_association_normalize, {
         'studentReference.studentUniqueId': 'studentKey',
         'sectionReference.schoolId': 'schoolKey',
     })
-    addColumnIfNotExists(student_section_association_normalize, 'endDate')
+    addColumnIfNotExists(student_section_association_normalize, 'EndDate')
     get_reference_from_href(student_section_association_normalize, 'sectionReference.link.href', 'sectionId')
     # Select needed columns.
     student_section_association_normalize = renameColumns(
@@ -62,13 +72,12 @@ def rls_student_data_authorization_dataframe(
         {
             'studentKey': 'StudentKey',
             'schoolKey': 'SchoolKey',
-            'sectionId': 'SectionId',
-            'beginDate': 'BeginDate',
-            'endDate': 'EndDate'
+            'sectionId': 'SectionId'
         }
     )
     # Select needed columns.
     result_data_frame = subset(student_section_association_normalize, columns)
+    result_data_frame['SchoolKey'] = result_data_frame['SchoolKey'].astype(str)
     return result_data_frame
 
 

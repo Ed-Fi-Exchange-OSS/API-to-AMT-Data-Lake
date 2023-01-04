@@ -16,6 +16,7 @@ from edfi_amt_data_lake.parquet.Common.pandasWrapper import (
     jsonNormalize,
     pdMerge,
     renameColumns,
+    replace_null,
     subset,
     to_datetime_key,
 )
@@ -237,6 +238,11 @@ def rls_user_authorization_dataframe(
             'staffClassificationDescriptor_constantName': 'UserScope'
         }
     )
+
+    replace_null(result_section_data_frame, 'SectionPermission', '')
+    replace_null(result_section_data_frame, 'SectionKeyPermission', '')
+    replace_null(result_section_data_frame, 'DistrictId', '')
+
     result_data_frame = subset(result_section_data_frame, columns).drop_duplicates()
 
     return result_data_frame
