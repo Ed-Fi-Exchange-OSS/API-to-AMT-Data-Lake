@@ -52,7 +52,7 @@ def base_collection(school_year) -> None:
     all_student_school_dim(school_year)
     class_period_dim(school_year)
     contact_person_dim(school_year)
-    #date_dim(school_year)
+    date_dim(school_year)
     demographics_dim(school_year)
     grading_period_dim(school_year)
     local_education_agency_dim(school_year)

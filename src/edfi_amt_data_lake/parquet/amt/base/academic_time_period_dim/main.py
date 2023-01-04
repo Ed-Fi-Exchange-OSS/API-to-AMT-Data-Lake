@@ -174,7 +174,7 @@ def academic_time_period_dim_frame(
         + "-" + result_data_frame["session_gradingPeriodReference.schoolId"].astype(str)
         + "-" + result_data_frame["beginDate_grading_periods_normalized"].astype(str).str.replace("-", "")
     )
-    
+
     result_data_frame["IsCurrentSchoolYear"] = (
         result_data_frame["currentSchoolYear"].astype(int)
     ).astype(int)

@@ -11,7 +11,6 @@ from edfi_amt_data_lake.helper.data_frame_generation_result import (
 from edfi_amt_data_lake.parquet.Common.functions import getEndpointJson
 from edfi_amt_data_lake.parquet.Common.pandasWrapper import (
     create_parquet_file,
-    
     get_descriptor_code_value_from_uri,
     get_reference_from_href,
     jsonNormalize,
@@ -68,7 +67,7 @@ def local_education_agency_dataframe(
     )
 
     local_education_agency_normalize['localEducationAgencyId'] = local_education_agency_normalize['localEducationAgencyId'].astype(str)
-    
+
     replace_null(local_education_agency_normalize, 'charterStatusDescriptor', '')
     replace_null(local_education_agency_normalize, 'parentLocalEducationAgencyReference.localEducationAgencyId', '')
     get_descriptor_code_value_from_uri(
@@ -201,15 +200,15 @@ def local_education_agency_dataframe(
             'localEducationAgencyCharterStatus': 'LocalEducationAgencyCharterStatus',
         }
     )
-    replace_null(result_data_frame,'LocalEducationAgencyParentLocalEducationAgencyKey','')
+    replace_null(result_data_frame, 'LocalEducationAgencyParentLocalEducationAgencyKey', '')
     result_data_frame['LocalEducationAgencyParentLocalEducationAgencyKey'] = (
-         result_data_frame['LocalEducationAgencyParentLocalEducationAgencyKey'].astype(str)
-    )    
-    replace_null(result_data_frame,'LocalEducationAgencyStateEducationAgencyKey','')
-    result_data_frame['LocalEducationAgencyStateEducationAgencyKey'] = (
-         result_data_frame['LocalEducationAgencyStateEducationAgencyKey'].astype(str)
+        result_data_frame['LocalEducationAgencyParentLocalEducationAgencyKey'].astype(str)
     )
-    replace_null(result_data_frame,'LocalEducationAgencyStateEducationAgencyName','')
+    replace_null(result_data_frame, 'LocalEducationAgencyStateEducationAgencyKey', '')
+    result_data_frame['LocalEducationAgencyStateEducationAgencyKey'] = (
+        result_data_frame['LocalEducationAgencyStateEducationAgencyKey'].astype(str)
+    )
+    replace_null(result_data_frame, 'LocalEducationAgencyStateEducationAgencyName', '')
     # Select needed columns.
     result_data_frame = subset(result_data_frame, columns)
     return result_data_frame

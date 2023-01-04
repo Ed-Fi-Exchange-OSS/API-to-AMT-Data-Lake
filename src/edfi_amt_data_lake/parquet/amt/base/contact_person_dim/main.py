@@ -491,7 +491,7 @@ def contact_person_dim_dataframe(
     result_data_frame["primaryContactStatus"] = result_data_frame["primaryContactStatus"].astype(int)
     result_data_frame["livesWith"] = result_data_frame["livesWith"].astype(int)
     result_data_frame["emergencyContactStatus"] = result_data_frame["emergencyContactStatus"].astype(int)
-    replace_null(result_data_frame,"contactPriority",'0')
+    replace_null(result_data_frame, "contactPriority", '0')
     result_data_frame["contactPriority"] = result_data_frame["contactPriority"].astype(int)
 
     result_data_frame['UniqueKey'] = result_data_frame['parentUniqueId'] + '-' + result_data_frame['studentReference.studentUniqueId']
