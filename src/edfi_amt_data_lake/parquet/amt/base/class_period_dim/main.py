@@ -117,7 +117,8 @@ def class_period_dim_data_frame(
         'sectionIdentifier': 'SectionIdentifier',
         'courseOfferingReference.sessionName': 'SessionName'
     })
-
+    result_data_frame['SchoolYear'] = result_data_frame['SchoolYear'].astype(str)
+    result_data_frame['SchoolId'] = result_data_frame['SchoolId'].astype(str)
     result_data_frame = result_data_frame[columns]
 
     return result_data_frame[

@@ -206,6 +206,7 @@ def school_dim_data_frame(
         'nameOfInstitution': 'EducationServiceCenterName',
         'educationServiceCenterId': 'EducationServiceCenterKey'
     })
+    result_data_frame['SchoolKey'] = result_data_frame['SchoolKey'].astype(str)
     # Reorder columns to match AMT
     return result_data_frame[
         columns

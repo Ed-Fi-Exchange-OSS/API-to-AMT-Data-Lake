@@ -252,7 +252,7 @@ def staff_section_dim_dataframe(
         'highlyQualifiedTeacher': 'HighlyQualifiedTeacher',
         'loginId': 'LoginId'
     })
-
+    replace_null(result_data_frame, 'LoginId', '')
     result_data_frame = result_data_frame[
         columns
     ]
