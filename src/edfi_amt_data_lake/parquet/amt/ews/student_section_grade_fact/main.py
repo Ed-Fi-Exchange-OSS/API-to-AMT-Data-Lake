@@ -17,6 +17,7 @@ from edfi_amt_data_lake.parquet.Common.pandasWrapper import (
     renameColumns,
     subset,
     toDateTime,
+    replace_null
 )
 
 RESULT_COLUMNS = [
@@ -181,6 +182,8 @@ def student_section_grade_fact_data_frame(
         + '-' + result_data_frame['studentSectionAssociationReference.sectionIdentifier']
         + '-' + result_data_frame['studentSectionAssociationReference.sessionName']
     )
+
+    replace_null(result_data_frame, 'letterGradeEarned', '')
 
     # Rename columns to match AMT
     result_data_frame = renameColumns(result_data_frame, {
