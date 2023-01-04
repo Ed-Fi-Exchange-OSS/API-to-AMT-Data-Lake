@@ -64,7 +64,7 @@ def rls_student_data_authorization_dataframe(
         'studentReference.studentUniqueId': 'studentKey',
         'sectionReference.schoolId': 'schoolKey',
     })
-    addColumnIfNotExists(student_section_association_normalize, 'endDate')
+    addColumnIfNotExists(student_section_association_normalize, 'EndDate')
     get_reference_from_href(student_section_association_normalize, 'sectionReference.link.href', 'sectionId')
     # Select needed columns.
     student_section_association_normalize = renameColumns(
@@ -72,13 +72,12 @@ def rls_student_data_authorization_dataframe(
         {
             'studentKey': 'StudentKey',
             'schoolKey': 'SchoolKey',
-            'sectionId': 'SectionId',
-            'beginDate': 'BeginDate',
-            'endDate': 'EndDate'
+            'sectionId': 'SectionId'
         }
     )
     # Select needed columns.
     result_data_frame = subset(student_section_association_normalize, columns)
+    result_data_frame['SchoolKey'] = result_data_frame['SchoolKey'].astype(str)
     return result_data_frame
 
 

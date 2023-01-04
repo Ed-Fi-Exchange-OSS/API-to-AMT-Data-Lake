@@ -241,7 +241,7 @@ def rls_user_authorization_dataframe(
 
     replace_null(result_section_data_frame, 'SectionPermission', '')
     replace_null(result_section_data_frame, 'SectionKeyPermission', '')
-    replace_null(result_section_data_frame, 'DistrictId', '-1')
+    replace_null(result_section_data_frame, 'DistrictId', '')
 
     result_data_frame = subset(result_section_data_frame, columns).drop_duplicates()
 
