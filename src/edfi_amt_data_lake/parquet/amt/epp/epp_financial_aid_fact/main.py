@@ -236,6 +236,7 @@ def epp_financial_aid_fact_dataframe(
     replace_null(result_data_frame, 'aidConditionDescription', '')
     replace_null(result_data_frame, 'aidAmount', '0')
     replace_null(result_data_frame, 'pellGrantRecipient', '0')
+    result_data_frame['pellGrantRecipient'] = result_data_frame['pellGrantRecipient'].astype(int)
     result_data_frame['aidTypeDescriptorId'] = result_data_frame['aidTypeDescriptorId'].astype(str)
     result_data_frame['candidateAidKey'] = (
         result_data_frame['candidateIdentifier']

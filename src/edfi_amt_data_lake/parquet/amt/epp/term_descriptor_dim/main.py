@@ -48,7 +48,7 @@ def term_descriptor_dim_dataframe(
         'codeValue': 'CodeValue'
     })
 
-    result_data_frame['TermDescriptorKey'] = result_data_frame['termDescriptorId'].astype(str)
+    result_data_frame['TermDescriptorKey'] = result_data_frame['TermDescriptorKey'].astype(str)
 
     result_data_frame = result_data_frame[columns]
     return result_data_frame

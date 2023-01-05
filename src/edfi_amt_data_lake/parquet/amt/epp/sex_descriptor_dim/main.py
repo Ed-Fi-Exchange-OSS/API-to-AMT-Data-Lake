@@ -49,7 +49,7 @@ def sex_descriptor_dim_dataframe(
         'codeValue': 'CodeValue'
     })
 
-    result_data_frame['SexDescriptorKey'] = result_data_frame['sexDescriptorId'].astype(str)
+    result_data_frame['SexDescriptorKey'] = result_data_frame['SexDescriptorKey'].astype(str)
 
     result_data_frame = result_data_frame[columns]
     return result_data_frame

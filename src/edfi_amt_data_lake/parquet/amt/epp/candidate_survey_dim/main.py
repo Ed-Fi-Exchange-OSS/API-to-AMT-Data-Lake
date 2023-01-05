@@ -350,7 +350,7 @@ def candidate_survey_dim_dataframe(
         suffixRight='_candidate'
     )
     replace_null(result_data_frame, 'candidateIdentifier', '')
-    replace_null(result_data_frame, 'numericResponse', '0')
+    replace_null(result_data_frame, 'numericResponse', '')
     replace_null(result_data_frame, 'textResponse', '')
 
     result_data_frame['numericResponse'] = result_data_frame['numericResponse'].astype(str)

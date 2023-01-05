@@ -14,6 +14,7 @@ from edfi_amt_data_lake.parquet.Common.pandasWrapper import (
     jsonNormalize,
     pdMerge,
     renameColumns,
+    to_datetime_key
 )
 
 ENDPOINT_CANDIDATES = 'candidates'
@@ -21,16 +22,18 @@ ENDPOINT_EVALUATION_OBJETIVES = 'evaluationObjectives'
 ENDPOINT_EVALUATION_ELEMENTS_RATINGS = 'evaluationElementRatings'
 ENDPOINT_TERM_DESCRIPTOR = 'termDescriptors'
 RESULT_COLUMNS = [
-    'candidateIdentifier',
-    'evaluationObjectiveRatingReference.evaluationDate',
-    'evaluationElementReference.performanceEvaluationTitle',
-    'evaluationObjectiveTitle',
-    'evaluationElementReference.evaluationElementTitle',
-    'ratingResultTitle',
-    'evaluationElementReference.evaluationTitle',
-    'termDescriptorId',
-    'evaluationElementReference.schoolYear',
-    'rating'
+    'CandidateKey',
+    'EvaluationDate',
+    'EvaluationDateKey',
+    'PerformanceEvaluationTitle',
+    'EvaluationObjectiveTitle',
+    'EvaluationElementTitle',
+    'RatingResultTitle',
+    'EvaluationTitle',
+    'TermDescriptorId',
+    'TermDescriptorKey',
+    'SchoolYear',
+    'Rating'
 ]
 
 
@@ -168,7 +171,7 @@ def evaluation_element_rating_dim_dataframe(
         suffixRight='_term_descriptor'
     )
 
-    result_data_frame = result_data_frame[columns]
+   
 
     result_data_frame = result_data_frame.drop_duplicates([
         'candidateIdentifier',
@@ -186,9 +189,6 @@ def evaluation_element_rating_dim_dataframe(
         result_data_frame['evaluationObjectiveRatingReference.evaluationDate'].str[:10]
     )
 
-    result_data_frame['termDescriptorId'] = result_data_frame['termDescriptorId'].astype(str)
-    result_data_frame['schoolYear'] = result_data_frame['schoolYear'].astype(str)
-
     result_data_frame = renameColumns(result_data_frame, {
         'candidateIdentifier': 'CandidateKey',
         'evaluationObjectiveRatingReference.evaluationDate': 'EvaluationDate',
@@ -201,8 +201,12 @@ def evaluation_element_rating_dim_dataframe(
         'evaluationElementReference.schoolYear': 'SchoolYear',
         'rating': 'Rating'
     })
-
-    return result_data_frame
+    result_data_frame['EvaluationDateKey'] = to_datetime_key(result_data_frame, 'EvaluationDate')
+    result_data_frame['TermDescriptorId'] = result_data_frame['TermDescriptorId'].astype(str)
+    result_data_frame['TermDescriptorKey'] = result_data_frame['TermDescriptorId'].astype(str)
+    result_data_frame['SchoolYear'] = result_data_frame['SchoolYear'].astype(str)
+    return result_data_frame[columns]
+    
 
 
 def evaluation_element_rating_dim(school_year) -> data_frame_generation_result:

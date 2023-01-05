@@ -324,7 +324,7 @@ def candidate_dim_data_frame(
             'issuanceDate'
         ]]
 
-    result_data_frame['EducationOrganizationKey'] = result_data_frame['educatorPreparationProgramReference.educationOrganizationId'].astype(str) + '-' + result_data_frame['educatorPreparationProgramReference.programName']
+    result_data_frame['EducationOrganizationKey'] = result_data_frame['educatorPreparationProgramReference.educationOrganizationId'].astype(str)
 
     get_descriptor_code_value_from_uri(result_data_frame, 'reasonExitedDescriptor')
     get_descriptor_code_value_from_uri(result_data_frame, 'candidate_educator_preparation_program_termDescriptor')
