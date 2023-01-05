@@ -88,6 +88,11 @@ def date_dim_data_frame(
             'schoolYear': 'SchoolYear'
         }
     )
+    result_data_frame['Day'] = result_data_frame['Day'].astype(str)
+    result_data_frame['Month'] = result_data_frame['Month'].astype(str)
+    result_data_frame['CalendarQuarter'] = result_data_frame['CalendarQuarter'].astype(str)
+    result_data_frame['Year'] = result_data_frame['Year'].astype(str)
+    result_data_frame['SchoolYear'] = result_data_frame['SchoolYear'].astype(str)
     # Select needed columns.
     result_data_frame = subset(result_data_frame, columns)
     return result_data_frame

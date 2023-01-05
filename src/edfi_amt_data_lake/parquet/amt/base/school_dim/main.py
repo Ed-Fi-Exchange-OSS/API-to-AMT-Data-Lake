@@ -169,7 +169,7 @@ def school_dim_data_frame(
         + ' ' + result_data_frame['address_nameOfCounty']
     )
     # Rename columns to match AMT
-
+    addColumnIfNotExists(result_data_frame, 'educationServiceCenterId', '')
     result_data_frame['localEducationAgencyId'] = result_data_frame['localEducationAgencyId'].astype(str)
     result_data_frame['stateEducationAgencyId'] = result_data_frame['stateEducationAgencyId'].astype(str)
     result_data_frame['educationServiceCenterId'] = result_data_frame['educationServiceCenterId'].astype(str)

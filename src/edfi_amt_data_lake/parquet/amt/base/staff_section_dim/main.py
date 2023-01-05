@@ -229,7 +229,8 @@ def staff_section_dim_dataframe(
         'highlyQualifiedTeacher',
         'loginId'
     ])
-
+    replace_null(result_data_frame, 'highlyQualifiedTeacher', '0')
+    replace_null(result_data_frame, 'hispanicLatinoEthnicity', '0')
     result_data_frame["highlyQualifiedTeacher"] = result_data_frame["highlyQualifiedTeacher"].astype(int)
     result_data_frame["hispanicLatinoEthnicity"] = result_data_frame["hispanicLatinoEthnicity"].astype(int)
     result_data_frame['sectionReference.schoolId'] = result_data_frame['sectionReference.schoolId'].astype(str)
