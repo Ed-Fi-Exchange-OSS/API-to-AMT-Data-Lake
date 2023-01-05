@@ -46,6 +46,7 @@ RESULT_COLUMNS = [
     , 'EducationOrganizationId'
     , 'PersonId'
     , 'CohortYearTermDescription'
+    , 'EducationOrganizationKey'
 ]
 
 
@@ -91,7 +92,7 @@ def candidate_dim_data_frame(
         errors='ignore'
     )
 
-    races_descriptor_normalized["namespace_codevalue"] = races_descriptor_normalized['namespace'] + '#' + races_descriptor_normalized['codeValue']
+    races_descriptor_normalized['namespace_codevalue'] = races_descriptor_normalized['namespace'] + '#' + races_descriptor_normalized['codeValue']
 
     sex_descriptor_normalized = jsonNormalize(
         sex_descriptor_content,
@@ -106,7 +107,7 @@ def candidate_dim_data_frame(
         recordPrefix='sex_',
         errors='ignore'
     )
-    sex_descriptor_normalized["namespace_codevalue"] = sex_descriptor_normalized['namespace'] + '#' + sex_descriptor_normalized['codeValue']
+    sex_descriptor_normalized['namespace_codevalue'] = sex_descriptor_normalized['namespace'] + '#' + sex_descriptor_normalized['codeValue']
 
     candidates_normalized = jsonNormalize(
         candidates_content,
@@ -181,7 +182,7 @@ def candidate_dim_data_frame(
 
     credentials_normalized = credentials_normalized.fillna('')
     addColumnIfNotExists(credentials_normalized, '_ext.tpdm.personReference.personId')
-    credentials_normalized["hasPersonId"] = credentials_normalized['_ext.tpdm.personReference.personId'].astype(bool)
+    credentials_normalized['hasPersonId'] = credentials_normalized['_ext.tpdm.personReference.personId'].astype(bool)
     credentials_normalized = credentials_normalized[credentials_normalized['hasPersonId'].astype(bool)]
 
     candidate_educator_preparation_program_associations_normalized = jsonNormalize(
@@ -236,7 +237,7 @@ def candidate_dim_data_frame(
         leftOn=['candidateIdentifier'],
         rightOn=['candidateReference.candidateIdentifier'],
         suffixLeft=None,
-        suffixRight="_candidate_educator_preparation_program_associations"
+        suffixRight='_candidate_educator_preparation_program_associations'
     )
 
     result_data_frame = pdMerge(
@@ -246,7 +247,7 @@ def candidate_dim_data_frame(
         leftOn=['candidateIdentifier', 'educatorPreparationProgramReference.programName'],
         rightOn=['candidateReference.candidateIdentifier', 'educatorPreparationProgramReference.programName'],
         suffixLeft=None,
-        suffixRight="_candidate_prep_program_cohortyears"
+        suffixRight='_candidate_prep_program_cohortyears'
     )
 
     result_data_frame = pdMerge(
@@ -256,7 +257,7 @@ def candidate_dim_data_frame(
         leftOn=['candidateIdentifier'],
         rightOn=['candidateIdentifier'],
         suffixLeft=None,
-        suffixRight="_candidate_races"
+        suffixRight='_candidate_races'
     )
 
     result_data_frame = pdMerge(
@@ -323,17 +324,18 @@ def candidate_dim_data_frame(
             'issuanceDate'
         ]]
 
+    result_data_frame['EducationOrganizationKey'] = result_data_frame['educatorPreparationProgramReference.educationOrganizationId'].astype(str)
+
     get_descriptor_code_value_from_uri(result_data_frame, 'reasonExitedDescriptor')
     get_descriptor_code_value_from_uri(result_data_frame, 'candidate_educator_preparation_program_termDescriptor')
 
     result_data_frame = result_data_frame.fillna('')
-
-    result_data_frame['ProgramComplete'] = [1 if x == 'Completed' else 0 for x in result_data_frame['reasonExitedDescriptor']]
-
     result_data_frame.loc[result_data_frame['economicDisadvantaged'] == '', 'economicDisadvantaged'] = False
-    result_data_frame["economicDisadvantaged_Int"] = result_data_frame["economicDisadvantaged"].astype(int)
-
-    result_data_frame["hispanicLatinoEthnicity_Int"] = result_data_frame["hispanicLatinoEthnicity"].astype(int)
+    result_data_frame['economicDisadvantaged_Int'] = result_data_frame['economicDisadvantaged'].astype(int)
+    result_data_frame['hispanicLatinoEthnicity_Int'] = result_data_frame['hispanicLatinoEthnicity'].astype(int)
+    result_data_frame['ProgramComplete'] = [1 if x == 'Completed' else 0 for x in result_data_frame['reasonExitedDescriptor']]
+    result_data_frame['educatorPreparationProgramReference.educationOrganizationId'] = result_data_frame['educatorPreparationProgramReference.educationOrganizationId'].astype(str)
+    result_data_frame['sexDescriptorId'] = result_data_frame['sexDescriptorId'].astype(str)
 
     result_data_frame = renameColumns(result_data_frame, {
         'candidateIdentifier': 'CandidateKey',
@@ -365,7 +367,7 @@ def candidate_dim_data_frame(
 
 def candidate_dim(school_year) -> data_frame_generation_result:
     return candidate_dim_data_frame(
-        file_name="epp_CandidateDim.parquet",
+        file_name='epp_CandidateDim.parquet',
         columns=RESULT_COLUMNS,
         school_year=school_year
     )

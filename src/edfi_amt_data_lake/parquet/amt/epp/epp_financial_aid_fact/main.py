@@ -35,7 +35,9 @@ RESULT_COLUMNS = [
     'AidConditionDescription',
     'AidType',
     'AidAmount',
-    'PellGrantRecipient'
+    'PellGrantRecipient',
+    'BeginDateKey',
+    'EndDateKey'
 ]
 
 
@@ -234,6 +236,7 @@ def epp_financial_aid_fact_dataframe(
     replace_null(result_data_frame, 'aidConditionDescription', '')
     replace_null(result_data_frame, 'aidAmount', '0')
     replace_null(result_data_frame, 'pellGrantRecipient', '0')
+    result_data_frame['pellGrantRecipient'] = result_data_frame['pellGrantRecipient'].astype(int)
     result_data_frame['aidTypeDescriptorId'] = result_data_frame['aidTypeDescriptorId'].astype(str)
     result_data_frame['candidateAidKey'] = (
         result_data_frame['candidateIdentifier']
@@ -242,6 +245,10 @@ def epp_financial_aid_fact_dataframe(
     )
     result_data_frame['candidateKey'] = result_data_frame['candidateIdentifier'].astype(str)
     result_data_frame['aidType'] = result_data_frame['aidTypeDescriptorCodeValue'].astype(str)
+
+    result_data_frame['BeginDateKey'] = result_data_frame['beginDate'].astype(str)
+    result_data_frame['EndDateKey'] = result_data_frame['endDate'].astype(str)
+
     result_data_frame = renameColumns(result_data_frame, {
         'candidateAidKey': 'CandidateAidKey'
         , 'candidateKey': 'CandidateKey'

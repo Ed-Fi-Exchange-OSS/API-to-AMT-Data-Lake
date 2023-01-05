@@ -83,6 +83,9 @@ def epp_dim_dataframe(
         'schoolId': 'EducationOrganizationKey',
         'nameOfInstitution': 'NameOfInstitution'
     })
+
+    result_data_frame['EducationOrganizationKey'] = result_data_frame['EducationOrganizationKey'].astype(str)
+
     result_data_frame = result_data_frame[columns]
     return result_data_frame
 

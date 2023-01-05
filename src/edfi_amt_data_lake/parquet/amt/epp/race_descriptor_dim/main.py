@@ -47,6 +47,9 @@ def race_descriptor_dim_dataframe(
         'raceDescriptorId': 'RaceDescriptorKey',
         'codeValue': 'CodeValue'
     })
+
+    result_data_frame['RaceDescriptorKey'] = result_data_frame['RaceDescriptorKey'].astype(str)
+
     result_data_frame = result_data_frame[columns]
     return result_data_frame
 
