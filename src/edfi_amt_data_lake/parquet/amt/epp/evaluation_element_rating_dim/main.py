@@ -14,7 +14,7 @@ from edfi_amt_data_lake.parquet.Common.pandasWrapper import (
     jsonNormalize,
     pdMerge,
     renameColumns,
-    to_datetime_key
+    to_datetime_key,
 )
 
 ENDPOINT_CANDIDATES = 'candidates'
@@ -170,9 +170,6 @@ def evaluation_element_rating_dim_dataframe(
         suffixLeft=None,
         suffixRight='_term_descriptor'
     )
-
-   
-
     result_data_frame = result_data_frame.drop_duplicates([
         'candidateIdentifier',
         'evaluationObjectiveRatingReference.evaluationDate',
@@ -206,7 +203,6 @@ def evaluation_element_rating_dim_dataframe(
     result_data_frame['TermDescriptorKey'] = result_data_frame['TermDescriptorId'].astype(str)
     result_data_frame['SchoolYear'] = result_data_frame['SchoolYear'].astype(str)
     return result_data_frame[columns]
-    
 
 
 def evaluation_element_rating_dim(school_year) -> data_frame_generation_result:
