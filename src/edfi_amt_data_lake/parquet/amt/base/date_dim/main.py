@@ -16,6 +16,7 @@ from edfi_amt_data_lake.parquet.Common.pandasWrapper import (
     subset,
     to_datetime,
     to_datetime_key,
+    replace_null
 )
 
 ENDPOINT_CALENDAR_DATES = 'calendarDates'
@@ -88,6 +89,7 @@ def date_dim_data_frame(
             'schoolYear': 'SchoolYear'
         }
     )
+    replace_null(result_data_frame, 'SchoolYear', 'Unknown')
     result_data_frame['Day'] = result_data_frame['Day'].astype(str)
     result_data_frame['Month'] = result_data_frame['Month'].astype(str)
     result_data_frame['CalendarQuarter'] = result_data_frame['CalendarQuarter'].astype(str)
