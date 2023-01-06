@@ -362,6 +362,8 @@ def section_dim_dataframe(
         + result_data_frame['courseOfferingReference.sessionName']
     )
 
+    result_data_frame['localEducationAgencyReference.localEducationAgencyId'] = result_data_frame['localEducationAgencyReference.localEducationAgencyId'].astype(str)
+
     result_data_frame = renameColumns(result_data_frame, {
         'courseOfferingReference.schoolId': 'SchoolKey',
         'courseOfferingReference.sessionName': 'SessionName',

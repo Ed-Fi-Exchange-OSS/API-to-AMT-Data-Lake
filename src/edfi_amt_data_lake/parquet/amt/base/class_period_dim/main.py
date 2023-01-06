@@ -26,6 +26,7 @@ RESULT_COLUMNS = [
     'ClassPeriodName',
     'LocalCourseCode',
     'SchoolId',
+    'SchoolKey',
     'SchoolYear',
     'SectionIdentifier',
     'SessionName'
@@ -104,6 +105,10 @@ def class_period_dim_data_frame(
         + "-" + result_data_frame["courseOfferingReference.sessionName"]
     )
 
+    result_data_frame["SchoolKey"] = (
+        result_data_frame["courseOfferingReference.schoolId"].astype(str)
+    ).astype(str)
+
     result_data_frame = renameColumns(result_data_frame, {
         'classPeriodReference.classPeriodName': 'ClassPeriodName',
         'courseOfferingReference.localCourseCode': 'LocalCourseCode',
@@ -112,7 +117,8 @@ def class_period_dim_data_frame(
         'sectionIdentifier': 'SectionIdentifier',
         'courseOfferingReference.sessionName': 'SessionName'
     })
-
+    result_data_frame['SchoolYear'] = result_data_frame['SchoolYear'].astype(str)
+    result_data_frame['SchoolId'] = result_data_frame['SchoolId'].astype(str)
     result_data_frame = result_data_frame[columns]
 
     return result_data_frame[

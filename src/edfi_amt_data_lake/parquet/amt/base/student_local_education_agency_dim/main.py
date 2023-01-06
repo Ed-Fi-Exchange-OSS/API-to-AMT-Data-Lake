@@ -322,8 +322,10 @@ def student_local_education_agency_dataframe(
         result_data_frame['StudentKey']
         + '-' + result_data_frame['LocalEducationAgencyKey']
     )
+    replace_null(result_data_frame, 'IsHispanicBoolean', 'FALSE')
     result_data_frame.loc[result_data_frame['IsHispanicBoolean'].astype(str).str.upper() == 'TRUE', 'IsHispanic'] = '1'
     result_data_frame.loc[result_data_frame['IsHispanicBoolean'].astype(str).str.upper() != 'TRUE', 'IsHispanic'] = '0'
+
     replace_null(result_data_frame, 'IsHispanic', '0')
     result_data_frame['IsHispanic'].astype(int)
     result_data_frame = subset(

@@ -177,7 +177,7 @@ def academic_time_period_dim_frame(
 
     result_data_frame["IsCurrentSchoolYear"] = (
         result_data_frame["currentSchoolYear"].astype(int)
-    )
+    ).astype(int)
 
     result_data_frame = renameColumns(result_data_frame, {
         "session_gradingPeriodReference.schoolYear": "SchoolYear",
@@ -187,7 +187,8 @@ def academic_time_period_dim_frame(
         "codeValue_session_with_term_descriptor_merged": "TermName",
         "codeValue_grading_period_descriptor_normalized": "GradingPeriodName",
     })
-
+    result_data_frame["SchoolKey"] = result_data_frame["SchoolKey"].astype(str)
+    result_data_frame["SchoolYear"] = result_data_frame["SchoolYear"].astype(str)
     return result_data_frame[columns]
 
 

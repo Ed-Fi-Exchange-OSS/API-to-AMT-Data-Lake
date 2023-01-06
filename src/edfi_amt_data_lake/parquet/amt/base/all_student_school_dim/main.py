@@ -520,11 +520,11 @@ def all_student_school_dim_data_frame_base(
         + result_data_frame['SchoolKey'].astype(str) + '-'
         + to_datetime_key(result_data_frame, 'EnrollmentDateKey')
     )
-
+    result_data_frame['SchoolKey'] = result_data_frame['SchoolKey'].astype(str)
     result_data_frame['StudentSchoolKey'] = (
         result_data_frame['StudentKey'] + '-'
         + result_data_frame['SchoolKey'].astype(str)
-    )
+    ).astype(str)
 
     result_data_frame['SchoolYear'] = result_data_frame['SchoolYear'].apply(
         lambda x: 'Unknown' if x == '' else str(x)

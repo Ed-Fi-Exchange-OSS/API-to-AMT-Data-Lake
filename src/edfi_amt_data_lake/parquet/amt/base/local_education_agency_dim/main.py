@@ -65,6 +65,9 @@ def local_education_agency_dataframe(
         recordPrefix=None,
         errors='ignore'
     )
+
+    local_education_agency_normalize['localEducationAgencyId'] = local_education_agency_normalize['localEducationAgencyId'].astype(str)
+
     replace_null(local_education_agency_normalize, 'charterStatusDescriptor', '')
     replace_null(local_education_agency_normalize, 'parentLocalEducationAgencyReference.localEducationAgencyId', '')
     get_descriptor_code_value_from_uri(
@@ -117,6 +120,11 @@ def local_education_agency_dataframe(
         recordPrefix=None,
         errors='ignore'
     )
+
+    state_education_agency_normalize['stateEducationAgencyId'] = state_education_agency_normalize['stateEducationAgencyId'].astype(str)
+    replace_null(state_education_agency_normalize, 'nameOfInstitution', '')
+    replace_null(state_education_agency_normalize, 'stateEducationAgencyId', '')
+
     state_education_agency_normalize = renameColumns(state_education_agency_normalize, {
         'id': 'stateEducationAgencyReferenceId',
         'nameOfInstitution': 'localEducationAgencyStateEducationAgencyName',
@@ -143,6 +151,9 @@ def local_education_agency_dataframe(
         recordPrefix=None,
         errors='ignore'
     )
+
+    education_service_center_normalize['educationServiceCenterId'] = education_service_center_normalize['educationServiceCenterId'].astype(str)
+
     education_service_center_normalize = renameColumns(education_service_center_normalize, {
         'id': 'educationServiceCenterReferenceId',
         'nameOfInstitution': 'localEducationAgencyServiceCenterName',
@@ -189,6 +200,15 @@ def local_education_agency_dataframe(
             'localEducationAgencyCharterStatus': 'LocalEducationAgencyCharterStatus',
         }
     )
+    replace_null(result_data_frame, 'LocalEducationAgencyParentLocalEducationAgencyKey', '')
+    result_data_frame['LocalEducationAgencyParentLocalEducationAgencyKey'] = (
+        result_data_frame['LocalEducationAgencyParentLocalEducationAgencyKey'].astype(str)
+    )
+    replace_null(result_data_frame, 'LocalEducationAgencyStateEducationAgencyKey', '')
+    result_data_frame['LocalEducationAgencyStateEducationAgencyKey'] = (
+        result_data_frame['LocalEducationAgencyStateEducationAgencyKey'].astype(str)
+    )
+    replace_null(result_data_frame, 'LocalEducationAgencyStateEducationAgencyName', '')
     # Select needed columns.
     result_data_frame = subset(result_data_frame, columns)
     return result_data_frame
@@ -196,7 +216,7 @@ def local_education_agency_dataframe(
 
 def local_education_agency_dim(school_year) -> data_frame_generation_result:
     return local_education_agency_dataframe(
-        file_name="localEducationAgencyDim.parquet",
+        file_name='localEducationAgencyDim.parquet',
         columns=RESULT_COLUMNS,
         school_year=school_year
     )

@@ -18,6 +18,7 @@ from edfi_amt_data_lake.parquet.Common.pandasWrapper import (
     jsonNormalize,
     pdMerge,
     renameColumns,
+    replace_null,
     subset,
 )
 
@@ -168,6 +169,29 @@ def school_dim_data_frame(
         + ' ' + result_data_frame['address_nameOfCounty']
     )
     # Rename columns to match AMT
+    addColumnIfNotExists(result_data_frame, 'educationServiceCenterId', '')
+    result_data_frame['localEducationAgencyId'] = result_data_frame['localEducationAgencyId'].astype(str)
+    result_data_frame['stateEducationAgencyId'] = result_data_frame['stateEducationAgencyId'].astype(str)
+    result_data_frame['educationServiceCenterId'] = result_data_frame['educationServiceCenterId'].astype(str)
+    result_data_frame['nameOfInstitution_stateEducationAgencies'] = result_data_frame['nameOfInstitution_stateEducationAgencies'].astype(str)
+    result_data_frame['nameOfInstitution_localEducationAgencies'] = result_data_frame['nameOfInstitution_localEducationAgencies'].astype(str)
+
+    replace_null_fields = [
+        'localEducationAgencyId',
+        'stateEducationAgencyId',
+        'nameOfInstitution',
+        'educationServiceCenterId',
+        'nameOfInstitution_localEducationAgencies',
+        'nameOfInstitution_stateEducationAgencies'
+    ]
+
+    for field in replace_null_fields:
+        replace_null(
+            result_data_frame,
+            field,
+            ''
+        )
+
     result_data_frame = renameColumns(result_data_frame, {
         'schoolId': 'SchoolKey',
         'nameOfInstitution_schools': 'SchoolName',
@@ -182,6 +206,7 @@ def school_dim_data_frame(
         'nameOfInstitution': 'EducationServiceCenterName',
         'educationServiceCenterId': 'EducationServiceCenterKey'
     })
+    result_data_frame['SchoolKey'] = result_data_frame['SchoolKey'].astype(str)
     # Reorder columns to match AMT
     return result_data_frame[
         columns
