@@ -13,10 +13,9 @@ from edfi_amt_data_lake.parquet.Common.pandasWrapper import (
     create_parquet_file,
     jsonNormalize,
     renameColumns,
+    replace_null,
     subset,
     to_datetime,
-    to_datetime_key,
-    replace_null
 )
 
 ENDPOINT_CALENDAR_DATES = 'calendarDates'
@@ -63,15 +62,17 @@ def date_dim_data_frame(
         'date',
         'schoolYear'
     ])
-    if result_data_frame is None:
+    if result_data_frame is None or result_data_frame.empty:
         return None
+    result_data_frame[["day", "month", "year"]] = result_data_frame["date"].str.split("-", expand=True)
     result_data_frame.drop_duplicates()
-    result_data_frame['dateKey'] = to_datetime_key(result_data_frame, 'date')
+    result_data_frame['dateKey'] = (
+        result_data_frame["year"]
+        + result_data_frame["month"]
+        + result_data_frame["day"]
+    )
     result_data_frame['date'] = to_datetime(result_data_frame, 'date')
-    result_data_frame['day'] = result_data_frame['date'].dt.day
-    result_data_frame['month'] = result_data_frame['date'].dt.month
     result_data_frame['monthName'] = result_data_frame['date'].dt.month_name()
-    result_data_frame['year'] = result_data_frame['date'].dt.year
     result_data_frame['calendarQuarter'] = result_data_frame['date'].dt.quarter
     result_data_frame['calendarQuarterName'] = result_data_frame['calendarQuarter'].map(
         {1: 'First', 2: 'Second', 3: 'Third', 4: 'Fourth'})
