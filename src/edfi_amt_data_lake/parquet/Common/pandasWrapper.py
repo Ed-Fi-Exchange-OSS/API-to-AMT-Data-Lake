@@ -145,7 +145,7 @@ def to_datetime_key(data=pd.DataFrame, column=str):
 
 
 def to_datetime(data=pd.DataFrame, column=str):
-    return pd.to_datetime(data[column], errors='ignore')
+    return pd.to_datetime(data[column], errors='raise')
 
 
 def replace_null(data=pd.DataFrame, column=str, replace_value: Any = None):
