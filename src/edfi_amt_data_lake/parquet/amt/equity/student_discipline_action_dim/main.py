@@ -15,6 +15,7 @@ from edfi_amt_data_lake.parquet.Common.pandasWrapper import (
     addColumnIfNotExists,
     create_parquet_file,
     get_descriptor_code_value_from_uri,
+    is_data_frame_empty,
     jsonNormalize,
     pdMerge,
     renameColumns,
@@ -191,7 +192,7 @@ def student_discipline_action_dim_data_frame(
         suffixLeft='_discipline_action',
         suffixRight='_student_school_association'
     )
-    if result_data_frame is None:
+    if is_data_frame_empty(result_data_frame):
         return None
     # Filter by exitWithdrawDate
     result_data_frame = result_data_frame[result_data_frame['exitWithdrawDate'] >= result_data_frame['date_now']]

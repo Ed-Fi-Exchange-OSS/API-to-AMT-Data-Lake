@@ -15,6 +15,7 @@ from edfi_amt_data_lake.parquet.amt_parquet import generate_amt_parquet
 
 @op
 def get_api_data() -> bool:
+    return True
     logger = get_dagster_logger()
     try:
         for school_year in get_school_year():

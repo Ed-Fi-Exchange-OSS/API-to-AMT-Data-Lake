@@ -18,6 +18,7 @@ from edfi_amt_data_lake.parquet.Common.pandasWrapper import (
     create_parquet_file,
     crossTab,
     get_descriptor_code_value_from_uri,
+    is_data_frame_empty,
     jsonNormalize,
     pdMerge,
     renameColumns,
@@ -126,10 +127,8 @@ def student_early_warning_fact_data_frame(
     if not calendar_dates_normalized.empty:
         calendar_dates_normalized.loc[calendar_dates_normalized['calendarEvents_calendarEventDescriptor_constantName'] == IS_INSTRUCTIONAL_DAY, 'IsInstructionalDay'] = '1'
         calendar_dates_normalized.loc[calendar_dates_normalized['calendarEvents_calendarEventDescriptor_constantName'] != IS_INSTRUCTIONAL_DAY, 'IsInstructionalDay'] = '0'
-
-    calendar_dates_normalized['IsInstructionalDay'] = calendar_dates_normalized['IsInstructionalDay'].astype(int)
-
     replace_null(calendar_dates_normalized, 'IsInstructionalDay', '0')
+    calendar_dates_normalized['IsInstructionalDay'] = calendar_dates_normalized['IsInstructionalDay'].astype(int)
     # Select needed columns.
     calendar_dates_normalized = subset(calendar_dates_normalized, [
         'IsInstructionalDay',
@@ -155,7 +154,7 @@ def student_early_warning_fact_data_frame(
         suffixLeft='_studentSchoolAssociation',
         suffixRight='_calendarDates'
     )
-    if result_data_frame is None:
+    if is_data_frame_empty(result_data_frame):
         return None
     result_data_frame['exitWithdrawDateKey'] = to_datetime_key(result_data_frame, 'exitWithdrawDate')
     result_data_frame['dateKey'] = to_datetime_key(result_data_frame, 'date')
@@ -219,7 +218,7 @@ def student_early_warning_fact_data_frame(
         suffixLeft='_studentSchoolAssociation',
         suffixRight='_studentSchoolAttendanceEvents'
     )
-    if result_data_frame is None:
+    if is_data_frame_empty(result_data_frame):
         return None
     ####################################################################################
     # By Section

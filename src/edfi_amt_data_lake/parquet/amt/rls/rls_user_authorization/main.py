@@ -13,6 +13,7 @@ from edfi_amt_data_lake.parquet.Common.pandasWrapper import (
     addColumnIfNotExists,
     create_parquet_file,
     get_reference_from_href,
+    is_data_frame_empty,
     jsonNormalize,
     pdMerge,
     renameColumns,
@@ -62,7 +63,7 @@ def rls_user_authorization_dataframe(
         errors='ignore'
     )
 
-    if staff_edorg_assignment_association_normalize.empty:
+    if is_data_frame_empty(staff_edorg_assignment_association_normalize):
         return None
 
     staff_edorg_assignment_association_normalize = (

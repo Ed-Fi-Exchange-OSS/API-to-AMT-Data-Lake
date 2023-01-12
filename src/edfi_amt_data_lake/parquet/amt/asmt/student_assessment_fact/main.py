@@ -14,6 +14,7 @@ from edfi_amt_data_lake.parquet.Common.functions import getEndpointJson
 from edfi_amt_data_lake.parquet.Common.pandasWrapper import (
     create_parquet_file,
     get_descriptor_code_value_from_uri,
+    is_data_frame_empty,
     jsonNormalize,
     pdMerge,
     renameColumns,
@@ -142,7 +143,7 @@ def student_assessment_fact_dataframe(
         recordPrefix=None,
         errors="ignore",
     )
-    if student_assessment_content is None or student_assessment_content.empty:
+    if is_data_frame_empty(student_assessment_content):
         return None
     ############################
     # Student Objective Assessment
@@ -417,7 +418,7 @@ def student_assessment_fact_dataframe(
         'exitWithdrawDate'
     ])
     data_frame = data_frame[data_frame['assessmentReference.assessmentIdentifier'] != '']
-    if data_frame is None or data_frame.empty:
+    if is_data_frame_empty(data_frame):
         return None
     # Add concatenated columns
     data_frame['StudentAssessmentFactKey'] = (

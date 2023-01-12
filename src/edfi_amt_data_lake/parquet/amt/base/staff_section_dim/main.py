@@ -14,6 +14,7 @@ from edfi_amt_data_lake.parquet.Common.pandasWrapper import (
     create_parquet_file,
     get_descriptor_code_value_from_uri,
     get_reference_from_href,
+    is_data_frame_empty,
     jsonNormalize,
     pdMerge,
     renameColumns,
@@ -74,7 +75,7 @@ def staff_section_dim_dataframe(
         errors='ignore'
     )
 
-    if staff_section_association_normalized.empty:
+    if is_data_frame_empty(staff_section_association_normalized):
         return None
 
     get_reference_from_href(

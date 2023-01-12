@@ -12,6 +12,7 @@ from edfi_amt_data_lake.parquet.Common.functions import getEndpointJson
 from edfi_amt_data_lake.parquet.Common.pandasWrapper import (
     create_parquet_file,
     get_descriptor_code_value_from_uri,
+    is_data_frame_empty,
     jsonNormalize,
     pdMerge,
     renameColumns,
@@ -113,7 +114,7 @@ def grading_period_dim_dataframe(
         suffixLeft='_grading_period',
         suffixRight='_grading_period_descriptor'
     )
-    if result_data_frame is None:
+    if is_data_frame_empty(result_data_frame):
         return None
     result_data_frame['gradingPeriodDescriptorId'] = result_data_frame['gradingPeriodDescriptorId'].astype(str)
     result_data_frame['schoolKey'] = result_data_frame['schoolId'].astype(str)

@@ -28,8 +28,10 @@ from edfi_amt_data_lake.parquet.amt.equity.student_discipline_action_dim.main im
 from edfi_amt_data_lake.parquet.Common.descriptor_mapping import get_descriptor_constant
 from edfi_amt_data_lake.parquet.Common.functions import getEndpointJson
 from edfi_amt_data_lake.parquet.Common.pandasWrapper import (
+    addColumnIfNotExists,
     create_empty_data_frame,
     create_parquet_file,
+    is_data_frame_empty,
     jsonNormalize,
     pdMerge,
     renameColumns,
@@ -66,7 +68,7 @@ def student_history_dim_data_frame(
     student_section_dim_view = student_section_dim(school_year).data_frame
     student_enrollment_dim_view = all_student_school_dim(school_year).data_frame
     student_discipline_dim_view = student_discipline_action_dim(school_year).data_frame
-    if student_school_dim_view is None or student_enrollment_dim_view is None:
+    if is_data_frame_empty(student_school_dim_view) or is_data_frame_empty(student_enrollment_dim_view):
         return None
     ############################
     # Student Enrollment
@@ -143,6 +145,8 @@ def student_history_dim_data_frame(
             }))
         )
         attendance_history.reset_index()
+        addColumnIfNotExists(attendance_history, 'DaysEnrolled', '1')
+        addColumnIfNotExists(attendance_history, 'DaysAbsent', '0')
         replace_null_empty(attendance_history, 'DaysEnrolled', 1)
         replace_null_empty(attendance_history, 'DaysAbsent', 0)
         attendance_history['AttendanceRate'] = (
@@ -153,7 +157,13 @@ def student_history_dim_data_frame(
             )
             / attendance_history['DaysEnrolled'].astype(int)
         ).astype(float)
-
+    else:
+        attendance_history = create_empty_data_frame(
+            [
+                'StudentSchoolKey',
+                'AttendanceRate'
+            ]
+        )
     attendance_history = subset(
         attendance_history,
         [
@@ -162,9 +172,9 @@ def student_history_dim_data_frame(
         ]
     ).reset_index()
 
-    if attendance_history is None:
+    if is_data_frame_empty(attendance_history):
         return None
-
+    addColumnIfNotExists(attendance_history, 'AttendanceRate')
     replace_null_empty(attendance_history, 'AttendanceRate', 100)
     attendance_history['AttendanceRate'] = attendance_history['AttendanceRate'].astype(str)
     attendance_history = attendance_history.set_index(['StudentSchoolKey'])
@@ -337,7 +347,7 @@ def student_history_dim_data_frame(
         suffixLeft=None,
         suffixRight=None
     )
-    if result_data_frame is None:
+    if is_data_frame_empty(result_data_frame):
         return None
     if not (attendance_history is None or attendance_history.empty):
         result_data_frame = pdMerge(
@@ -371,6 +381,7 @@ def student_history_dim_data_frame(
             suffixLeft=None,
             suffixRight='student_grades_association_normalized_'
         ).reset_index()
+    replace_null(result_data_frame, 'AttendanceRate', '0')
     result_data_frame['AttendanceRate'] = result_data_frame['AttendanceRate'].astype(float)
     replace_null(result_data_frame, 'GradeSummary', '')
     result_data_frame = subset(

@@ -10,7 +10,10 @@ from edfi_amt_data_lake.helper.data_frame_generation_result import (
 from edfi_amt_data_lake.parquet.amt.base.all_student_school_dim.main import (
     all_student_school_dim,
 )
-from edfi_amt_data_lake.parquet.Common.pandasWrapper import create_parquet_file
+from edfi_amt_data_lake.parquet.Common.pandasWrapper import (
+    create_parquet_file,
+    is_data_frame_empty,
+)
 
 RESULT_COLUMNS = [
     'StudentSchoolKey',
@@ -43,7 +46,7 @@ def student_school_dim_data_frame(
     file_name = file_name
 
     result_data_frame = all_student_school_dim(school_year=school_year).data_frame
-    if result_data_frame is None:
+    if is_data_frame_empty(result_data_frame):
         return None
 
     result_data_frame['SchoolKey'] = result_data_frame['SchoolKey'].astype(str)

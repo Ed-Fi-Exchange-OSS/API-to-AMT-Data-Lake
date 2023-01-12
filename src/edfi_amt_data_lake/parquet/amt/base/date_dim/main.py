@@ -11,6 +11,7 @@ from edfi_amt_data_lake.helper.data_frame_generation_result import (
 from edfi_amt_data_lake.parquet.Common.functions import getEndpointJson
 from edfi_amt_data_lake.parquet.Common.pandasWrapper import (
     create_parquet_file,
+    is_data_frame_empty,
     jsonNormalize,
     renameColumns,
     replace_null,
@@ -62,7 +63,7 @@ def date_dim_data_frame(
         'date',
         'schoolYear'
     ])
-    if result_data_frame is None or result_data_frame.empty:
+    if is_data_frame_empty(result_data_frame):
         return None
     result_data_frame[["day", "month", "year"]] = result_data_frame["date"].str.split("-", expand=True)
     result_data_frame.drop_duplicates()

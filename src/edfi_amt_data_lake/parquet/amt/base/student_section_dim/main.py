@@ -12,6 +12,7 @@ from edfi_amt_data_lake.parquet.Common.pandasWrapper import (
     create_parquet_file,
     get_descriptor_code_value_from_uri,
     get_reference_from_href,
+    is_data_frame_empty,
     jsonNormalize,
     pdMerge,
     renameColumns,
@@ -294,7 +295,7 @@ def section_dim_dataframe(
         suffixLeft=None,
         suffixRight=None
     )
-    if (staff_section_association_normalized is None or staff_section_association_normalized.empty):
+    if is_data_frame_empty(staff_section_association_normalized):
         return None
     ############################
     # Join Staff and Section
@@ -320,7 +321,7 @@ def section_dim_dataframe(
         suffixLeft=None,
         suffixRight=None
     )
-    if (result_data_frame is None or result_data_frame.empty):
+    if is_data_frame_empty(result_data_frame):
         return None
     ############################
     # Join Section and Course
@@ -334,7 +335,7 @@ def section_dim_dataframe(
         suffixLeft=None,
         suffixRight=None
     )
-    if (result_data_frame is None or result_data_frame.empty):
+    if is_data_frame_empty(result_data_frame):
         return None
     ############################
     # Join Section and academicSubjectDescriptor
@@ -348,7 +349,7 @@ def section_dim_dataframe(
         suffixLeft=None,
         suffixRight=None
     )
-    if (result_data_frame is None or result_data_frame.empty):
+    if is_data_frame_empty(result_data_frame):
         return None
     addColumnIfNotExists(result_data_frame, 'TeacherName', '')
     result_data_frame['StudentKey'] = result_data_frame['StudentKey'].astype(str)

@@ -15,6 +15,7 @@ from edfi_amt_data_lake.parquet.Common.pandasWrapper import (
     create_parquet_file,
     get_descriptor_code_value_from_uri,
     get_reference_from_href,
+    is_data_frame_empty,
     jsonNormalize,
     pdMerge,
     renameColumns,
@@ -97,6 +98,8 @@ def student_local_education_agency_dataframe(
         recordPrefix=None,
         errors='ignore'
     )
+    if is_data_frame_empty(student_normalize):
+        return None
     student_normalize = renameColumns(
         student_normalize,
         {
@@ -145,7 +148,7 @@ def student_local_education_agency_dataframe(
         suffixLeft='_student',
         suffixRight='_student_school_association'
     )
-    if student_normalize is None:
+    if is_data_frame_empty(student_normalize):
         return None
     student_normalize = (
         student_normalize[
@@ -287,7 +290,7 @@ def student_local_education_agency_dataframe(
         suffixLeft='_studentEdOrgAssociation',
         suffixRight='_local_education_agency'
     )
-    if result_data_frame is None:
+    if is_data_frame_empty(result_data_frame):
         return None
     ############################
     # student_education_organization_association
@@ -301,7 +304,7 @@ def student_local_education_agency_dataframe(
         suffixLeft='_studentEdOrgAssociation',
         suffixRight='_studentEdOrgAssociationIndicator'
     )
-    if result_data_frame is None:
+    if is_data_frame_empty(result_data_frame):
         return None
     ############################
     # student_education_organization_association
@@ -315,7 +318,7 @@ def student_local_education_agency_dataframe(
         suffixLeft='_studentEdOrgAssociation',
         suffixRight='_student'
     )
-    if result_data_frame is None:
+    if is_data_frame_empty(result_data_frame):
         return None
 
     result_data_frame['StudentLocalEducationAgencyKey'] = (

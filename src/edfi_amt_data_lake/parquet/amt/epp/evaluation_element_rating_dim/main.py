@@ -11,6 +11,7 @@ from edfi_amt_data_lake.helper.data_frame_generation_result import (
 from edfi_amt_data_lake.parquet.Common.functions import getEndpointJson
 from edfi_amt_data_lake.parquet.Common.pandasWrapper import (
     create_parquet_file,
+    is_data_frame_empty,
     jsonNormalize,
     pdMerge,
     renameColumns,
@@ -67,7 +68,7 @@ def evaluation_element_rating_dim_dataframe(
         errors='ignore'
     )
 
-    if evaluation_elements_ratings_normalized.empty:
+    if is_data_frame_empty(evaluation_elements_ratings_normalized):
         return None
 
     evaluation_elements_ratings_results_normalized = jsonNormalize(
@@ -97,7 +98,7 @@ def evaluation_element_rating_dim_dataframe(
         errors='ignore'
     )
 
-    if candidates_normalized.empty:
+    if is_data_frame_empty(candidates_normalized):
         return None
 
     evaluation_objetives_normalized = jsonNormalize(
@@ -111,7 +112,7 @@ def evaluation_element_rating_dim_dataframe(
         errors='ignore'
     )
 
-    if evaluation_objetives_normalized.empty:
+    if is_data_frame_empty(evaluation_objetives_normalized):
         return None
 
     term_descriptor_normalize = jsonNormalize(

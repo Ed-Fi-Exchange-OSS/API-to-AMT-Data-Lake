@@ -15,6 +15,7 @@ from edfi_amt_data_lake.parquet.Common.pandasWrapper import (
     addColumnIfNotExists,
     create_parquet_file,
     get_descriptor_code_value_from_uri,
+    is_data_frame_empty,
     jsonNormalize,
     pdMerge,
     renameColumns,
@@ -97,7 +98,7 @@ def school_dim_data_frame(
         suffixLeft='_schools',
         suffixRight='_localEducationAgencies'
     )
-    if result_data_frame.empty:
+    if is_data_frame_empty(result_data_frame):
         return None
     # Education Service Center Join
     educationServiceCentersContentNormalized = jsonNormalize(

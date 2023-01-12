@@ -15,6 +15,7 @@ from edfi_amt_data_lake.parquet.Common.functions import getEndpointJson
 from edfi_amt_data_lake.parquet.Common.pandasWrapper import (
     create_parquet_file,
     get_descriptor_code_value_from_uri,
+    is_data_frame_empty,
     jsonNormalize,
     pdMerge,
     renameColumns,
@@ -79,7 +80,7 @@ def contact_person_dim_dataframe(
         errors='ignore'
     )
 
-    if student_parent_associations_normalize.empty:
+    if is_data_frame_empty(student_parent_associations_normalize):
         return None
 
     get_descriptor_code_value_from_uri(student_parent_associations_normalize, 'relationDescriptor')
@@ -98,7 +99,7 @@ def contact_person_dim_dataframe(
         errors='ignore'
     )
 
-    if parents_normalize.empty:
+    if is_data_frame_empty(parents_normalize.empty):
         return None
 
     parents_address_normalize = jsonNormalize(

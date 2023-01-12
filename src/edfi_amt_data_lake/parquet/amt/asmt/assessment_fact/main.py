@@ -12,6 +12,7 @@ from edfi_amt_data_lake.parquet.Common.functions import getEndpointJson
 from edfi_amt_data_lake.parquet.Common.pandasWrapper import (
     create_parquet_file,
     get_descriptor_code_value_from_uri,
+    is_data_frame_empty,
     jsonNormalize,
     pdMerge,
     renameColumns,
@@ -259,7 +260,7 @@ def assessment_fact_data_frame(
         suffixLeft=None,
         suffixRight=None
     )
-    if result_data_frame is None:
+    if is_data_frame_empty(result_data_frame):
         return None
     # Scores merge
     result_data_frame = pdMerge(
@@ -271,7 +272,7 @@ def assessment_fact_data_frame(
         suffixLeft=None,
         suffixRight=None
     )
-    if result_data_frame is None:
+    if is_data_frame_empty(result_data_frame):
         return None
     # Academic Subjects merge
     result_data_frame = pdMerge(
@@ -283,7 +284,7 @@ def assessment_fact_data_frame(
         suffixLeft=None,
         suffixRight=None
     )
-    if result_data_frame is None:
+    if is_data_frame_empty(result_data_frame):
         return None
     # Objective Assessment
     objectiveAssessmentsContentNormalized = jsonNormalize(
@@ -370,7 +371,7 @@ def assessment_fact_data_frame(
         suffixLeft=None,
         suffixRight=None
     )
-    if result_objective_data_frame is None:
+    if is_data_frame_empty(result_objective_data_frame):
         return None
     # Objective Learning Standards merge
     result_objective_data_frame = pdMerge(
@@ -382,7 +383,7 @@ def assessment_fact_data_frame(
         suffixLeft=None,
         suffixRight=None
     )
-    if result_objective_data_frame is None:
+    if is_data_frame_empty(result_objective_data_frame) is None:
         return None
     # Merge Assessment data and Objective Assessment data
     result_data_frame = pdMerge(
@@ -394,7 +395,7 @@ def assessment_fact_data_frame(
         suffixLeft=None,
         suffixRight='_objective'
     )
-    if result_data_frame is None:
+    if is_data_frame_empty(result_data_frame):
         return None
     # Removes namespace from Category Descriptor
     get_descriptor_code_value_from_uri(result_data_frame, 'assessmentCategoryDescriptor')
