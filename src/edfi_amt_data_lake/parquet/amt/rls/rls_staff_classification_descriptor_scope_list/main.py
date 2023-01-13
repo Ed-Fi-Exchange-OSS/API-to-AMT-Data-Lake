@@ -4,17 +4,30 @@
 # See the LICENSE and NOTICES files in the project root for more information.
 
 import pandas as pd
-from decouple import config
 
+from edfi_amt_data_lake.helper.data_frame_generation_result import (
+    data_frame_generation_result,
+)
 from edfi_amt_data_lake.helper.helper import get_descriptor_mapping_config
 from edfi_amt_data_lake.parquet.Common.pandasWrapper import (
+    create_empty_data_frame,
+    create_parquet_file,
     jsonNormalize,
     renameColumns,
-    saveParquetFile,
 )
 
+RESULT_COLUMNS = [
+    'AuthorizationScopeName',
+    'CodeValue'
+]
 
-def rls_staff_classification_descriptor_scope_list_dataframe(school_year) -> pd.DataFrame:
+
+@create_parquet_file
+def rls_staff_classification_descriptor_scope_list_dataframe(
+    file_name: str,
+    columns: list[str],
+    school_year: int
+) -> pd.DataFrame:
 
     descriptor_mapping_content = get_descriptor_mapping_config()
 
@@ -26,6 +39,9 @@ def rls_staff_classification_descriptor_scope_list_dataframe(school_year) -> pd.
         , recordPrefix=None
         , errors='ignore'
     )
+
+    if descriptor_mapping_normalized.empty:
+        return create_empty_data_frame(columns)
 
     result_data_frame = (
         descriptor_mapping_normalized[
@@ -42,9 +58,12 @@ def rls_staff_classification_descriptor_scope_list_dataframe(school_year) -> pd.
         'codeValue': "CodeValue"
     })
 
-    return result_data_frame
+    return result_data_frame[columns]
 
 
-def rls_staff_classification_descriptor_scope_list(school_year) -> None:
-    result_data_frame = rls_staff_classification_descriptor_scope_list_dataframe(school_year)
-    saveParquetFile(result_data_frame, f"{config('PARQUET_FILES_LOCATION')}", "rls_StaffClassificationDescriptorScopeList.parquet", school_year)
+def rls_staff_classification_descriptor_scope_list(school_year) -> data_frame_generation_result:
+    return rls_staff_classification_descriptor_scope_list_dataframe(
+        file_name="rls_StaffClassificationDescriptorScopeList.parquet",
+        columns=RESULT_COLUMNS,
+        school_year=school_year
+    )
