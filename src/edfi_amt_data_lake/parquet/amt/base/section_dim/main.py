@@ -12,6 +12,7 @@ from edfi_amt_data_lake.parquet.Common.functions import getEndpointJson
 from edfi_amt_data_lake.parquet.Common.pandasWrapper import (
     create_parquet_file,
     get_reference_from_href,
+    is_data_frame_empty,
     jsonNormalize,
     pdMerge,
     renameColumns,
@@ -223,7 +224,7 @@ def section_dim_dataframe(
         suffixLeft=None,
         suffixRight='_courseOfferings'
     )
-    if result_data_frame is None:
+    if is_data_frame_empty(result_data_frame):
         return None
     result_data_frame = pdMerge(
         left=result_data_frame,
@@ -234,7 +235,7 @@ def section_dim_dataframe(
         suffixLeft=None,
         suffixRight='_courses'
     )
-    if result_data_frame is None:
+    if is_data_frame_empty(result_data_frame):
         return None
     result_data_frame = pdMerge(
         left=result_data_frame,
@@ -245,7 +246,7 @@ def section_dim_dataframe(
         suffixLeft=None,
         suffixRight='_classPeriods'
     )
-    if result_data_frame is None:
+    if is_data_frame_empty(result_data_frame):
         return None
     result_data_frame = pdMerge(
         left=result_data_frame,
@@ -256,7 +257,7 @@ def section_dim_dataframe(
         suffixLeft=None,
         suffixRight='_sessions'
     )
-    if result_data_frame is None:
+    if is_data_frame_empty(result_data_frame):
         return None
     result_data_frame = pdMerge(
         left=result_data_frame,
@@ -267,7 +268,7 @@ def section_dim_dataframe(
         suffixLeft=None,
         suffixRight='_schools'
     )
-    if result_data_frame is None:
+    if is_data_frame_empty(result_data_frame):
         return None
     result_data_frame = pdMerge(
         left=result_data_frame,
@@ -278,7 +279,7 @@ def section_dim_dataframe(
         suffixLeft=None,
         suffixRight='_academic_subj_desc'
     )
-    if result_data_frame is None:
+    if is_data_frame_empty(result_data_frame):
         return None
     result_data_frame = pdMerge(
         left=result_data_frame,
@@ -289,7 +290,7 @@ def section_dim_dataframe(
         suffixLeft=None,
         suffixRight='_term_desc'
     )
-    if result_data_frame is None:
+    if is_data_frame_empty(result_data_frame):
         return None
     result_data_frame = pdMerge(
         left=result_data_frame,
@@ -300,7 +301,7 @@ def section_dim_dataframe(
         suffixLeft=None,
         suffixRight='_educational_environment_desc'
     )
-    if result_data_frame is None:
+    if is_data_frame_empty(result_data_frame):
         return None
     result_data_frame = result_data_frame[[
         'sectionIdentifier',

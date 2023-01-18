@@ -15,6 +15,7 @@ from edfi_amt_data_lake.parquet.Common.pandasWrapper import (
     create_parquet_file,
     get_descriptor_code_value_from_uri,
     get_reference_from_href,
+    is_data_frame_empty,
     jsonNormalize,
     pd_concat,
     pdMerge,
@@ -199,7 +200,7 @@ def student_local_education_agency_demographics_bridge_dataframe(
                     ]
                 )
             )
-    if (demographics_data_frame is None or demographics_data_frame.empty):
+    if is_data_frame_empty(demographics_data_frame):
         return None
     result_data_frame = pdMerge(
         left=demographics_data_frame,
@@ -426,7 +427,7 @@ def get_student_demographic(content, item) -> pd.DataFrame:
 
 def student_local_education_agency_demographics_bridge(school_year) -> None:
     return student_local_education_agency_demographics_bridge_dataframe(
-        file_name="StudentLocalEducationAgencyDemographicsBridge.parquet",
+        file_name="studentLocalEducationAgencyDemographicsBridge.parquet",
         columns=RESULT_COLUMNS,
         school_year=school_year
     )

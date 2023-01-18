@@ -15,6 +15,7 @@ from edfi_amt_data_lake.parquet.Common.pandasWrapper import (
     create_parquet_file,
     get_descriptor_code_value_from_uri,
     get_reference_from_href,
+    is_data_frame_empty,
     jsonNormalize,
     pdMerge,
     renameColumns,
@@ -129,7 +130,7 @@ def student_program_cohort_dim_data_frame(
         suffixLeft='_student_cohort_association',
         suffixRight='_cohort'
     )
-    if student_cohort_association_normalized is None:
+    if is_data_frame_empty(student_cohort_association_normalized):
         return None
     # Select needed columns.
     student_cohort_association_normalized = subset(student_cohort_association_normalized, [
@@ -300,7 +301,7 @@ def student_program_cohort_dim_data_frame(
         suffixLeft='_discipline_action',
         suffixRight='_student_school_association'
     )
-    if result_data_frame is None:
+    if is_data_frame_empty(result_data_frame):
         return None
     # Filter by exitWithdrawDate
     result_data_frame = result_data_frame[result_data_frame['exitWithdrawDate'] >= result_data_frame['date_now']]

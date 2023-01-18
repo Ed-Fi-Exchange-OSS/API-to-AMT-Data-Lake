@@ -11,6 +11,7 @@ from edfi_amt_data_lake.helper.data_frame_generation_result import (
 from edfi_amt_data_lake.parquet.Common.functions import getEndpointJson
 from edfi_amt_data_lake.parquet.Common.pandasWrapper import (
     create_parquet_file,
+    is_data_frame_empty,
     jsonNormalize,
     pd_concat,
     pdMerge,
@@ -367,7 +368,7 @@ def demographics_dim_dataframe(
             student_characteristic_descriptor_normalize
         ],
     )
-    if result_data_frame is None:
+    if is_data_frame_empty(result_data_frame):
         return None
     result_data_frame = renameColumns(
         result_data_frame,

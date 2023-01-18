@@ -267,3 +267,7 @@ def get_data_frame_from_file(file_path: str) -> pd.DataFrame:
     except Exception:
         parquet_logger.error(f"get_data_frame_from_file - Exception: {traceback.format_exc()}")
         return None
+
+
+def is_data_frame_empty(data: pd.DataFrame) -> bool:
+    return (data is None or data.empty)

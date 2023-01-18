@@ -18,6 +18,7 @@ from edfi_amt_data_lake.parquet.Common.pandasWrapper import (
     create_parquet_file,
     crossTab,
     get_descriptor_code_value_from_uri,
+    is_data_frame_empty,
     jsonNormalize,
     pdMerge,
     renameColumns,
@@ -75,7 +76,7 @@ def chronic_absenteeism_attendance_fact_dataframe(
         errors='ignore'
     )
 
-    if student_school_associations_normalize.empty:
+    if is_data_frame_empty(student_school_associations_normalize):
         return None
 
     calendar_dates_normalize = jsonNormalize(
@@ -92,7 +93,7 @@ def chronic_absenteeism_attendance_fact_dataframe(
         errors='ignore'
     )
 
-    if calendar_dates_normalize.empty:
+    if is_data_frame_empty(calendar_dates_normalize):
         return None
 
     calendar_dates_calendar_events_normalize = jsonNormalize(
@@ -105,7 +106,7 @@ def chronic_absenteeism_attendance_fact_dataframe(
         errors='ignore'
     )
 
-    if calendar_dates_calendar_events_normalize.empty:
+    if is_data_frame_empty(calendar_dates_calendar_events_normalize):
         return None
 
     calendar_dates_normalize = pdMerge(

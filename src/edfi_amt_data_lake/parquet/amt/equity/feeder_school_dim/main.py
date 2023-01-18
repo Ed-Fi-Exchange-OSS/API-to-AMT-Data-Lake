@@ -13,6 +13,7 @@ from edfi_amt_data_lake.helper.data_frame_generation_result import (
 from edfi_amt_data_lake.parquet.Common.functions import getEndpointJson
 from edfi_amt_data_lake.parquet.Common.pandasWrapper import (
     create_parquet_file,
+    is_data_frame_empty,
     jsonNormalize,
     pdMerge,
     renameColumns,
@@ -52,7 +53,7 @@ def feeder_school_dim_data_frame(
         errors='ignore'
     )
 
-    if feeder_school_association_normalized.empty:
+    if is_data_frame_empty(feeder_school_association_normalized):
         return None
 
     if 'endDate' in feeder_school_association_normalized:

@@ -9,7 +9,10 @@ from edfi_amt_data_lake.helper.data_frame_generation_result import (
 from edfi_amt_data_lake.parquet.amt.base.grading_period_dim.main import (
     grading_period_dim,
 )
-from edfi_amt_data_lake.parquet.Common.pandasWrapper import create_parquet_file
+from edfi_amt_data_lake.parquet.Common.pandasWrapper import (
+    create_parquet_file,
+    is_data_frame_empty,
+)
 
 RESULT_COLUMNS = [
     'GradingPeriodKey',
@@ -32,7 +35,7 @@ def most_recent_grading_period_dataframe(
     file_name = file_name
     columns = columns
     result_data_frame = grading_period_dim(school_year).data_frame
-    if result_data_frame is None:
+    if is_data_frame_empty(result_data_frame):
         return None
     result_data_frame = result_data_frame.groupby(['SchoolKey'], sort=False)['GradingPeriodBeginDateKey'].max()
     result_data_frame = result_data_frame.to_frame()

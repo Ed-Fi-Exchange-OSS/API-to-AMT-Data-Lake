@@ -10,6 +10,7 @@ from edfi_amt_data_lake.parquet.Common.functions import getEndpointJson
 from edfi_amt_data_lake.parquet.Common.pandasWrapper import (
     addColumnIfNotExists,
     create_parquet_file,
+    is_data_frame_empty,
     jsonNormalize,
     pdMerge,
     renameColumns,
@@ -42,7 +43,7 @@ def rls_user_dim_dataframe(
         errors='ignore'
     )
 
-    if staffs_normalize.empty:
+    if is_data_frame_empty(staffs_normalize):
         return None
 
     staffs_emails_normalize = jsonNormalize(

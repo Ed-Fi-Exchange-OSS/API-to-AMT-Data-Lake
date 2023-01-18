@@ -13,6 +13,7 @@ from edfi_amt_data_lake.helper.data_frame_generation_result import (
 )
 from edfi_amt_data_lake.parquet.Common.functions import getEndpointJson
 from edfi_amt_data_lake.parquet.Common.pandasWrapper import (
+    add_dataframe_column,
     addColumnIfNotExists,
     create_empty_data_frame,
     create_parquet_file,
@@ -186,7 +187,6 @@ def all_student_school_dim_data_frame_base(
             recordPrefix=None,
             errors='ignore'
         )
-
         if student_school_education_organization_associations_indicators_normalized.empty:
             addColumnIfNotExists(student_school_education_organization_associations_normalized, 'indicator')
             addColumnIfNotExists(student_school_education_organization_associations_normalized, 'indicator_internet_access_type_in_residence')
@@ -412,11 +412,18 @@ def all_student_school_dim_data_frame_base(
             suffixLeft='',
             suffixRight='_districtEdOrg'
         )
-
+    add_dataframe_column(
+        result_data_frame,
+        [
+            'indicator_districtEdOrg',
+            'indicator_internet_access_type_in_residence_districtEdOrg',
+            'indicator_internet_performance_in_residence_districtEdOrg',
+            'indicator_digital_device_districtEdOrg',
+            'indicator_device_access_districtEdOrg'
+        ]
+    )
     # District Education Organization ends
-
     result_data_frame = result_data_frame.fillna('')
-
     # LimitedEnglishProficiency
     result_data_frame['LimitedEnglishProficiency'] = (
         result_data_frame.apply(
@@ -443,7 +450,6 @@ def all_student_school_dim_data_frame_base(
             lambda x: x['sexDescriptor'] if x['sexDescriptor'] != '' else x['sexDescriptor_districtEdOrg'], axis=1
         )
     )
-
     # Internet Access In Residence
     result_data_frame['InternetAccessInResidence'] = (
         result_data_frame.apply(

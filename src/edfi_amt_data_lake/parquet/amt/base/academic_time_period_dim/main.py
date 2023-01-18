@@ -14,6 +14,7 @@ from edfi_amt_data_lake.parquet.Common.pandasWrapper import (
     create_parquet_file,
     get_descriptor_code_value_from_uri,
     get_reference_from_href,
+    is_data_frame_empty,
     jsonNormalize,
     pdMerge,
     renameColumns,
@@ -152,7 +153,7 @@ def academic_time_period_dim_frame(
         suffixRight="_grading_periods_normalized"
     )
 
-    if result_data_frame is None:
+    if is_data_frame_empty(result_data_frame):
         return None
 
     result_data_frame["AcademicTimePeriodKey"] = (

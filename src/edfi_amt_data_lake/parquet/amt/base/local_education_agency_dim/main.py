@@ -159,6 +159,8 @@ def local_education_agency_dataframe(
         'nameOfInstitution': 'localEducationAgencyServiceCenterName',
         'educationServiceCenterId': 'localEducationAgencyServiceCenterKey',
     })
+    replace_null(education_service_center_normalize, 'localEducationAgencyServiceCenterName', '')
+    replace_null(education_service_center_normalize, 'localEducationAgencyServiceCenterKey', '')
     # Select needed columns.
     education_service_center_normalize = subset(education_service_center_normalize, [
         'educationServiceCenterReferenceId',
@@ -200,6 +202,8 @@ def local_education_agency_dataframe(
             'localEducationAgencyCharterStatus': 'LocalEducationAgencyCharterStatus',
         }
     )
+    replace_null(result_data_frame, 'LocalEducationAgencyServiceCenterName', '')
+    replace_null(result_data_frame, 'LocalEducationAgencyServiceCenterKey', '')
     replace_null(result_data_frame, 'LocalEducationAgencyParentLocalEducationAgencyKey', '')
     result_data_frame['LocalEducationAgencyParentLocalEducationAgencyKey'] = (
         result_data_frame['LocalEducationAgencyParentLocalEducationAgencyKey'].astype(str)

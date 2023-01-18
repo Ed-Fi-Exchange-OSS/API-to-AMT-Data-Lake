@@ -16,6 +16,7 @@ from edfi_amt_data_lake.parquet.Common.pandasWrapper import (
     create_parquet_file,
     get_descriptor_code_value_from_uri,
     get_reference_from_href,
+    is_data_frame_empty,
     jsonNormalize,
     pdMerge,
     renameColumns,
@@ -100,7 +101,7 @@ def student_program_dim_frame(
         suffixLeft=None,
         suffixRight=None,
     )
-    if student_program_dim is None:
+    if is_data_frame_empty(student_program_dim):
         return None
     student_program_dim = subset(
         student_program_dim,
@@ -158,7 +159,7 @@ def student_program_dim_frame(
         suffixLeft="_left",
         suffixRight=None,
     )
-    if prev_data_frame is None:
+    if is_data_frame_empty(prev_data_frame):
         return None
     data_frame = pdMerge(
         left=prev_data_frame,
@@ -175,7 +176,7 @@ def student_program_dim_frame(
         suffixLeft="_prev_left",
         suffixRight=None,
     )
-    if data_frame is None:
+    if is_data_frame_empty(data_frame):
         return None
 
     data_frame = subset(data_frame, [
