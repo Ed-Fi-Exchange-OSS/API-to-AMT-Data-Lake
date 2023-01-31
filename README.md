@@ -63,10 +63,10 @@ PARQUET_FILES_LOCATION=C:\\temp\\edfi\\parquet\\
 #### Continue with the next steps for Linux:
 
 ```sh
-cd API-to-AMT-Data-Lake/src
+cd ./src
 poetry install
 source  $(poetry env info --path)/bin/activate
-cd ../src/dagster_data_lake
+cd ./dagster_data_lake
 mkdir ~/dagster_home
 export DAGSTER_HOME=~"/dagster_home"
 dagster instance info
@@ -77,10 +77,10 @@ dagit -w workspace.yaml
 #### Continue with the next steps for Windows:
 
 ```sh
-cd API-to-AMT-Data-Lake/src
+cd ./src
 poetry install
 & (join-path (poetry env info --path) "\Scripts\activate.ps1")
-cd ../src/dagster_data_lake
+cd ./dagster_data_lake
 mkdir ~/dagster_home
 $env:DAGSTER_HOME = ($home + '\dagster_home')
 dagster instance info
