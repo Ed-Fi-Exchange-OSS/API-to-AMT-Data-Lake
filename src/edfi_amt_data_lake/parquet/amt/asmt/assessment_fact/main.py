@@ -20,6 +20,7 @@ from edfi_amt_data_lake.parquet.Common.pandasWrapper import (
 
 ENDPOINT_ASSESSSMENTS = 'assessments'
 ENDPOINT_OBJECTIVEASSESSMENTS = 'objectiveAssessments'
+ENDPOINT_ASSESSMENT_CATEGORY_DESCRIPTOR = 'assessmentCategoryDescriptors'
 ENDPOINT_GRADE_LEVEL_DESCRIPTOR = 'gradeLevelDescriptors'
 ENDPOINT_ASSESSMENT_REPORTING_METHOD_DESCRIPTOR = 'assessmentReportingMethodDescriptors'
 ENDPOINT_ACADEMIC_SUBJECT_DESCRIPTOR = 'academicSubjectDescriptors'
@@ -57,12 +58,35 @@ def assessment_fact_data_frame(
     file_name = file_name
     silverDataLocation = config('SILVER_DATA_LOCATION')
     assessmentsContent = getEndpointJson(ENDPOINT_ASSESSSMENTS, silverDataLocation, school_year)
+    assessment_category_descriptor_content = getEndpointJson(ENDPOINT_ASSESSMENT_CATEGORY_DESCRIPTOR, silverDataLocation, school_year)
     objectiveAssessmentsContent = getEndpointJson(ENDPOINT_OBJECTIVEASSESSMENTS, silverDataLocation, school_year)
     grade_level_descriptor_content = getEndpointJson(ENDPOINT_GRADE_LEVEL_DESCRIPTOR, silverDataLocation, school_year)
     assessment_reporting_method_descriptor_content = getEndpointJson(ENDPOINT_ASSESSMENT_REPORTING_METHOD_DESCRIPTOR, silverDataLocation, school_year)
     academic_subject_descriptor_content = getEndpointJson(ENDPOINT_ACADEMIC_SUBJECT_DESCRIPTOR, silverDataLocation, school_year)
     result_datatype_type_descriptor_content = getEndpointJson(ENDPOINT_RESULT_DATATYPE_TYPE_DESCRIPTOR, silverDataLocation, school_year)
     # Descriptors
+    ############################
+    # assessmentCategoryDescriptor
+    ############################
+    assessment_category_descriptor_normalized = jsonNormalize(
+        assessment_category_descriptor_content,
+        recordPath=None,
+        meta=[
+            'assessmentCategoryDescriptorId',
+            'codeValue',
+            'description',
+        ],
+        metaPrefix=None,
+        recordPrefix=None,
+        errors='ignore'
+    )
+    assessment_category_descriptor_normalized = renameColumns(
+        assessment_category_descriptor_normalized,
+        {
+            'codeValue': 'assessmentCategoryDescriptor',
+            'description': 'assessmentCategoryDescriptorDescription'
+        }
+    )
     ############################
     # gradeLevelDescriptor
     ############################
@@ -399,7 +423,15 @@ def assessment_fact_data_frame(
         return None
     # Removes namespace from Category Descriptor
     get_descriptor_code_value_from_uri(result_data_frame, 'assessmentCategoryDescriptor')
-
+    result_data_frame = pdMerge(
+        left=result_data_frame,
+        right=assessment_category_descriptor_normalized,
+        how='left',
+        leftOn=['assessmentCategoryDescriptor'],
+        rightOn=['assessmentCategoryDescriptor'],
+        suffixLeft=None,
+        suffixRight=None
+    )
     # Removes namespace from Assessed Grade Level Descriptor
     get_descriptor_code_value_from_uri(result_data_frame, 'gradeLevelDescriptor')
 
