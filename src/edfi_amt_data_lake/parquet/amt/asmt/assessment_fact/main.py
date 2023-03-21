@@ -462,7 +462,7 @@ def assessment_fact_data_frame(
         'assessmentTitle': 'Title',
         'assessmentVersion': 'Version',
         'assessmentCategoryDescriptor': 'Category',
-        'gradeLevelDescriptor': 'AssessedGradeLevel',
+        'gradeLevelDescriptorDescription': 'AssessedGradeLevel',
         'academicSubjectDescriptor': 'AcademicSubject',
         'resultDatatypeTypeDescriptor': 'ResultDataType',
         'assessmentReportingMethodDescriptor': 'ReportingMethod',
