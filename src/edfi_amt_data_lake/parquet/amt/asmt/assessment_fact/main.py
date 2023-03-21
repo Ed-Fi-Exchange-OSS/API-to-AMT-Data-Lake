@@ -461,11 +461,11 @@ def assessment_fact_data_frame(
         'namespace': 'Namespace',
         'assessmentTitle': 'Title',
         'assessmentVersion': 'Version',
-        'assessmentCategoryDescriptor': 'Category',
+        'assessmentCategoryDescriptorDescription': 'Category',
         'gradeLevelDescriptorDescription': 'AssessedGradeLevel',
-        'academicSubjectDescriptor': 'AcademicSubject',
-        'resultDatatypeTypeDescriptor': 'ResultDataType',
-        'assessmentReportingMethodDescriptor': 'ReportingMethod',
+        'academicSubjectDescriptorDescription': 'AcademicSubject',
+        'resultDatatypeTypeDescriptorDescription': 'ResultDataType',
+        'assessmentReportingMethodDescriptorDescription': 'ReportingMethod',
         'identificationCode': 'IdentificationCode',
         'description': 'ObjectiveAssessmentDescription',
         'minimumScore': 'MinScore',
@@ -474,8 +474,8 @@ def assessment_fact_data_frame(
         'learningStandardReference.learningStandardId': 'LearningStandard'
     })
 
-    result_data_frame.loc[result_data_frame['ResultDataType'] == '', 'ResultDataType'] = result_data_frame['resultDatatypeTypeDescriptor_objective']
-    result_data_frame.loc[result_data_frame['ReportingMethod'] == '', 'ReportingMethod'] = result_data_frame['assessmentReportingMethodDescriptor_objective']
+    result_data_frame.loc[result_data_frame['ResultDataType'] == '', 'ResultDataType'] = result_data_frame['resultDatatypeTypeDescriptorDescription_objective']
+    result_data_frame.loc[result_data_frame['ReportingMethod'] == '', 'ReportingMethod'] = result_data_frame['assessmentReportingMethodDescriptorDescription_objective']
 
     result_data_frame.loc[result_data_frame['MinScore'] == '', 'MinScore'] = result_data_frame['minimumScore_objective']
     result_data_frame.loc[result_data_frame['MaxScore'] == '', 'MaxScore'] = result_data_frame['maximumScore_objective']
