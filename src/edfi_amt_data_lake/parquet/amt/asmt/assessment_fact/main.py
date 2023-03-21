@@ -478,7 +478,7 @@ def assessment_fact_data_frame(
     result_data_frame.loc[result_data_frame['ReportingMethod'] == '', 'ReportingMethod'] = result_data_frame['assessmentReportingMethodDescriptor_objective']
 
     result_data_frame.loc[result_data_frame['MinScore'] == '', 'MinScore'] = result_data_frame['minimumScore_objective']
-    result_data_frame.loc[result_data_frame['MinScore'] == '', 'MinScore'] = result_data_frame['maximumScore_objective']
+    result_data_frame.loc[result_data_frame['MaxScore'] == '', 'MaxScore'] = result_data_frame['maximumScore_objective']
 
     # Converting some fields to str as preparation for the parquet file.
     result_data_frame['Version'] = result_data_frame['Version'].astype(str)
