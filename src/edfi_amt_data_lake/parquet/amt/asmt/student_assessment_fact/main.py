@@ -455,14 +455,14 @@ def student_assessment_fact_dataframe(
                    + r["assessmentReference.assessmentIdentifier"] + '-'
                    + r["studentAssessmentIdentifier"] + '-'
                    + r["assessmentReference.namespace"])
-            if r["objectiveAssessmentReference.identificationCode"] != '' else '', axis=1
+        if r["objectiveAssessmentReference.identificationCode"] != '' else '', axis=1
     )
 
     data_frame["ObjectiveAssessmentKey"] = data_frame.apply(
         lambda r: (r["assessmentReference.assessmentIdentifier"] + '-'
                    + r["objectiveAssessmentReference.identificationCode"] + '-'
                    + r["assessmentReference.namespace"])
-            if r["objectiveAssessmentReference.identificationCode"] != '' else '', axis=1
+        if r["objectiveAssessmentReference.identificationCode"] != '' else '', axis=1
     )
 
     # Rename result columns to AMT View column name.
