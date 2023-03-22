@@ -448,18 +448,23 @@ def student_assessment_fact_dataframe(
         data_frame['studentReference.studentUniqueId'] + '-'
         + data_frame['schoolReference.schoolId'].astype(str)
     ).astype(str)
-    data_frame['StudentObjectiveAssessmentKey'] = (
-        data_frame['studentReference.studentUniqueId'] + '-'
-        + data_frame['objectiveAssessmentReference.identificationCode'] + '-'
-        + data_frame['assessmentReference.assessmentIdentifier'] + '-'
-        + data_frame['studentAssessmentIdentifier'] + '-'
-        + data_frame['assessmentReference.namespace']
+
+    data_frame["StudentObjectiveAssessmentKey"] = data_frame.apply(
+        lambda r: (r["studentReference.studentUniqueId"] + '-'
+                   + r["objectiveAssessmentReference.identificationCode"] + '-'
+                   + r["assessmentReference.assessmentIdentifier"] + '-'
+                   + r["studentAssessmentIdentifier"] + '-'
+                   + r["assessmentReference.namespace"])
+            if r["objectiveAssessmentReference.identificationCode"] != '' else '', axis=1
     )
-    data_frame['ObjectiveAssessmentKey'] = (
-        + data_frame['assessmentReference.assessmentIdentifier'] + '-'
-        + data_frame['objectiveAssessmentReference.identificationCode'] + '-'
-        + data_frame['assessmentReference.namespace']
+
+    data_frame["ObjectiveAssessmentKey"] = data_frame.apply(
+        lambda r: (r["assessmentReference.assessmentIdentifier"] + '-'
+                   + r["objectiveAssessmentReference.identificationCode"] + '-'
+                   + r["assessmentReference.namespace"])
+            if r["objectiveAssessmentReference.identificationCode"] != '' else '', axis=1
     )
+
     # Rename result columns to AMT View column name.
     data_frame = renameColumns(data_frame, {
         'assessmentReference.assessmentIdentifier': 'AssessmentIdentifier',
