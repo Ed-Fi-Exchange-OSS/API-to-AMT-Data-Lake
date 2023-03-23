@@ -533,7 +533,7 @@ def all_student_school_dim_data_frame_base(
     ).astype(str)
 
     result_data_frame['SchoolYear'] = result_data_frame['SchoolYear'].apply(
-        lambda x: 'Unknown' if x == '' else str(x)
+        lambda x: 'Unknown' if x == '' else str(int(x))
     )
     result_data_frame['SchoolYear'] = result_data_frame['SchoolYear'].astype(str)
     result_data_frame['LimitedEnglishProficiency'] = result_data_frame['LimitedEnglishProficiency'].apply(
