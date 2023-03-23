@@ -1,4 +1,4 @@
-from dagster_data_lake.jobs.pipe_api import pipe_api_job
+from dagster_config.jobs.pipe_api import pipe_api_job
 
 
 def test_pipe_api() -> bool:

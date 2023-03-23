@@ -73,7 +73,7 @@ Once the environment variables have been configured. Continue with the following
 cd ./src
 poetry install
 source  $(poetry env info --path)/bin/activate
-cd ./dagster_data_lake
+cd ./edfi_amt_data_lake
 mkdir ~/dagster_home
 export DAGSTER_HOME=~"/dagster_home"
 dagster instance info
@@ -87,7 +87,7 @@ dagit -w workspace.yaml
 cd ./src
 poetry install
 & (join-path (poetry env info --path) "\Scripts\activate.ps1")
-cd ./dagster_data_lake
+cd ./edfi_amt_data_lake
 mkdir ~/dagster_home
 $env:DAGSTER_HOME = ($home + '\dagster_home')
 dagster instance info
@@ -102,7 +102,7 @@ After you have finished the above steps, you can open your localhost or http://1
 The log can be found in the same directory or inside the dagster home folder
 ```sh
 
-1-) /API-to-AMT-Data-Lake/src/dagster_data_lake/api_to_amt.log
+1-) /API-to-AMT-Data-Lake/src/edfi_amt_data_lake/api_to_amt.log
 
 2-) /dagster_home/storage/xxxxxxxx-folder-xxxxxxxx/compute_logs
 ```

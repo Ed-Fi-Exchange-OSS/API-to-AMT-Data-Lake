@@ -1,5 +1,5 @@
 {
-    "python.analysis.extraPaths": ["./src/dagster_data_lake"],
+    "python.analysis.extraPaths": ["./src/edfi"],
     "python.linting.flake8Enabled": true,
     "python.linting.enabled": true,
     "python.linting.flake8Args": [
