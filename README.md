@@ -59,7 +59,7 @@ REQUESTS_CERT_VERIFICATION=True
 
 
 **OS_CPU:** Defined as the number of CPUs to be used for parallel calls, this value must be less than the number of CPUs of the machine for proper performance.
-**DISABLE_CHANGE_VERSION:** For the current version, the change query version feature has been disabled. 
+**DISABLE_CHANGE_VERSION:** For the current version, the change query version feature has been disabled.
 This simply means that every time the project is executed, all data is requested.
 
 **REQUESTS_CERT_VERIFICATION:** In case you are executing the project on a local development environment and you have not set up a SSL certificate, this value should be False.

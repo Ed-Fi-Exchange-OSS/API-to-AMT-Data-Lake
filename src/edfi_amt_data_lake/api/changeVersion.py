@@ -54,12 +54,14 @@ def _delete_change_version_file() -> None:
     shutil.rmtree(path, ignore_errors=True, onerror=None)
     time.sleep(1)
 
+
 def _delete_silver_data_files() -> None:
     import shutil
     import time
     path = config("SILVER_DATA_LOCATION")
     shutil.rmtree(path, ignore_errors=True, onerror=None)
     time.sleep(1)
+
 
 def _update_change_version_file(pathfilename: str, oldestChangeVersion: str, newestChangeVersion: str) -> None:
     with open(pathfilename, "w") as outfile:
@@ -69,7 +71,7 @@ def _update_change_version_file(pathfilename: str, oldestChangeVersion: str, new
 
 def get_change_version_updated(school_year) -> bool:
     school_year_path = f"{school_year}/" if school_year else ""
-    path = config("CHANGE_VERSION_FILEPATH") + f"{school_year_path}"
+    path = config("CHANGE_VERSION_FILEPATH") + f"/{school_year_path}"
     pathfilename = f"{path}changeVersion.txt"
 
     create_file_if_not_exists(pathfilename, path)
@@ -83,7 +85,7 @@ def get_change_version_updated(school_year) -> bool:
     oldestChangeVersion = ''
     newestChangeVersion = ''
 
-    disable_change_version = config("DISABLE_CHANGE_VERSION", default=False, cast=bool)
+    disable_change_version = config("DISABLE_CHANGE_VERSION", default=True, cast=bool)
     if disable_change_version:
         _delete_change_version_file()
         _delete_silver_data_files()
