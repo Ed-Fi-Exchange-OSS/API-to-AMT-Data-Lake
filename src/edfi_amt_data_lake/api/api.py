@@ -26,7 +26,7 @@ LIMIT = API_LIMIT if API_LIMIT else 500
 # Get the newest and oldest change version values
 def _get_change_version_values(school_year: Any) -> ChangeVersionValues:
     school_year_path = f"{school_year}/" if school_year else ""
-    path_filename = f"{config('CHANGE_VERSION_FILEPATH')}/API_TO_AMT/{school_year_path}{config('CHANGE_VERSION_FILENAME')}"
+    path_filename = f"{config('CHANGE_VERSION_FILEPATH')}/{school_year_path}changeVersion.txt"
     with open(path_filename, "r") as outfile:
         values = outfile.readlines()
         if len(values) == 2:
@@ -48,7 +48,8 @@ def _api_call(url: str, token: str, version: ChangeVersionValues) -> list:
                 f"{url}?limit={LIMIT}&offset={offset}&minChangeVersion={version.oldestChangeVersion}"
                 + f"&maxChangeVersion={version.newestChangeVersion}"
             )
-            response = requests.get(endpoint, headers=headers)
+            verify_cert = config('REQUESTS_CERT_VERIFICATION', default=True, cast=bool)
+            response = requests.get(endpoint, headers=headers, verify=verify_cert)
             if response.ok:
                 response_data = response.json()
                 result.extend(response_data)
