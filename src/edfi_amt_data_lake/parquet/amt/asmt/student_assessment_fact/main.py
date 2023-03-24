@@ -39,6 +39,7 @@ RESULT_COLUMNS = [
     'StudentSchoolKey',
     'SchoolKey',
     'AdministrationDate',
+    'AdministrationDateKey',
     'AssessedGradeLevel',
     'StudentScore',
     'ResultDataType',
@@ -421,7 +422,7 @@ def student_assessment_fact_dataframe(
     if is_data_frame_empty(data_frame):
         return None
 
-    data_frame['entryDate'] = data_frame['entryDate'].apply(lambda x: x.replace("-", ""))
+    data_frame['entryDate'] = to_datetime_key(data_frame, 'entryDate')
 
     # Add concatenated columns
     data_frame['StudentAssessmentFactKey'] = (
@@ -492,6 +493,8 @@ def student_assessment_fact_dataframe(
     data_frame["StudentAssessmentResultDataType"] = data_frame['resultDatatypeTypeDescriptor']
     data_frame["StudentAssessmentReportingMethod"] = data_frame['assessmentReportingMethodDescriptor']
     data_frame["StudentAssessmentPerformanceResult"] = data_frame['performanceLevelDescriptor']
+
+    data_frame['AdministrationDateKey'] = to_datetime_key(data_frame, 'AdministrationDate')
     # Result dataframe
     data_frame = data_frame[columns]
     return data_frame
