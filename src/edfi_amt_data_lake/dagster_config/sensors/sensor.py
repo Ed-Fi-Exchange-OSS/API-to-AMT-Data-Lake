@@ -1,7 +1,7 @@
 from typing import Any
 
 from dagster import RunRequest, sensor
-from dagster_config.jobs.pipe_api import pipe_api_job
+from edfi_amt_data_lake.dagster_config.jobs.pipe_api import pipe_api_job
 
 
 @sensor(job=pipe_api_job)

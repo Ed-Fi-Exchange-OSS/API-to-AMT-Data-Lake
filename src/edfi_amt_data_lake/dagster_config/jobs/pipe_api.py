@@ -4,7 +4,7 @@
 # See the LICENSE and NOTICES files in the project root for more information.
 
 from dagster import job
-from dagster_config.ops.api import generate_parquet, get_api_data
+from edfi_amt_data_lake.dagster_config.ops.api import generate_parquet, get_api_data
 
 
 @job
