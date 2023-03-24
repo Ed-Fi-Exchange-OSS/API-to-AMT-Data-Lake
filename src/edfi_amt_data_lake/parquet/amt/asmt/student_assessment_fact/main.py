@@ -20,7 +20,6 @@ from edfi_amt_data_lake.parquet.Common.pandasWrapper import (
     renameColumns,
     subset,
     to_datetime_key,
-    toCsv,
 )
 
 ENDPOINT_STUDENT_ASSESSSMENTS = "studentAssessments"
@@ -224,7 +223,6 @@ def student_assessment_fact_dataframe(
         suffixLeft=None,
         suffixRight=None
     )
-    toCsv(student_assessment_performance_levels, "c:/temp/edfi/parquet/", "student_assessment_performance_levels.csv", "")
     ############################
     # Student Objective Assessments Score Results
     ############################
