@@ -20,6 +20,7 @@ from edfi_amt_data_lake.parquet.Common.pandasWrapper import (
     renameColumns,
     subset,
     to_datetime_key,
+    toCsv,
 )
 
 ENDPOINT_STUDENT_ASSESSSMENTS = "studentAssessments"
@@ -223,6 +224,7 @@ def student_assessment_fact_dataframe(
         suffixLeft=None,
         suffixRight=None
     )
+    toCsv(student_assessment_performance_levels, "c:/temp/edfi/parquet/", "student_assessment_performance_levels.csv", "")
     ############################
     # Student Objective Assessments Score Results
     ############################
@@ -420,6 +422,9 @@ def student_assessment_fact_dataframe(
     data_frame = data_frame[data_frame['assessmentReference.assessmentIdentifier'] != '']
     if is_data_frame_empty(data_frame):
         return None
+
+    data_frame['entryDate'] = data_frame['entryDate'].apply(lambda x: x.replace("-", ""))
+
     # Add concatenated columns
     data_frame['StudentAssessmentFactKey'] = (
         data_frame['assessmentReference.assessmentIdentifier'] + '-'
@@ -432,7 +437,7 @@ def student_assessment_fact_dataframe(
         + data_frame['performanceLevelDescriptorId_student_objective_performanceLevels'].astype(str) + '-'
         + data_frame['studentReference.studentUniqueId'] + '-'
         + data_frame['schoolReference.schoolId'].astype(str) + '-'
-        + data_frame['entryDate'].astype(str)
+        + data_frame['entryDate']
     )
     data_frame['StudentAssessmentKey'] = (
         data_frame['assessmentReference.assessmentIdentifier'] + '-'
