@@ -39,6 +39,7 @@ RESULT_COLUMNS = [
     'StudentSchoolKey',
     'SchoolKey',
     'AdministrationDate',
+    'AdministrationDateKey',
     'AssessedGradeLevel',
     'StudentScore',
     'ResultDataType',
@@ -420,6 +421,9 @@ def student_assessment_fact_dataframe(
     data_frame = data_frame[data_frame['assessmentReference.assessmentIdentifier'] != '']
     if is_data_frame_empty(data_frame):
         return None
+
+    data_frame['entryDate'] = to_datetime_key(data_frame, 'entryDate')
+
     # Add concatenated columns
     data_frame['StudentAssessmentFactKey'] = (
         data_frame['assessmentReference.assessmentIdentifier'] + '-'
@@ -432,7 +436,7 @@ def student_assessment_fact_dataframe(
         + data_frame['performanceLevelDescriptorId_student_objective_performanceLevels'].astype(str) + '-'
         + data_frame['studentReference.studentUniqueId'] + '-'
         + data_frame['schoolReference.schoolId'].astype(str) + '-'
-        + data_frame['entryDate'].astype(str)
+        + data_frame['entryDate']
     )
     data_frame['StudentAssessmentKey'] = (
         data_frame['assessmentReference.assessmentIdentifier'] + '-'
@@ -448,18 +452,23 @@ def student_assessment_fact_dataframe(
         data_frame['studentReference.studentUniqueId'] + '-'
         + data_frame['schoolReference.schoolId'].astype(str)
     ).astype(str)
-    data_frame['StudentObjectiveAssessmentKey'] = (
-        data_frame['studentReference.studentUniqueId'] + '-'
-        + data_frame['objectiveAssessmentReference.identificationCode'] + '-'
-        + data_frame['assessmentReference.assessmentIdentifier'] + '-'
-        + data_frame['studentAssessmentIdentifier'] + '-'
-        + data_frame['assessmentReference.namespace']
+
+    data_frame["StudentObjectiveAssessmentKey"] = data_frame.apply(
+        lambda r: (r["studentReference.studentUniqueId"] + '-'
+                   + r["objectiveAssessmentReference.identificationCode"] + '-'
+                   + r["assessmentReference.assessmentIdentifier"] + '-'
+                   + r["studentAssessmentIdentifier"] + '-'
+                   + r["assessmentReference.namespace"])
+        if r["objectiveAssessmentReference.identificationCode"] != '' else '', axis=1
     )
-    data_frame['ObjectiveAssessmentKey'] = (
-        + data_frame['assessmentReference.assessmentIdentifier'] + '-'
-        + data_frame['objectiveAssessmentReference.identificationCode'] + '-'
-        + data_frame['assessmentReference.namespace']
+
+    data_frame["ObjectiveAssessmentKey"] = data_frame.apply(
+        lambda r: (r["assessmentReference.assessmentIdentifier"] + '-'
+                   + r["objectiveAssessmentReference.identificationCode"] + '-'
+                   + r["assessmentReference.namespace"])
+        if r["objectiveAssessmentReference.identificationCode"] != '' else '', axis=1
     )
+
     # Rename result columns to AMT View column name.
     data_frame = renameColumns(data_frame, {
         'assessmentReference.assessmentIdentifier': 'AssessmentIdentifier',
@@ -484,6 +493,8 @@ def student_assessment_fact_dataframe(
     data_frame["StudentAssessmentResultDataType"] = data_frame['resultDatatypeTypeDescriptor']
     data_frame["StudentAssessmentReportingMethod"] = data_frame['assessmentReportingMethodDescriptor']
     data_frame["StudentAssessmentPerformanceResult"] = data_frame['performanceLevelDescriptor']
+
+    data_frame['AdministrationDateKey'] = to_datetime_key(data_frame, 'AdministrationDate')
     # Result dataframe
     data_frame = data_frame[columns]
     return data_frame
