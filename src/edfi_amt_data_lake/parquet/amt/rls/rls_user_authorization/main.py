@@ -91,19 +91,18 @@ def rls_user_authorization_dataframe(
         'educationOrganizationReference.educationOrganizationId': 'educationOrganizationId'
     })
     # Dates to validate endDate.
-    addColumnIfNotExists(staff_edorg_assignment_association_normalize, 'endDate', '2199-12-31')
-    staff_edorg_assignment_association_normalize['endDateKey'] = (
-        to_datetime_key(staff_edorg_assignment_association_normalize, 'endDate')
-    )
-    staff_edorg_assignment_association_normalize['date_now'] = date.today()
-    staff_edorg_assignment_association_normalize['date_now'] = (
-        to_datetime_key(staff_edorg_assignment_association_normalize, 'date_now')
-    )
+    addColumnIfNotExists(staff_edorg_assignment_association_normalize, 'endDate', '2099-12-31')
+    # staff_edorg_assignment_association_normalize['endDateKey'] = (
+    #     to_datetime_key(staff_edorg_assignment_association_normalize, 'endDate')
+    # )
+    # staff_edorg_assignment_association_normalize['date_now'] = date.today()
+    # staff_edorg_assignment_association_normalize['date_now'] = (
+    #     to_datetime_key(staff_edorg_assignment_association_normalize, 'date_now')
+    # )
     # Select needed columns.
     staff_edorg_assignment_association_normalize = subset(staff_edorg_assignment_association_normalize, [
         'UserKey',
-        'date_now',
-        'endDateKey',
+        'endDate',
         'edOrgReferenceId',
         'staffClassificationDescriptor_constantName',
         'educationOrganizationId',
@@ -118,6 +117,7 @@ def rls_user_authorization_dataframe(
         recordPath=None,
         meta=[
             'id',
+            'endDate',
             'sectionReference.link.href',
             'staffReference.link.href',
             'sectionReference.schoolId',
@@ -143,6 +143,8 @@ def rls_user_authorization_dataframe(
 
     # Select needed columns.
     staff_section_association_normalize = subset(staff_section_association_normalize, [
+        'id',
+        'endDate',
         'sectionReferenceId',
         'staffReferenceId',
         'sectionReference.schoolId',
@@ -162,8 +164,32 @@ def rls_user_authorization_dataframe(
         leftOn=['staffReferenceId'],
         rightOn=['staffReferenceId'],
         suffixLeft=None,
-        suffixRight=None
+        suffixRight='_staff_section_association'
     )
+
+    ############################
+    # Filters
+    ############################
+
+    result_section_data_frame["UserScope_DistrictOrSchool"] = result_section_data_frame.apply(
+        lambda r: (True)
+        if r['staffClassificationDescriptor_constantName'] == 'AuthorizationScope.School'
+            or r['staffClassificationDescriptor_constantName'] == 'AuthorizationScope.District' else False, axis=1
+    )
+
+    result_section_data_frame['date_now'] = date.today()
+    result_section_data_frame['date_now'] = to_datetime_key(result_section_data_frame, 'date_now')
+    result_section_data_frame['endDateKey_staff_section_association'] = (
+        to_datetime_key(result_section_data_frame, 'endDate_staff_section_association')
+    )
+    result_section_data_frame['endDateKey_staff_section_association'] = result_section_data_frame['endDateKey_staff_section_association'].fillna('')
+
+    result_section_data_frame["Result"] = result_section_data_frame.apply(
+        lambda r: (True)
+        if (r['endDateKey_staff_section_association'] >= r['date_now']
+            and r['id']) or r['UserScope_DistrictOrSchool'] == True else False, axis=1)
+
+    result_section_data_frame = result_section_data_frame[result_section_data_frame['Result'] == True]
 
     result_section_data_frame['sectionReference.schoolKey'] = result_section_data_frame['sectionReference.schoolId'].astype('Int64').astype(str)
     result_section_data_frame['sectionReference.schoolYear'] = result_section_data_frame['sectionReference.schoolYear'].astype('Int64').astype(str)
