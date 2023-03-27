@@ -76,14 +76,8 @@ def get_change_version_updated(school_year) -> bool:
 
     create_file_if_not_exists(pathfilename, path)
 
-    # Read the Change Version values from the file if they exists.
-    changeVersionFromFile = get_change_version_values_from_file(pathfilename)
-
     # Get the Change Version values from the API.
     changeVersionFromAPI = get_change_version_values_from_api(school_year)
-
-    oldestChangeVersion = ''
-    newestChangeVersion = ''
 
     disable_change_version = config("DISABLE_CHANGE_VERSION", default=True, cast=bool)
     if disable_change_version:
@@ -92,6 +86,12 @@ def get_change_version_updated(school_year) -> bool:
         create_file_if_not_exists(pathfilename, path)
         _update_change_version_file(pathfilename, "0", changeVersionFromAPI.newestChangeVersion)
         return True
+
+    # Read the Change Version values from the file if they exists.
+    changeVersionFromFile = get_change_version_values_from_file(pathfilename)
+
+    oldestChangeVersion = ''
+    newestChangeVersion = ''
 
     if changeVersionFromFile.newestChangeVersion == 0:
         # First Scenario: Fist time we are saving these values locally.
