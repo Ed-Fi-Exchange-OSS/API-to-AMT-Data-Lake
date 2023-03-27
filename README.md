@@ -43,6 +43,8 @@ DISABLE_CHANGE_VERSION=True
 # Development settings:
 LOG_LEVEL=info
 REQUESTS_CERT_VERIFICATION=True
+GENERATE_SILVER_DATA=True
+GENERATE_GOLD_DATA=False
 ```
 
 **API_URL:** URL to get connected to the ODS API.
@@ -64,6 +66,11 @@ This simply means that every time the project is executed, all data is requested
 
 **REQUESTS_CERT_VERIFICATION:** In case you are executing the project on a local development environment and you have not set up a SSL certificate, this value should be False.
 The system will throw a number of warnings. For local development environment this is okay.
+
+**GENERATE_SILVER_DATA:** Set this value True when you want to generate the raw data. False otherwise.
+Take into account that when you set this value to False, and the json files do not exist in the corresponding folder, all the parquet files generated will be empty.
+
+**GENERATE_GOLD_DATA:** Set this value True when you want to generate the parquet files. False otherwise.
 
 Once the environment variables have been configured. Continue with the following commands to prepare the execution of the project.
 

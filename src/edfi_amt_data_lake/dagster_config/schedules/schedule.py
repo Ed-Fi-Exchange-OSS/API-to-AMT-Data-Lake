@@ -1,6 +1,7 @@
 from typing import Any
 
 from dagster import schedule
+
 from edfi_amt_data_lake.dagster_config.jobs.pipe_api import pipe_api_job
 
 
