@@ -59,6 +59,10 @@ GENERATE_GOLD_DATA=False
 **SILVER_DATA_LOCATION:** The location where the raw data will be saved., The raw data is a collection of json files in an staging phase.
 **PARQUET_FILES_LOCATION:** The location where the data in its final structure will be stored.
 
+**GENERATE_SILVER_DATA:** Set this value True when you want to generate the raw data. False otherwise.
+Take into account that when you set this value to False, and the json files do not exist in the corresponding folder, all the parquet files generated will be empty.
+
+**GENERATE_GOLD_DATA:** Set this value True when you want to generate the parquet files. False otherwise.
 
 **OS_CPU:** Defined as the number of CPUs to be used for parallel calls, this value must be less than the number of CPUs of the machine for proper performance.
 **DISABLE_CHANGE_VERSION:** For the current version, the change query version feature has been disabled.
@@ -66,11 +70,6 @@ This simply means that every time the project is executed, all data is requested
 
 **REQUESTS_CERT_VERIFICATION:** In case you are executing the project on a local development environment and you have not set up a SSL certificate, this value should be False.
 The system will throw a number of warnings. For local development environment this is okay.
-
-**GENERATE_SILVER_DATA:** Set this value True when you want to generate the raw data. False otherwise.
-Take into account that when you set this value to False, and the json files do not exist in the corresponding folder, all the parquet files generated will be empty.
-
-**GENERATE_GOLD_DATA:** Set this value True when you want to generate the parquet files. False otherwise.
 
 Once the environment variables have been configured. Continue with the following commands to prepare the execution of the project.
 
