@@ -35,6 +35,7 @@ ENDPOINT_GRADES = 'grades'
 GRADING_PERIOD = 'gradingPeriods'
 GRADING_PERIOD_DESCRIPTOR_GRADES = 'gradingPeriodDescriptors'
 
+
 @create_parquet_file
 def student_section_grade_fact_data_frame(
     file_name: str,
