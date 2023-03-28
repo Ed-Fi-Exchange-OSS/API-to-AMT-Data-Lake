@@ -170,11 +170,10 @@ def rls_user_authorization_dataframe(
     ############################
     # Filters
     ############################
-
     result_section_data_frame["UserScope_DistrictOrSchool"] = result_section_data_frame.apply(
         lambda r: (True)
         if r['staffClassificationDescriptor_constantName'] == 'AuthorizationScope.School'
-            or r['staffClassificationDescriptor_constantName'] == 'AuthorizationScope.District' else False, axis=1
+        or r['staffClassificationDescriptor_constantName'] == 'AuthorizationScope.District' else False, axis=1
     )
 
     result_section_data_frame['date_now'] = date.today()
@@ -187,10 +186,13 @@ def rls_user_authorization_dataframe(
     result_section_data_frame["Result"] = result_section_data_frame.apply(
         lambda r: (True)
         if (r['endDateKey_staff_section_association'] >= r['date_now']
-            and r['id']) or r['UserScope_DistrictOrSchool'] == True else False, axis=1)
+            and r['id']) or r['UserScope_DistrictOrSchool'] else False, axis=1)
 
-    result_section_data_frame = result_section_data_frame[result_section_data_frame['Result'] == True]
+    result_section_data_frame = result_section_data_frame[result_section_data_frame['Result']]
 
+    ############################
+    # Permission Columns
+    ############################
     result_section_data_frame['sectionReference.schoolKey'] = result_section_data_frame['sectionReference.schoolId'].astype('Int64').astype(str)
     result_section_data_frame['sectionReference.schoolYear'] = result_section_data_frame['sectionReference.schoolYear'].astype('Int64').astype(str)
     result_section_data_frame['sectionKey'] = (
