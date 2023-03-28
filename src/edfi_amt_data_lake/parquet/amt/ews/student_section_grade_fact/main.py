@@ -32,7 +32,8 @@ RESULT_COLUMNS = [
 
 ]
 ENDPOINT_GRADES = 'grades'
-GRANDINGPERIODS_GRADES = 'gradingPeriods'
+GRADING_PERIOD = 'gradingPeriods'
+GRADING_PERIOD_DESCRIPTOR_GRADES = 'gradingPeriodDescriptors'
 
 
 @create_parquet_file
@@ -41,10 +42,11 @@ def student_section_grade_fact_data_frame(
     columns: list[str],
     school_year: int
 ):
-    gradesContent = getEndpointJson(ENDPOINT_GRADES, config('SILVER_DATA_LOCATION'), school_year)
-    gradingPeriodsContent = getEndpointJson(GRANDINGPERIODS_GRADES, config('SILVER_DATA_LOCATION'), school_year)
+    grades_content = getEndpointJson(ENDPOINT_GRADES, config('SILVER_DATA_LOCATION'), school_year)
+    grading_periods_content = getEndpointJson(GRADING_PERIOD, config('SILVER_DATA_LOCATION'), school_year)
+    grading_period_descriptor_content = getEndpointJson(GRADING_PERIOD_DESCRIPTOR_GRADES, config('SILVER_DATA_LOCATION'), school_year)
     file_name = file_name
-    letterGradeTranslation = createDataFrame(
+    letter_grade_translation = createDataFrame(
         data=[
             ['A', 95],
             ['B', 85],
@@ -53,9 +55,30 @@ def student_section_grade_fact_data_frame(
             ['F', 55]
         ],
         columns=['LetterGradeEarned', 'NumericGradeEarnedJoin'])
-
-    gradesContentNormalized = jsonNormalize(
-        gradesContent,
+    ############################
+    # grading_period_descriptor
+    ############################
+    grading_period_descriptor_normalized = jsonNormalize(
+        grading_period_descriptor_content,
+        recordPath=None,
+        meta=[
+            'gradingPeriodDescriptorId',
+            'codeValue',
+            'description',
+        ],
+        metaPrefix=None,
+        recordPrefix=None,
+        errors="ignore",
+    )
+    grading_period_descriptor_normalized = renameColumns(
+        grading_period_descriptor_normalized,
+        {
+            'codeValue': 'gradingPeriodDescriptorCodeValue',
+            'description': 'gradingPeriodDescriptorDescription',
+        }
+    )
+    grades_content_normalized = jsonNormalize(
+        grades_content,
         recordPath=None,
         meta=[
             'gradingPeriodReference.gradingPeriodDescriptor',
@@ -78,14 +101,15 @@ def student_section_grade_fact_data_frame(
         errors='ignore'
     )
 
-    gradingPeriodsContentNormalized = jsonNormalize(
-        gradingPeriodsContent,
+    grading_periods_content_normalized = jsonNormalize(
+        grading_periods_content,
         recordPath=None,
         meta=[
             'gradingPeriodDescriptor',
             'periodSequence',
             'schoolReference.schoolId',
-            'schoolYearTypeReference.schoolYear'
+            'schoolYearTypeReference.schoolYear',
+            'beginDate',
         ],
         metaPrefix=None,
         recordPrefix=None,
@@ -93,8 +117,8 @@ def student_section_grade_fact_data_frame(
     )
 
     result_data_frame = pdMerge(
-        left=gradesContentNormalized,
-        right=gradingPeriodsContentNormalized,
+        left=grades_content_normalized,
+        right=grading_periods_content_normalized,
         how='left',
         leftOn=[
             'gradingPeriodReference.gradingPeriodDescriptor',
@@ -117,7 +141,7 @@ def student_section_grade_fact_data_frame(
 
     result_data_frame = pdMerge(
         left=result_data_frame,
-        right=letterGradeTranslation,
+        right=letter_grade_translation,
         how='left',
         leftOn=['letterGradeEarned'],
         rightOn=['LetterGradeEarned'],
@@ -127,6 +151,21 @@ def student_section_grade_fact_data_frame(
 
     result_data_frame.numericGradeEarned[result_data_frame.numericGradeEarned == 0] = result_data_frame.NumericGradeEarnedJoin
 
+    # Removes namespace from Grading Period Descriptor
+    get_descriptor_code_value_from_uri(result_data_frame, 'gradingPeriodReference.gradingPeriodDescriptor')
+    result_data_frame = pdMerge(
+        left=result_data_frame,
+        right=grading_period_descriptor_normalized,
+        how='inner',
+        leftOn=[
+            'gradingPeriodReference.gradingPeriodDescriptor',
+        ],
+        rightOn=[
+            'gradingPeriodDescriptorCodeValue',
+        ],
+        suffixLeft='',
+        suffixRight='_gradingPeriodDescriptor'
+    )
     # Keep the fields I actually need.
     result_data_frame = subset(result_data_frame, [
         'studentSectionAssociationReference.studentUniqueId',
@@ -139,16 +178,16 @@ def student_section_grade_fact_data_frame(
         'studentSectionAssociationReference.sessionName',
         'numericGradeEarned',
         'letterGradeEarned',
-        'gradeTypeDescriptor'
+        'gradeTypeDescriptor',
+        'gradingPeriodDescriptorId',
+        'beginDate',
     ])
     result_data_frame = get_descriptor_constant(result_data_frame, 'gradeTypeDescriptor')
     # Formatting begin date that will be used as part of the keys later
     result_data_frame['studentSectionAssociationReference.beginDate'] = toDateTime(result_data_frame['studentSectionAssociationReference.beginDate'])
     result_data_frame['studentSectionAssociationReference.beginDate'] = result_data_frame['studentSectionAssociationReference.beginDate'].dt.strftime('%Y%m%d')
-
-    # # Removes namespace from Grading Period Descriptor
-    get_descriptor_code_value_from_uri(result_data_frame, 'gradingPeriodReference.gradingPeriodDescriptor')
-
+    result_data_frame['beginDate'] = toDateTime(result_data_frame['beginDate'])
+    result_data_frame['beginDate'] = result_data_frame['beginDate'].dt.strftime('%Y%m%d')
     # Removes namespace from Grade Type Descriptor
     get_descriptor_code_value_from_uri(result_data_frame, 'gradeTypeDescriptor')
 
@@ -156,14 +195,14 @@ def student_section_grade_fact_data_frame(
     result_data_frame['studentSectionAssociationReference.schoolId'] = result_data_frame['studentSectionAssociationReference.schoolId'].astype(str)
     result_data_frame['studentSectionAssociationReference.schoolYear'] = result_data_frame['studentSectionAssociationReference.schoolYear'].astype(str)
 
-    # Creates concatanation for GradingPeriodKey field
+    # Creates concatenation for GradingPeriodKey field
     result_data_frame['GradingPeriodKey'] = (
-        result_data_frame['gradingPeriodReference.gradingPeriodDescriptor']
+        result_data_frame['gradingPeriodDescriptorId'].astype(str)
         + '-' + result_data_frame['studentSectionAssociationReference.schoolId']
-        + '-' + result_data_frame['studentSectionAssociationReference.beginDate']
+        + '-' + result_data_frame['beginDate']
     )
 
-    # Creates concatanation for StudentSectionKey field
+    # Creates concatenation for StudentSectionKey field
     result_data_frame['StudentSectionKey'] = (
         result_data_frame['studentSectionAssociationReference.studentUniqueId']
         + '-' + result_data_frame['studentSectionAssociationReference.schoolId']
@@ -174,7 +213,7 @@ def student_section_grade_fact_data_frame(
         + '-' + result_data_frame['studentSectionAssociationReference.beginDate']
     )
 
-    # Creates concatanation for SectionKey field
+    # Creates concatenation for SectionKey field
     result_data_frame['SectionKey'] = (
         result_data_frame['studentSectionAssociationReference.schoolId']
         + '-' + result_data_frame['studentSectionAssociationReference.localCourseCode']

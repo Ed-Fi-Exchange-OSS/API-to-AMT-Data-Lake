@@ -99,7 +99,7 @@ def contact_person_dim_dataframe(
         errors='ignore'
     )
 
-    if is_data_frame_empty(parents_normalize.empty):
+    if is_data_frame_empty(parents_normalize):
         return None
 
     parents_address_normalize = jsonNormalize(
