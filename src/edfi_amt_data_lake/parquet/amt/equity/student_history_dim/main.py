@@ -140,7 +140,7 @@ def student_history_dim_data_frame(
                 as_index=False,
                 group_keys=False
             ).apply(lambda s: pd.Series({
-                'DaysEnrolled': s.size,
+                'DaysEnrolled': s['ReportedAsAbsentFromHomeRoom'].count(),
                 'DaysAbsent': s['ReportedAsAbsentFromHomeRoom'].sum(),
             }))
         )
