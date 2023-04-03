@@ -9,7 +9,7 @@ on:
   pull_request:
     branches: [ main ]
     paths:
-      - "src/dagster_data_lake/**/*.py"
+      - "src/edfi_amt_data_lake/**/*.py"
       - "**/pyproject.toml"
       - ".github/**/*.yml"
   workflow_dispatch:
@@ -24,7 +24,7 @@ jobs:
         working-directory: src
 
     env:
-      PROJECT: dagster_data_lake
+      PROJECT: edfi_amt_data_lake
 
     steps:
     - name: Checkout

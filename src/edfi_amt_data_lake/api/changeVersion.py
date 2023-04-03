@@ -11,6 +11,7 @@ from decouple import config
 
 from edfi_amt_data_lake.helper.changeVersionValues import ChangeVersionValues
 from edfi_amt_data_lake.helper.token import get_token
+from edfi_amt_data_lake.helper.utils import delete_path_content
 
 
 def create_file_if_not_exists(filepath, path) -> None:
@@ -31,27 +32,20 @@ def get_change_version_values_from_file(file) -> ChangeVersionValues:
 
 def get_change_version_values_from_api(school_year="") -> ChangeVersionValues:
     token = get_token()
+    verify_cert = config('REQUESTS_CERT_VERIFICATION', default=True, cast=bool)
     school_year_url = f"{school_year}/" if school_year else ""
     url = f"{config('API_URL')}{config('AVAILABLE_CHANGE_VERSIONS').format(school_year_url)}"
     headers = {"Authorization": "Bearer " + token}
-    response = requests.get(url, headers=headers)
+    response = requests.get(url, headers=headers, verify=verify_cert)
 
     if response.ok:
         response_json = response.json()
 
-        oldestChangeVersion = str(response_json["OldestChangeVersion"])
-        newestChangeVersion = str(response_json["NewestChangeVersion"])
+        oldestChangeVersion = str(response_json["oldestChangeVersion"])
+        newestChangeVersion = str(response_json["newestChangeVersion"])
         changeVersionValues = ChangeVersionValues(oldestChangeVersion, newestChangeVersion)
 
     return changeVersionValues
-
-
-def _delete_files() -> None:
-    import shutil
-    import time
-    path = config("CHANGE_VERSION_FILEPATH")
-    shutil.rmtree(path, ignore_errors=True, onerror=None)
-    time.sleep(1)
 
 
 def _update_change_version_file(pathfilename: str, oldestChangeVersion: str, newestChangeVersion: str) -> None:
@@ -62,27 +56,26 @@ def _update_change_version_file(pathfilename: str, oldestChangeVersion: str, new
 
 def get_change_version_updated(school_year) -> bool:
     school_year_path = f"{school_year}/" if school_year else ""
-    path = config("CHANGE_VERSION_FILEPATH") + f"API_TO_AMT/{school_year_path}"
-    filename = config("CHANGE_VERSION_FILENAME")
-    pathfilename = f"{path}{filename}"
+    path = config("CHANGE_VERSION_FILEPATH") + f"/{school_year_path}"
+    pathfilename = f"{path}changeVersion.txt"
 
     create_file_if_not_exists(pathfilename, path)
-
-    # Read the Change Version values from the file if they exists.
-    changeVersionFromFile = get_change_version_values_from_file(pathfilename)
 
     # Get the Change Version values from the API.
     changeVersionFromAPI = get_change_version_values_from_api(school_year)
 
-    oldestChangeVersion = ''
-    newestChangeVersion = ''
-
-    disable_change_version = config("DISABLE_CHANGE_VERSION", default=False, cast=bool)
+    disable_change_version = config("DISABLE_CHANGE_VERSION", default=True, cast=bool)
     if disable_change_version:
-        _delete_files()
+        delete_path_content(config("CHANGE_VERSION_FILEPATH"))
         create_file_if_not_exists(pathfilename, path)
         _update_change_version_file(pathfilename, "0", changeVersionFromAPI.newestChangeVersion)
         return True
+
+    # Read the Change Version values from the file if they exists.
+    changeVersionFromFile = get_change_version_values_from_file(pathfilename)
+
+    oldestChangeVersion = ''
+    newestChangeVersion = ''
 
     if changeVersionFromFile.newestChangeVersion == 0:
         # First Scenario: Fist time we are saving these values locally.

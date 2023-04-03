@@ -122,10 +122,10 @@ celerybeat.pid
 
 # Temp files
 src/jsons/*
-src/dagster_data_lake/tmp*
+src/edfi_amt_data_lake/tmp*
 
 src/edfi_amt_data_lake/jsons/*.json
-src/dagster_data_lake/dagster_data_lake/tmp*
+src/edfi_amt_data_lake/dagster_config/tmp*
 
 # Environments
 .env

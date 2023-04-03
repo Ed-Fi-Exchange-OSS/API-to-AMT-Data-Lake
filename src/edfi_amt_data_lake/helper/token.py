@@ -15,13 +15,14 @@ def get_token() -> str:
     api_user = config('API_KEY')
     api_password = config('API_SECRET')
     api_url_token = f"{config('API_URL')}/{config('PREX_TOKEN')}"
+    verify_cert = config('REQUESTS_CERT_VERIFICATION', default=True, cast=bool)
 
     credential = ":".join((api_user, api_password))
     credential_encoded = base64.b64encode(credential.encode("utf-8"))
     access_headers = {"Authorization": b"Basic " + credential_encoded}
     access_params = {"grant_type": "client_credentials"}
 
-    response = requests.post(api_url_token, headers=access_headers, data=access_params)
+    response = requests.post(api_url_token, headers=access_headers, data=access_params, verify=verify_cert)
 
     if response.status_code == 200:
         return response.json()["access_token"]
