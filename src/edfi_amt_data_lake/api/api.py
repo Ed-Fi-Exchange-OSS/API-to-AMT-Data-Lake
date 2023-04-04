@@ -80,7 +80,7 @@ def is_tpdm_supported() -> bool:
 # Get a response from the Ed-Fi API
 def _api_call(url: str, token: str, version: ChangeVersionValues) -> list:
     offset = 0
-    result: list[any]
+    result: list[str]
     result = []
     loop = True
     headers = get_headers(token)
