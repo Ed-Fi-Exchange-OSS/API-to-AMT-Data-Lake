@@ -5,9 +5,17 @@
 
 from dagster import job
 
-from edfi_amt_data_lake.dagster_config.ops.api import generate_parquet, get_api_data
+from edfi_amt_data_lake.api.api import validate_supported_api
+from edfi_amt_data_lake.dagster_config.ops.api import (
+    generate_parquet,
+    get_api_data,
+    not_supported_data_standard_version,
+)
 
 
 @job
 def pipe_api_job():
-    generate_parquet(get_api_data())
+    if validate_supported_api():
+        generate_parquet(get_api_data())
+    else:
+        not_supported_data_standard_version()

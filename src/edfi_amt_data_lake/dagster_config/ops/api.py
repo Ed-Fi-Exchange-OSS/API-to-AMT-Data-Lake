@@ -15,7 +15,13 @@ from edfi_amt_data_lake.helper.utils import delete_path_content
 from edfi_amt_data_lake.parquet.amt_parquet import generate_amt_parquet
 
 
-@op
+@op(description="API Data Standard Version is not supported.")
+def not_supported_data_standard_version():
+    logger = get_dagster_logger()
+    logger.error("Data Standard Version not supported.")
+
+
+@op(description="Get JSON Data from API.")
 def get_api_data() -> bool:
     if (config('GENERATE_SILVER_DATA', default=True, cast=bool)):
         logger = get_dagster_logger()
@@ -31,7 +37,7 @@ def get_api_data() -> bool:
     return True
 
 
-@op
+@op(description="Generate Parquet Files.")
 def generate_parquet(api_result_sucess) -> bool:
     if (config('GENERATE_GOLD_DATA', default=True, cast=bool)):
         logger = get_dagster_logger()

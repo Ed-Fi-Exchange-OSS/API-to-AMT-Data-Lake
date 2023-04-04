@@ -11,6 +11,7 @@ from decouple import config
 
 from edfi_amt_data_lake.helper.base import PATH, JSONFile
 from edfi_amt_data_lake.helper.changeVersionValues import ChangeVersionValues
+from edfi_amt_data_lake.helper.data_model_values import data_model_values
 from edfi_amt_data_lake.helper.helper import (
     get_endpoint,
     get_headers,
@@ -21,6 +22,8 @@ from edfi_amt_data_lake.helper.token import get_token
 
 API_LIMIT = config("API_LIMIT", cast=int)
 LIMIT = API_LIMIT if API_LIMIT else 500
+SUPPORTED_VERSION = ["3.3", "4.0"]
+DATA_MODEL = {"edfi": "Ed-Fi", "tpdm": "TPDM"}
 
 
 # Get the newest and oldest change version values
@@ -36,20 +39,64 @@ def _get_change_version_values(school_year: Any) -> ChangeVersionValues:
     return ChangeVersionValues('0', '0')
 
 
+def _get_api_data_models() -> list:
+    url = f"{config('API_URL')}"
+    result = []
+    verify_cert = config('REQUESTS_CERT_VERIFICATION', default=True, cast=bool)
+    response = requests.get(url, verify=verify_cert)
+    if response.ok:
+        response_data = response.json()
+        result = response_data["dataModels"]
+    return result
+
+
+def _get_data_model_by_name(name: str) -> data_model_values:
+    data_model_list = _get_api_data_models()
+    for data_model in data_model_list:
+        if data_model["name"].lower() == name.lower():
+            return data_model_values(
+                data_model.get("name",),
+                data_model.get("version"),
+                data_model.get("informationalVersion")
+            )
+    return data_model_values("", "", "")
+
+
+def validate_supported_api() -> bool:
+    ed_fi_model = _get_data_model_by_name(DATA_MODEL["edfi"])
+    if ed_fi_model.version:
+        for version in SUPPORTED_VERSION:
+            if ed_fi_model.version.startswith(version):
+                return True
+    return False
+
+
+def is_tpdm_supported() -> bool:
+    if _get_data_model_by_name(DATA_MODEL["tpdm"]).name:
+        return True
+    return False
+
+
 # Get a response from the Ed-Fi API
 def _api_call(url: str, token: str, version: ChangeVersionValues) -> list:
     offset = 0
+    result: list[Any]
     result = []
     loop = True
     headers = get_headers(token)
+    change_version_parameters = (
+        f"&minChangeVersion={version.oldestChangeVersion}&maxChangeVersion={version.newestChangeVersion}"
+        if not config('DISABLE_CHANGE_VERSION', default=True, cast=bool)
+        else ""
+    )
     try:
         while loop:
             endpoint = (
-                f"{url}?limit={LIMIT}&offset={offset}&minChangeVersion={version.oldestChangeVersion}"
-                + f"&maxChangeVersion={version.newestChangeVersion}"
+                f"{url}?limit={LIMIT}&offset={offset}{change_version_parameters}"
             )
             verify_cert = config('REQUESTS_CERT_VERIFICATION', default=True, cast=bool)
             response = requests.get(endpoint, headers=headers, verify=verify_cert)
+            response_data = ''
             if response.ok:
                 response_data = response.json()
                 result.extend(response_data)
