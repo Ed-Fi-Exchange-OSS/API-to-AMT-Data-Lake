@@ -37,12 +37,12 @@ def get_change_version_values_from_api(school_year="") -> ChangeVersionValues:
     url = f"{config('API_URL')}{config('AVAILABLE_CHANGE_VERSIONS').format(school_year_url)}"
     headers = {"Authorization": "Bearer " + token}
     response = requests.get(url, headers=headers, verify=verify_cert)
-
+    changeVersionValues = ChangeVersionValues("", "")
     if response.ok:
         response_json = response.json()
 
-        oldestChangeVersion = str(response_json["oldestChangeVersion"])
-        newestChangeVersion = str(response_json["newestChangeVersion"])
+        oldestChangeVersion = str(response_json.get("oldestChangeVersion", response_json.get("OldestChangeVersion", "")))
+        newestChangeVersion = str(response_json.get("newestChangeVersion", response_json.get("NewestChangeVersion", "")))
         changeVersionValues = ChangeVersionValues(oldestChangeVersion, newestChangeVersion)
 
     return changeVersionValues
