@@ -45,13 +45,11 @@ def get_descriptor_constant(data=pd.DataFrame, column=str):
             'descriptor': f"{column}_descriptor"
         })
         if not data[column].empty:
-            if len(data[column].str.split('/')) > 0:
-                data[f"{column}_descriptor_tail"] = data[column].str.split("/").str.get(-1)
-                if len(data[f"{column}_descriptor_tail"].str.split('#')) > 0:
-                    data[f"{column}_descriptor"] = data[f"{column}_descriptor_tail"].str.split("#").str.get(-2)
-                    data[f"{column}_codeValue"] = data[f"{column}_descriptor_tail"].str.split("#").str.get(-1)
-        if f"{column}_descriptor_tail" is data:
-            data = data.drop(f"{column}_descriptor_tail", axis=1)
+            if len(data[column].str.split('#')) > 0:
+                data[f"{column}_descriptor"] = data[column].str.split("#").str.get(-2)
+                data[f"{column}_codeValue"] = data[column].str.split("#").str.get(-1)
+                data[f"{column}_descriptor"] = data[f"{column}_descriptor"].str.split("/").str.get(-1)
+
         if (
             not (
                 f"{column}_descriptor" in descriptor_mapping_normalized
