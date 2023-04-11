@@ -65,8 +65,8 @@ def date_dim_data_frame(
     ])
     if is_data_frame_empty(result_data_frame):
         return None
-    result_data_frame[["day", "month", "year"]] = result_data_frame["date"].str.split("-", expand=True)
-    result_data_frame.drop_duplicates()
+    result_data_frame[["year", "month", "day"]] = result_data_frame["date"].str.split("-", expand=True)
+    result_data_frame = result_data_frame.drop_duplicates()
     result_data_frame['dateKey'] = (
         result_data_frame["year"]
         + result_data_frame["month"]
