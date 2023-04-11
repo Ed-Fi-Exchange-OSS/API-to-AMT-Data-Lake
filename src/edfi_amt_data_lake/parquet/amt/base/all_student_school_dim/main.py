@@ -564,10 +564,12 @@ def all_student_school_dim_data_frame_base(
     result_data_frame['date_now'] = date.today()
     result_data_frame['date_now'] = to_datetime_key(result_data_frame, 'date_now')
 
-    result_data_frame['IsEnrolled'] = result_data_frame['exitWithdrawDateKey'] >= result_data_frame['date_now']
-
-    result_data_frame['IsEnrolled'] = result_data_frame['exitWithdrawDateKey'] == ''
-    result_data_frame["IsEnrolled"] = result_data_frame["IsEnrolled"].astype(int)
+    result_data_frame['IsEnrolled'] = (
+        result_data_frame.apply(
+            lambda x: 1
+            if x['exitWithdrawDateKey'] > x['date_now'] or x['exitWithdrawDateKey'] == '' else 0, axis=1
+        )
+    )
 
     return result_data_frame[
         columns
