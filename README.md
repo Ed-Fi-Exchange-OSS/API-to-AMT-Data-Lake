@@ -101,8 +101,17 @@ cp -R dagster.yaml ~/dagster_home/
 dagit -w workspace.yaml
 ```
 
-After you have finished the above steps, you can open your localhost or http://127.0.0.1:3000 and you will be able to see in the launcher the list of tests or collections available.
+After you have finished the above steps, you can open your localhost or http://127.0.0.1:3000 and you will be able to see in the launcher the list of tests or collections available. You can click on the Launchpad tab.
 
+![api to amt dagster job](docs\images\pipe_api_job.jpg)
+
+On the LaunchPad tab, click the Launch Run button to start the process
+
+![launch dagster job](docs\images\launch_run.jpg)
+
+In the browser you can see the progress of the execution
+
+![launch dagster job](docs\images\process_progress.jpg)
 ## Logs
 
 The log can be found in the same directory or inside the dagster home folder
