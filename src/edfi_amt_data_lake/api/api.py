@@ -3,10 +3,11 @@
 # The Ed-Fi Alliance licenses this file to you under the Apache License, Version 2.0.
 # See the LICENSE and NOTICES files in the project root for more information.
 
-
+import traceback
 from typing import Any
 
 import requests
+from dagster import get_dagster_logger
 from decouple import config
 
 from edfi_amt_data_lake.helper.base import PATH, JSONFile
@@ -40,13 +41,19 @@ def _get_change_version_values(school_year: Any) -> ChangeVersionValues:
 
 
 def _get_api_data_models() -> list:
+    logger = get_dagster_logger()
     url = f"{config('API_URL')}"
     result = []
-    verify_cert = config('REQUESTS_CERT_VERIFICATION', default=True, cast=bool)
-    response = requests.get(url, verify=verify_cert)
-    if response.ok:
-        response_data = response.json()
-        result = response_data["dataModels"]
+    try:
+        verify_cert = config('REQUESTS_CERT_VERIFICATION', default=True, cast=bool)
+        response = requests.get(url, verify=verify_cert)
+        if response.ok:
+            response_data = response.json()
+            result = response_data["dataModels"]
+        else:
+            logger.error(f"Get API Data Response: {response.status_code} - {response.reason}.")
+    except Exception as ex:
+            logger.error(f"An unhandled exception occured: {ex}, Traceback: {traceback.format_exc()}")
     return result
 
 
@@ -79,6 +86,7 @@ def is_tpdm_supported() -> bool:
 
 # Get a response from the Ed-Fi API
 def _api_call(url: str, token: str, version: ChangeVersionValues) -> list:
+    logger = get_dagster_logger()
     offset = 0
     result: list[Any]
     result = []
@@ -104,7 +112,7 @@ def _api_call(url: str, token: str, version: ChangeVersionValues) -> list:
             if len(response_data) == 0:
                 loop = False
     except BaseException as err:
-        print(f"Unexpected {err=}, {type(err)=}")
+        logger.error(f"Unexpected {err=}, {type(err)=}")
     return result
 
 
