@@ -53,7 +53,7 @@ def _get_api_data_models() -> list:
         else:
             logger.error(f"Get API Data Response: {response.status_code} - {response.reason}.")
     except Exception as ex:
-            logger.error(f"An unhandled exception occured: {ex}, Traceback: {traceback.format_exc()}")
+        logger.error(f"An unhandled exception occured: {ex}, Traceback: {traceback.format_exc()}")
     return result
 
 
