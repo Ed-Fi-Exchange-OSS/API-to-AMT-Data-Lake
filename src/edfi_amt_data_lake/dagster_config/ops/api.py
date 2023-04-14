@@ -16,7 +16,7 @@ from edfi_amt_data_lake.parquet.amt_parquet import generate_amt_parquet
 
 
 @op(description="API Data Standard Version is not supported.")
-def not_supported_data_standard_version():
+def show_message_not_supported_data_standard_version():
     logger = get_dagster_logger()
     logger.error("Data Standard Version not supported.")
 
