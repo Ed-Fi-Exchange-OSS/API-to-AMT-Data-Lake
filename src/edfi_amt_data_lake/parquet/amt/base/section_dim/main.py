@@ -131,19 +131,6 @@ def section_dim_dataframe(
         'courseOfferingReference.link.href',
         'courseOfferingReferenceId'
     )
-    sections_class_periods_normalized = jsonNormalize(
-        sections_content,
-        recordPath=['classPeriods'],
-        meta=[
-            'id'
-        ],
-        recordMeta=[
-            'classPeriodReference.classPeriodName'
-        ],
-        metaPrefix=None,
-        recordPrefix=None,
-        errors='ignore'
-    )
     courses_offerings_normalized = jsonNormalize(
         courses_offerings_content,
         recordPath=None,
@@ -239,17 +226,6 @@ def section_dim_dataframe(
         return None
     result_data_frame = pdMerge(
         left=result_data_frame,
-        right=sections_class_periods_normalized,
-        how='left',
-        leftOn=['id'],
-        rightOn=['id'],
-        suffixLeft=None,
-        suffixRight='_classPeriods'
-    )
-    if is_data_frame_empty(result_data_frame):
-        return None
-    result_data_frame = pdMerge(
-        left=result_data_frame,
         right=sessions_normalized,
         how='left',
         leftOn=['sessionReferenceId'],
@@ -311,7 +287,6 @@ def section_dim_dataframe(
         'courseOfferingReference.sessionName',
         'academicSubjectDescriptor',
         'courseTitle',
-        'classPeriodReference.classPeriodName',
         'termDescriptor',
         'educationalEnvironmentDescriptor',
         'localEducationAgencyReference.localEducationAgencyId',
@@ -343,9 +318,7 @@ def section_dim_dataframe(
         + result_data_frame['courseOfferingReference.localCourseCode']
         + ')-'
         + result_data_frame['courseTitle']
-        + '-('
-        + result_data_frame['classPeriodReference.classPeriodName']
-        + ')-'
+        + '-'
         + result_data_frame['description_term_desc']
     )
 
